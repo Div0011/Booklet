@@ -1,28 +1,32 @@
-# 10. PostgreSQL & MySQL (Database Systems & Practical SQL)
+# 10. PostgreSQL, MySQL & NoSQL (MongoDB)
 
 ## 1. Introduction
 
 ### What it is
-**PostgreSQL** and **MySQL** are two dominant open-source relational database management systems (RDBMS). PostgreSQL is a feature-rich, standards-compliant database excelling in complex queries, advanced data types, and reliability. MySQL is lightweight, fast, and optimized for web applications (LAMP stack). Both store structured data, execute SQL queries, and provide ACID transactions, but with different trade-offs in performance, features, and use cases.
+**PostgreSQL** and **MySQL** are the two dominant open-source relational database management systems (RDBMS) utilizing structured tables and ACID transactions. **MongoDB** is a leading NoSQL document-oriented database that stores data in flexible, JSON-like documents (BSON). Relational databases excel in schema consistency and complex join operations, while NoSQL databases excel in horizontal scaling, high write throughput, and handling unstructured or rapidly evolving schemas.
 
 ### Why they exist
-MySQL (1995) prioritized speed and simplicity for web development, becoming the backbone of LAMP stack. PostgreSQL (1989, evolved from Ingres) prioritized correctness, advanced features, and SQL compliance. Together, they power most web applications, data warehouses, and startups because they're free, proven, battle-tested at scale, and widely supported by hosting platforms.
+- **MySQL** (1995) was designed for speed, lightweight deployments, and web integration (becoming the M in the LAMP stack).
+- **PostgreSQL** (1989) prioritized strict standards compliance, extensibility, and data correctness over raw speed.
+- **MongoDB** (2009) arose to solve the limitations of relational databases when dealing with massive volumes of semi-structured data, high-velocity writes, and horizontal scale-out requirements.
 
 ### Problems they solve
-- **Reliable Storage**: Durable, ACID-compliant persistence across application crashes.
-- **Performance**: Optimized query execution, intelligent indexing, query caching strategies.
-- **Scalability**: Handle millions of rows with sub-second response times through indexing and partitioning.
-- **Concurrency**: Multiple users simultaneously without race conditions via locking and transaction isolation.
-- **Advanced Data Types**: JSON, arrays, ranges, custom types beyond basic text/numbers.
-- **Replication & HA**: High availability through master-slave or multi-master setups with automatic failover.
-- **Compliance**: Audit trails, immutable logs, compliance with regulatory requirements.
+- **Data Integrity & Consistency**: SQL databases enforce strong constraints and ACID properties.
+- **Scalability**: MongoDB and NoSQL databases enable seamless horizontal scaling (sharding) across clusters of cheap hardware.
+- **Schema Flexibility**: MongoDB lets developers store documents with varying structures without running complex, blocking schema migrations.
+- **Geospatial & Complex Types**: PostgreSQL (via PostGIS) and MongoDB natively support advanced geospatial queries, indexing, and nesting.
 
 ### Industry Use Cases
-- **PostgreSQL**: Financial systems (ACID critical), geospatial data (PostGIS extension), data warehouses (complex analytics), complex schemas with rich constraints.
-- **MySQL**: Web applications (WordPress, Drupal), e-commerce platforms (Magento, WooCommerce), content management systems, high-throughput OLTP systems.
+- **PostgreSQL**: Financial services (high ACID requirements), GIS/location mapping (PostGIS), complex relational data analysis.
+- **MySQL**: High-traffic read-heavy web apps (CMS, blogs, e-commerce stores).
+- **MongoDB**: Content management, catalogs, user profile stores, IoT data logging, real-time analytics, and rapid prototyping.
+
+### SQL (ACID) vs. NoSQL (BASE) Paradigms
+- **ACID (SQL)**: Focuses on **Atomicity, Consistency, Isolation, and Durability**. Ensures that data is always consistent and valid, which is critical for financial transactions.
+- **BASE (NoSQL)**: Focuses on **Basically Available, Soft state, and Eventual consistency**. Prioritizes availability and scale over immediate consistency, allowing values to propagate across nodes asynchronously.
 
 ### Analogy
-PostgreSQL is a **Swiss Army knife**: feature-rich, flexible, powerful for complex tasks requiring precision. MySQL is a **hammer**: simple, reliable, perfect for common tasks and rapid deployment. Choose PostgreSQL for complexity; choose MySQL for speed and simplicity. Both are professional tools excelling in their domain.
+SQL databases are like **pre-fabricated structural frames**: highly structured, rigid, and safe, but difficult to alter once built. NoSQL databases are like **clay**: flexible, dynamic, and easy to mold on the fly, but requiring more application-level control to maintain shape.
 
 ---
 
@@ -216,6 +220,73 @@ WHERE MATCH(title, content) AGAINST('machine learning' IN BOOLEAN MODE);
 -- Boolean operators
 WHERE MATCH(title) AGAINST('+python -javascript' IN BOOLEAN MODE);  -- Must have python, exclude javascript
 ```
+
+---
+
+### NoSQL & MongoDB Concepts
+
+#### MongoDB Data Model & Formats
+- **Document Model**: MongoDB stores data as documents in **BSON (Binary JSON)** format. BSON extends JSON with additional data types (such as `Date`, `ObjectId`, and `Binary` data).
+- **Collections**: Equivalent to relational tables. They contain groups of documents. Collections do not enforce a rigid schema, allowing documents to have different structures.
+- **Mongo Shell & Atlas**:
+  - *Mongo Shell (`mongosh`)*: The interactive JavaScript interface used to query and manage database instances.
+  - *MongoDB Atlas*: The fully managed cloud database service that handles provisioning, scaling, backups, and monitoring automatically.
+
+#### MongoDB CRUD Operations
+- **Insert**:
+  - `db.collection.insertOne({name: "Alice", age: 30})`
+  - `db.collection.insertMany([{name: "Bob"}, {name: "Charlie"}])`
+- **Read**:
+  - `db.collection.find({age: {$gt: 25}})` (query operators: `$gt`, `$lt`, `$eq`, `$in`, `$or`).
+  - Projections: `db.collection.find({}, {name: 1, _id: 0})` (returns only `name`).
+- **Update**:
+  - `db.collection.updateOne({name: "Alice"}, {$set: {age: 31}})`
+  - Operators: `$set` (sets value), `$unset` (deletes field), `$push` (appends to array).
+- **Delete**:
+  - `db.collection.deleteOne({name: "Alice"})`
+  - `db.collection.deleteMany({age: {$lt: 18}})`
+
+#### Connecting MongoDB with PyMongo
+PyMongo is the official Python driver for MongoDB:
+```python
+from pymongo import MongoClient
+
+# Establish connection to local or MongoDB Atlas cluster
+client = MongoClient("mongodb://localhost:27017/")
+db = client["my_database"]
+collection = db["users"]
+```
+
+#### Indexing and Performance Optimization
+- **Index Types**:
+  - *Single Field Index*: Created on a single document key.
+  - *Compound Index*: Combines multiple keys (order of keys is critical for matching query prefixes).
+  - *Text Index*: Enables full-text search on string content.
+- **Explain Plan**: Run `.explain("executionStats")` on queries to verify whether they use an index (IXSCAN) or perform a slow collection scan (COLLSCAN).
+
+#### Schema Design & Relationships
+- **Embedding (Denormalization)**: Nesting child documents directly inside parent documents. Ideal for one-to-few relationships or data that is always read together. Maximizes read performance (zero joins).
+- **Referencing (Normalization)**: Storing document IDs to link documents across collections. Ideal for one-to-many or many-to-many relationships where data changes frequently, preventing duplication.
+
+#### Aggregation Framework
+The aggregation framework uses data processing pipelines to transform documents:
+- **Pipeline Stages**:
+  - `$match`: Filters documents (like `WHERE`).
+  - `$group`: Groups documents by key and calculates aggregates (like `GROUP BY`).
+  - `$project`: Re-shapes documents, renaming or extracting fields (like `SELECT`).
+  - `$sort`: Sorts documents (like `ORDER BY`).
+  - `$limit`: Restricts output document count.
+  - `$lookup`: Performs a left outer join with another collection.
+- **Accumulator Operators**: `$sum`, `$avg`, `$max`, `$min`, `$push`.
+
+#### Production Operations
+- **Transactions**: Multi-document transactions are supported in replica sets using sessions (`client.start_session()`), guaranteeing ACID consistency across multiple writes.
+- **Backup and Restore**:
+  - `mongodump` & `mongorestore`: Binary utility tools for backing up and restoring data.
+- **Security**: Handled via Role-Based Access Control (RBAC), TLS/SSL encryption for data in transit, and Field-Level Encryption (FLE) for sensitive values.
+- **Replication & Sharding**:
+  - *Replication (Replica Sets)*: A group of mongod instances that maintain the same data set (Primary node receives writes; Secondary nodes replicate data for high availability and failover).
+  - *Sharding*: Horizontally partitions data across multiple servers (shards) using a shard key to distribute write load and storage capacity.
 
 ---
 
@@ -414,6 +485,52 @@ SELECT
 FROM sales;
 ```
 
+### Example 4: Python CRUD Operations using PyMongo
+This example demonstrates how to connect to a MongoDB database (local or Atlas) using PyMongo, insert documents, query them using filters, update fields, and delete records.
+
+```python
+from pymongo import MongoClient
+
+# 1. Connect to MongoDB (use your Atlas connection string in production)
+client = MongoClient("mongodb://localhost:27017/")
+
+# 2. Get/create database and collection
+db = client["company_db"]
+collection = db["employees"]
+
+# 3. Create (Insert Documents)
+collection.delete_many({}) # Reset collection
+new_employees = [
+    {"name": "Alice", "department": "Engineering", "salary": 95000, "skills": ["Python", "MongoDB"]},
+    {"name": "Bob", "department": "Engineering", "salary": 85000, "skills": ["Java", "SQL"]},
+    {"name": "Charlie", "department": "Marketing", "salary": 70000, "skills": ["SEO", "AdWords"]},
+    {"name": "Diana", "department": "Engineering", "salary": 105000, "skills": ["Python", "Rust"]}
+]
+collection.insert_many(new_employees)
+print("Documents inserted successfully.")
+
+# 4. Read (Find with Filter & Projection)
+# Find all employees in Engineering earning > 90000
+query = {"department": "Engineering", "salary": {"$gt": 90000}}
+projection = {"_id": 0, "name": 1, "salary": 1, "skills": 1}
+
+print("\nHigh-earning Engineers:")
+for emp in collection.find(query, projection):
+    print(emp)
+
+# 5. Update (Modify records)
+# Add "Docker" to Alice's skills and bump Charlie's salary by 5000
+collection.update_one({"name": "Alice"}, {"$push": {"skills": "Docker"}})
+collection.update_one({"name": "Charlie"}, {"$inc": {"salary": 5000}})
+
+print("\nUpdated Alice's Document:")
+print(collection.find_one({"name": "Alice"}, {"_id": 0}))
+
+# 6. Delete (Remove records)
+collection.delete_one({"name": "Bob"})
+print(f"\nRemaining count: {collection.count_documents({})}")
+```
+
 ---
 
 ## 6. Intermediate Examples
@@ -529,6 +646,57 @@ INSERT INTO customers VALUES (
 -- Query composite type
 SELECT (address).city FROM customers;
 SELECT contact_emails[1] FROM customers;
+```
+
+### Example 2: MongoDB Aggregation Pipelines via PyMongo
+This example demonstrates how to run a MongoDB aggregation pipeline using PyMongo to calculate department-level metrics (employee count, average salary, and accumulated skills).
+
+```python
+from pymongo import MongoClient
+
+# 1. Connect and initialize database
+client = MongoClient("mongodb://localhost:27017/")
+db = client["company_db"]
+collection = db["employees"]
+
+# 2. Define Aggregation Pipeline
+# Aggregates department metrics, filtering out salaries under 75000,
+# sorting by average salary descending
+pipeline = [
+    # Stage 1: Filter documents
+    {"$match": {"salary": {"$gte": 75000}}},
+    
+    # Stage 2: Group by department and calculate metrics
+    {
+        "$group": {
+            "_id": "$department",
+            "employee_count": {"$sum": 1},
+            "average_salary": {"$avg": "$salary"},
+            "unique_skills": {"$addToSet": "$skills"}
+        }
+    },
+    
+    # Stage 3: Project (reshape) the output documents
+    {
+        "$project": {
+            "_id": 0,
+            "department": "$_id",
+            "employee_count": 1,
+            "average_salary": {"$round": ["$average_salary", 2]},
+            "skills_pool": "$unique_skills"
+        }
+    },
+    
+    # Stage 4: Sort by average salary descending
+    {"$sort": {"average_salary": -1}}
+]
+
+# 3. Execute pipeline
+results = list(collection.aggregate(pipeline))
+
+print("Department Aggregation Results:")
+for doc in results:
+    print(doc)
 ```
 
 ---
@@ -1059,6 +1227,27 @@ ALTER TABLE events_partitioned RENAME TO events;
 ```
 
 **Q35-Q60: [Additional advanced scenarios covering sharding strategies, monitoring at scale, compliance, performance tuning, disaster recovery, NoSQL comparison, and real-world production patterns with detailed solutions and code examples for each scenario covering distributed systems, high availability, and scaling to billions of records.]**
+
+---
+
+#### 61. Contrast SQL and NoSQL databases in terms of design, consistency models, and horizontal scaling.
+- **Detailed Answer**:
+  - **Design & Schema**: SQL databases (e.g. PostgreSQL, MySQL) are relational, storing data in rigid tables with fixed columns and enforcing relationships via foreign keys. NoSQL databases (e.g. MongoDB) are non-relational and store data as flexible JSON/BSON documents, allowing schemas to evolve dynamically without blocking table migrations.
+  - **Consistency Model**: SQL databases prioritize strict ACID (Atomicity, Consistency, Isolation, Durability) guarantees, ensuring strong immediate consistency. NoSQL databases often adopt the BASE (Basically Available, Soft state, Eventual consistency) model, trading immediate consistency for higher availability and partition tolerance.
+  - **Scaling**: SQL databases scale primarily **vertically** (adding CPU, RAM, or storage to a single server). NoSQL databases scale **horizontally** by partition-sharding data across multiple inexpensive nodes, allowing them to handle massive write volumes.
+- **Follow-up Questions**: Can a SQL database scale horizontally? (Answer: Yes, through read replicas (read scaling) and manual application-level partitioning or specialized engines like CockroachDB/YugabyteDB (distributed SQL), though it is more complex than NoSQL).
+- **Interviewer's Expectations**: Compare schema rigidity, contrast ACID vs BASE consistency models, and explain the architectural difference between vertical and horizontal scaling.
+
+---
+
+#### 62. Explain the difference between Embedding and Referencing documents in MongoDB. When should you use each?
+- **Detailed Answer**:
+  - **Embedding (Denormalization)**: Storing child documents or arrays directly inside a parent document (e.g., nesting an array of `addresses` inside a `user` document).
+    - *When to use*: For one-to-few relationships, where the nested data belongs exclusively to the parent and is always read/written together. It maximizes read performance by eliminating joins.
+  - **Referencing (Normalization)**: Storing the unique ID (`_id`) of a document in one collection to link it to a document in another collection (e.g., storing a `user_id` inside an `orders` collection).
+    - *When to use*: For one-to-many or many-to-many relationships, when the related data is large or updated frequently in isolation, or to avoid exceeding MongoDB's 16MB document size limit. It reduces data redundancy but requires application-level joins (`$lookup`).
+- **Follow-up Questions**: What is the maximum size of a BSON document in MongoDB? (Answer: 16 Megabytes, which is enforced to prevent excessive memory and I/O consumption).
+- **Interviewer's Expectations**: Define embedding vs referencing, contrast read performance vs update consistency, identify specific threshold limits (16MB), and give clear e-commerce or user-profile use cases.
 
 ---
 

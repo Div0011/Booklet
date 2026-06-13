@@ -19,10 +19,10 @@
 - 7. [7. Declarative & Functional Languages (Julia, Haskell, Prolog, Lisp)](#7-declarative-&-functional-languages-julia,-haskell,-prolog,-lisp)
 - 8. [8. Git & GitHub (Version Control & Collaboration)](#8-git-&-github-version-control-&-collaboration)
 - 9. [9. SQL & Relational Theory (Databases & Data)](#9-sql-&-relational-theory-databases-&-data)
-- 10. [10. PostgreSQL & MySQL (Database Systems & Practical SQL)](#10-postgresql-&-mysql-database-systems-&-practical-sql)
+- 10. [10. PostgreSQL, MySQL & NoSQL (MongoDB)](#10-postgresql,-mysql-&-nosql-mongodb)
 - 11. [11. NumPy (Numerical Python)](#11-numpy-numerical-python)
 - 12. [12. Pandas (Data Analysis and Manipulation)](#12-pandas-data-analysis-and-manipulation)
-- 13. [13. Matplotlib & Seaborn (Data Visualization)](#13-matplotlib-&-seaborn-data-visualization)
+- 13. [13. Matplotlib, Seaborn, Plotly & Bokeh (Data Visualization)](#13-matplotlib,-seaborn,-plotly-&-bokeh-data-visualization)
 - 14. [14. Statistics Fundamentals (Probability and Statistical Analysis)](#14-statistics-fundamentals-probability-and-statistical-analysis)
 - 15. [15. Scikit-Learn (Classical Machine Learning)](#15-scikit-learn-classical-machine-learning)
 - 16. [16. Machine Learning Fundamentals](#16-machine-learning-fundamentals)
@@ -52,6 +52,7 @@
 - 40. [40. Creative Frontend & 3D (Three.js & GSAP)](#40-creative-frontend-&-3d-threejs-&-gsap)
 - 41. [41. System Design Basics (Scalability & Architecture)](#41-system-design-basics-scalability-&-architecture)
 - 42. [42. Career & Interview Master Guide (DS, GenAI & Web Dev)](#42-career-&-interview-master-guide-ds,-genai-&-web-dev)
+- 43. [43. MLOps, Model Serving & Pipelines (FastAPI, Triton, ONNX, MLflow, CI/CD)](#43-mlops,-model-serving-&-pipelines-fastapi,-triton,-onnx,-mlflow,-ci/cd)
 
 ---
 
@@ -93,6 +94,35 @@ Think of Python as a **project manager** translating high-level business require
 
 ### Beginner Concepts
 
+#### Predefined Keywords
+Python has a set of predefined keywords (such as `def`, `class`, `yield`, `await`, `async`, `global`, `nonlocal`, `lambda`, `pass`, etc.) that hold special meanings and cannot be used as identifiers (variable or function names).
+- `global`: Declares that a variable inside a function is at the module level.
+- `nonlocal`: Used inside nested functions to rebind a variable in the nearest outer enclosing scope (excluding global scope).
+- `pass`: A null statement used as a placeholder where syntactically a statement is required but no action is needed.
+
+#### Operators & Type Casting
+- **Operators**: Python supports:
+  - *Arithmetic*: `+`, `-`, `*`, `/`, `%`, `**` (exponentiation), `//` (floor division).
+  - *Comparison*: `==`, `!=`, `>`, `<`, `>=`, `<=`.
+  - *Logical*: `and`, `or`, `not`.
+  - *Bitwise*: `&` (AND), `|` (OR), `^` (XOR), `~` (NOT), `<<` (left shift), `>>` (right shift).
+- **Type Casting**:
+  - *Implicit*: Python automatically coerces types when safe (e.g., `3 + 4.5` results in a float `7.5`).
+  - *Explicit*: Manual conversion using constructors like `int()`, `float()`, `str()`, `list()`, `set()`, `dict()`.
+
+#### Conditionals & Loops
+- **Conditionals**: `if`, `elif`, and `else` blocks handle branching logic based on boolean evaluations.
+- **Loops**:
+  - `for`: Iterates over a sequence. Supports an optional `else` block which runs if the loop completes without hitting a `break`.
+  - `while`: Repeatedly executes as long as a condition is true. Also supports `else`.
+  - **Loop Control**: `break` exits the loop immediately; `continue` skips the rest of the current iteration and goes to the next.
+
+#### Data Structures & Core Types
+- **Strings**: Immutable sequences of Unicode characters. Supports format engines (`f-strings`, `.format()`, `%`), slicing (`[start:stop:step]`), and operations like `.split()`, `.join()`.
+- **Lists**: Mutable dynamic arrays with amortized $O(1)$ insertions.
+- **Tuples & Sets**: Tuples are immutable arrays (hashable if their elements are hashable). Sets are mutable, unordered collections of unique elements backed by a hash table.
+- **Dictionaries**: Store key-value pairs. Dictionaries resolve hash collisions using **open addressing** (specifically, pseudo-random probing) rather than chaining.
+
 #### Dynamic Typing
 Variables bind to values at runtime, not declaration. Contrast with Java's `int x = 5`:
 ```python
@@ -109,6 +139,7 @@ lst = [1, 2]; lst.append(3)  # Same id()
 s = "hello"; s = s + " world"  # New string created
 ```
 **Why it matters**: Immutable objects hashable (safe dict keys). Mutable can't be hashed. Immutable avoids synchronization in multithreading.
+- *Mutable Defaults Trap*: Defining a function with a mutable default argument like `def foo(val=[])` binds `val` to a single list object created at definition time. Subsequent calls append to this same shared list instance. Fix this by using `def foo(val=None): if val is None: val = []`.
 
 #### LEGB Rule
 Variable lookup: **Local → Enclosing → Global → Builtin**
@@ -185,6 +216,35 @@ class Circle:
         if value <= 0: raise ValueError("Positive only")
         self._r = value
 ```
+
+#### Parameter Passing in Functions
+Python parameters are passed using **call-by-sharing** (pass-by-object-reference). When you call a function, the arguments are bound to the parameter names in the local scope:
+- If you pass an immutable object (e.g. integer or string), rebinding it inside the function does not affect the caller.
+- If you pass a mutable object (e.g. a list or dictionary), modifying it in-place affects the caller, but rebinding the variable to a new object does not.
+
+#### Functional Programming Utilities
+- **Lambdas**: Anonymous one-line functions: `lambda x, y: x + y`.
+- **Map, Filter, & Reduce**:
+  - `map(func, iterable)`: Applies a function to all items in an input list.
+  - `filter(func, iterable)`: Filters items based on a boolean-returning function.
+  - `reduce(func, iterable)`: Applies a rolling computation to sequential pairs of values (imported from `functools`).
+
+#### OOP Mechanics: Inheritance & Methods
+- **Inheritance Types**: Supports multiple and multilevel inheritance. Multiple inheritance is resolved via the MRO algorithm.
+- **Class Methods vs. Static Methods**:
+  - `@classmethod`: Accepts the class `cls` as the first argument. Can access/modify class state. Used for alternative constructor factory functions.
+  - `@staticmethod`: Receives no class or instance argument. Behaves like a regular function placed inside the class namespace.
+- **Abstract Classes**: Enforces child class implementations using the `abc` module:
+  ```python
+  from abc import ABC, abstractmethod
+  class Worker(ABC):
+      @abstractmethod
+      def do_work(self): pass
+  ```
+- **Dunder Methods**: Double underscore methods customize built-in operator behaviors:
+  - `__new__` vs `__init__`: `__new__` is the constructor (allocates memory and returns a new instance), while `__init__` is the initializer (populates attributes on the returned instance).
+  - `__str__` vs `__repr__`: `__str__` defines user-friendly string representations; `__repr__` defines unambiguous representations for developers (eval-able where possible).
+  - `__call__`: Allows instances to be invoked like regular functions.
 
 ### Advanced Concepts
 
@@ -300,6 +360,15 @@ def constant_folding():
 dis.dis(constant_folding)
 # Output: LOAD_CONST(5); RETURN_VALUE
 ```
+
+#### File Handling, Exceptions, & Logging
+- **File Handling**: Opening files using the `with` context manager guarantees file closure, preventing file descriptor leaks. Supports reading (`r`), writing (`w`), appending (`a`), and binary modes (`b`).
+- **Exceptions**: Exception hierarchy runs inside `try-except-else-finally` blocks. `else` executes only if no exception occurred; `finally` runs unconditionally, executing cleanup operations. Custom exceptions inherit from `Exception` (or `BaseException` for system-level overrides).
+- **Logging**: Configured via the `logging` module to track application events. Supports log levels: `DEBUG` $\to$ `INFO` $\to$ `WARNING` $\to$ `ERROR` $\to$ `CRITICAL`. Loggers can direct output to handlers (StreamHandler, FileHandler) and format messages structurally.
+
+#### Concurrency: Multithreading vs. Multiprocessing
+- **Multithreading**: Lightweight, shared memory execution. Because of CPython's **Global Interpreter Lock (GIL)**, multiple threads cannot execute bytecode in parallel on multiple cores. Multithreading is highly effective for I/O-bound tasks (network calls, database operations, file reads), as the GIL is released during blocking system calls. Threads can use locks (`threading.Lock`) to prevent race conditions.
+- **Multiprocessing**: Spawns multiple independent OS processes, each with its own memory space and Python interpreter instance. This bypasses the GIL entirely, enabling true parallel execution on multi-core systems. Spawning processes is computationally heavier and requires Inter-Process Communication (IPC) objects like `multiprocessing.Queue`, `Pipe`, or `SharedMemory` to exchange data.
 
 ---
 
@@ -996,6 +1065,30 @@ PEP 8: indentation groups statements into suites. Cleaner than braces.
 
 **60. Unpacking assignment.**
 `a, b = [1, 2]`. Extended: `a, *rest, z = [1, 2, 3, 4, 5]` → `a=1, rest=[2,3,4], z=5`.
+
+---
+
+#### 61. Explain how mutable default arguments behave in Python and how to avoid side effects.
+- **Detailed Answer**: In Python, default parameter values are evaluated exactly once when the function is defined, not when it is called. If a mutable object (like a list or dictionary) is used as a default, that single object is instantiated at compile-time and shared across all subsequent invocations. Any in-place updates to that argument will persist across calls, causing unintended side effects.
+  To avoid this, use a `None` sentinel as the default value and instantiate a new mutable object inside the function body if the argument is `None`:
+  ```python
+  def append_to(element, target=None):
+      if target is None:
+          target = []
+      target.append(element)
+      return target
+  ```
+- **Follow-up Questions**: Why does Python evaluate defaults at definition time? (Answer: To optimize performance by avoiding repetitive evaluations, and because default values themselves are attributes of the function object stored in `__defaults__`).
+- **Interviewer's Expectations**: Point out that defaults are evaluated once at definition time, describe the persistent shared object, and demonstrate the `None` sentinel fix.
+
+---
+
+#### 62. Contrast Python's multithreading and multiprocessing in terms of GIL, memory sharing, and suitability.
+- **Detailed Answer**:
+  - **Multithreading**: Uses lightweight threads within a single process. Since CPython's Global Interpreter Lock (GIL) restricts execution to one thread at a time, threads cannot run CPU-bound bytecode in parallel. However, threads share the same memory space, making communication simple, and they release the GIL during blocking I/O calls, making multithreading ideal for network/database tasks.
+  - **Multiprocessing**: Spawns independent OS processes, each with its own memory space and Python interpreter instance. This bypasses the GIL entirely, enabling true parallel execution on multi-core systems, making it ideal for CPU-bound tasks. The drawback is that processes do not share memory; exchanging data requires serialization (pickling) and IPC mechanisms (queues, pipes, or managers).
+- **Follow-up Questions**: How does memory overhead compare? (Answer: Multiprocessing has a much higher memory overhead since each process has to load the entire Python runtime and its own heap, whereas multithreading shares a single process heap).
+- **Interviewer's Expectations**: Contrast GIL impact, compare memory spaces (shared vs isolated), identify suitability (I/O-bound vs CPU-bound), and mention serialization overhead.
 
 ---
 
@@ -7342,130 +7435,138 @@ Think of a relational database as a **filing cabinet with superpowers**. Each ta
 
 ### Beginner Concepts
 
-#### Tables and Rows
-A table is a two-dimensional grid. Rows are records; columns are attributes.
+#### SQL Command Categorization
+SQL statements are grouped into functional categories:
+- **DDL (Data Definition Language)**: Defines the schema database structure.
+  - Commands: `CREATE`, `ALTER`, `DROP`, `TRUNCATE`.
+- **DML (Data Manipulation Language)**: Modifies and queries data.
+  - Commands: `SELECT`, `INSERT`, `UPDATE`, `DELETE`, `MERGE`.
+- **DCL (Data Control Language)**: Controls permissions and access.
+  - Commands: `GRANT`, `REVOKE`.
+- **TCL (Transaction Control Language)**: Manages transactions.
+  - Commands: `COMMIT`, `ROLLBACK`, `SAVEPOINT`.
 
-```sql
--- users table
-id | name    | email            | age
-1  | Alice   | alice@test.com   | 30
-2  | Bob     | bob@test.com     | 25
-3  | Charlie | charlie@test.com | 35
-```
+#### Data Constraints
+Constraints enforce data integrity rules at the schema level:
+- `PRIMARY KEY`: Uniquely identifies each record. Cannot contain NULLs.
+- `FOREIGN KEY`: Establishes referential integrity between tables, ensuring values in a column match values in the primary key of another table.
+- `NOT NULL`: Prevents NULL values from being stored in a column.
+- `UNIQUE`: Guarantees that all values in a column are distinct.
+- `CHECK`: Evaluates logical expressions to restrict allowed values (e.g. `CHECK (age >= 18)`).
+- `DEFAULT`: Automatically assigns a value if none is provided.
 
-#### Primary Keys
-Unique identifier for each row. Enforces uniqueness; used for indexing and relationships.
+#### Basic DML Operations
+- **INSERT**: Adds new records to a table:
+  ```sql
+  INSERT INTO users (id, name, age) VALUES (1, 'Alice', 30);
+  ```
+- **UPDATE**: Modifies existing data:
+  ```sql
+  UPDATE users SET age = 31 WHERE id = 1;
+  ```
+- **DELETE**: Removes records based on a filter condition:
+  ```sql
+  DELETE FROM users WHERE id = 1;
+  ```
+- **MERGE (Upsert)**: Conditionally inserts or updates a record depending on whether it matches an existing condition.
 
-```sql
-CREATE TABLE users (
-    id INT PRIMARY KEY,
-    name VARCHAR(100)
-);
-```
+#### Basic Query Clauses & Logical Operators
+- **WHERE**: Filters rows based on conditional logic.
+- **Logical Operators**: Combines conditions using `AND`, `OR`, and `NOT`.
+- **ORDER BY**: Sorts the result set. Defaults to `ASC` (ascending); use `DESC` for descending.
+- **LIMIT & OFFSET**:
+  - `LIMIT N`: Restricts the output to the first $N$ records.
+  - `OFFSET M`: Skips the first $M$ records (crucial for page-based querying).
 
-#### Foreign Keys
-Link rows in one table to rows in another. Prevents orphaned records.
+#### SQL Comparison Operators
+- **IN**: Checks if a value is within a list:
+  ```sql
+  SELECT * FROM users WHERE age IN (18, 21, 30);
+  ```
+- **BETWEEN**: Filters values within an inclusive range:
+  ```sql
+  SELECT * FROM users WHERE age BETWEEN 18 AND 30;
+  ```
+- **LIKE**: Matches patterns using wildcards:
+  - `%`: Represents zero or more characters (e.g., `'A%'` matches 'Alice', 'Arthur').
+  - `_`: Represents exactly one character (e.g., `'h_t'` matches 'hat', 'hot').
 
-```sql
-CREATE TABLE orders (
-    id INT PRIMARY KEY,
-    user_id INT REFERENCES users(id),
-    amount DECIMAL(10, 2)
-);
-```
-
-#### SELECT, WHERE, ORDER BY
-Fundamental query operations.
-
-```sql
-SELECT name, email FROM users WHERE age > 25 ORDER BY age DESC;
-```
-
-#### JOIN
-Combine rows from multiple tables.
-
-```sql
-SELECT users.name, orders.amount
-FROM users INNER JOIN orders ON users.id = orders.user_id;
-```
+#### Built-in Scalar Functions
+- **Numeric Functions**: `ABS(x)` (absolute value), `ROUND(x, d)` (round to $d$ decimals), `CEIL(x)` (ceiling), `FLOOR(x)` (floor).
+- **String Functions**:
+  - `CONCAT(a, b)`: Joins strings.
+  - `SUBSTRING(str, pos, len)`: Extracts substrings.
+  - `LENGTH(str)`: Returns character count.
+  - `REPLACE(str, from, to)`: Substitutes text.
+  - `UPPER(str)` / `LOWER(str)`: Capitalizes/lowercases strings.
+- **Date & Time Functions**:
+  - `NOW()` / `CURRENT_TIMESTAMP`: Current date and time.
+  - `DATE_ADD(date, interval)` / `DATE_SUB()`: Adds/subtracts days, hours, etc.
+  - `DATEDIFF(date1, date2)`: Returns difference in days.
+  - `DATE_FORMAT(date, format)`: Converts date to string format.
 
 ### Intermediate Concepts
 
-#### Normalization (1NF, 2NF, 3NF)
-Decomposing tables to eliminate redundancy.
+#### SQL Joins
+Joins combine records from two or more tables based on a matching column:
+- **INNER JOIN**: Returns rows only when there is a match in both tables.
+- **LEFT JOIN (LEFT OUTER JOIN)**: Returns all rows from the left table, and matched rows from the right (returns NULLs if no match).
+- **RIGHT JOIN (RIGHT OUTER JOIN)**: Returns all rows from the right table, and matched rows from the left.
+- **FULL JOIN (FULL OUTER JOIN)**: Returns all rows when there is a match in either table.
+- **CROSS JOIN**: Produces the Cartesian product of both tables (every row of table A paired with every row of table B).
+- **SELF JOIN**: A regular join in which a table is joined with itself (requires table aliases).
 
-- **1NF**: Atomic values (no lists in columns).
-- **2NF**: No partial dependencies (non-key columns depend on entire primary key).
-- **3NF**: No transitive dependencies (non-key columns depend only on primary key).
+#### Aggregation and HAVING
+- **Aggregation Functions**: Calculate summary values: `COUNT()`, `SUM()`, `AVG()`, `MIN()`, `MAX()`.
+- **GROUP BY**: Groups rows sharing a common value into summary rows.
+- **HAVING**: Filters grouped rows *after* the `GROUP BY` execution. Unlike `WHERE`, `HAVING` can evaluate aggregate functions.
 
-#### ACID Transactions
-- **Atomicity**: All-or-nothing; partial updates never happen.
-- **Consistency**: Data satisfies all constraints before and after transaction.
-- **Isolation**: Concurrent transactions don't interfere.
-- **Durability**: Committed data persists even if system crashes.
+#### Subqueries
+A subquery is a query nested inside another statement:
+- **Scalar Subquery**: Returns a single value (one row, one column). Used in SELECT or WHERE.
+- **Column Subquery**: Returns a single column containing multiple rows. Evaluated using `IN` or `NOT IN`.
+- **Correlated Subquery**: A subquery that references columns of the outer query. It is executed once for each row processed by the outer query:
+  ```sql
+  SELECT name, salary, department_id
+  FROM employees e1
+  WHERE salary > (
+      SELECT AVG(salary) 
+      FROM employees e2 
+      WHERE e2.department_id = e1.department_id
+  );
+  ```
+- **EXISTS**: Checks if the subquery returns any rows (stops processing as soon as a single match is found, improving performance).
 
-#### Indexes
-Speed up lookups by organizing data into B-Trees or Hash tables.
-
-```
-Without index: O(n) scan
-With index: O(log n) lookup
-```
-
-#### Aggregation Functions
-GROUP BY, COUNT, SUM, AVG, MAX, MIN.
-
-```sql
-SELECT department, COUNT(*) as employees, AVG(salary)
-FROM employees
-GROUP BY department;
-```
+#### Database Design, Normalization, & ER Diagrams
+- **Entity-Relationship (ER) Diagrams**: Conceptual drawings depicting tables (entities), columns (attributes), and lines showing relationships (one-to-one, one-to-many, many-to-many).
+- **Normalization**: Splitting tables to eliminate redundancy and prevent anomalies (insert/update/delete anomalies):
+  - **1NF**: Atomic values (no nested tables or multi-valued attributes).
+  - **2NF**: In 1NF and all non-key columns depend on the *entire* primary key (no partial dependencies on composite keys).
+  - **3NF**: In 2NF and non-key columns depend *only* on the primary key (no transitive dependencies).
 
 ### Advanced Concepts
 
 #### Window Functions
-Apply functions over a sliding "window" of rows without collapsing groups.
+Window functions perform calculations across a set of table rows related to the current row without collapsing the group:
+- Syntax: `FUNCTION() OVER (PARTITION BY col ORDER BY col)`
+- **ROW_NUMBER()**: Assigns a unique, sequential integer to each row.
+- **RANK()**: Assigns ranks, skipping numbers if there are ties (e.g. 1, 2, 2, 4).
+- **DENSE_RANK()**: Assigns ranks without skipping numbers for ties (e.g. 1, 2, 2, 3).
+- **LEAD(col, offset)**: Fetches values from subsequent rows in the window.
+- **LAG(col, offset)**: Fetches values from preceding rows in the window.
+- **Running Totals**: `SUM(amount) OVER (PARTITION BY user_id ORDER BY order_date ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW)`.
 
-```sql
-SELECT name, salary,
-       RANK() OVER (ORDER BY salary DESC) as rank,
-       LAG(salary) OVER (ORDER BY salary DESC) as prev_salary
-FROM employees;
-```
+#### ACID Transactions & Isolation
+- **Atomicity**: All-or-nothing execution.
+- **Consistency**: Transition from one valid state to another.
+- **Isolation**: Prevents concurrent execution interference.
+- **Durability**: Committed data survives crashes.
 
-#### Common Table Expressions (CTEs)
-Named temporary result sets for complex queries.
-
-```sql
-WITH manager_avg AS (
-    SELECT manager_id, AVG(salary) as avg_sal
-    FROM employees
-    GROUP BY manager_id
-)
-SELECT e.name, m.avg_sal
-FROM employees e
-JOIN manager_avg m ON e.manager_id = m.manager_id;
-```
-
-#### Query Optimization
-Query planner analyzes different execution paths and chooses the fastest.
-
-```
-SELECT * FROM orders WHERE user_id = 5 AND status = 'shipped'
-→ Index on (user_id, status)
-→ Cost: 0.32 (fast)
-```
-
-#### Constraints
-CHECK, UNIQUE, NOT NULL, FOREIGN KEY.
-
-```sql
-CREATE TABLE users (
-    id INT PRIMARY KEY,
-    email VARCHAR(100) UNIQUE NOT NULL,
-    age INT CHECK (age >= 18)
-);
-```
+#### Modern SQL: Generative AI & GPT with SQL
+- **Query Generation**: Using LLMs to compile natural language requests ("Show me our top 5 customers in 2026") into optimized SQL queries.
+- **Query Explanation**: Passing complex legacy SQL queries containing nested joins and subqueries to an LLM to generate plain English explanations.
+- **SQL Dialect Translation**: Translating SQL queries between dialects (e.g., converting Oracle PL/SQL syntax to PostgreSQL PG/SQL).
+- *Best Practices*: Enforce LLM outputs to utilize read-only credentials, run syntax parsers before execution, and use parameterized queries to prevent SQL injection.
 
 ---
 
@@ -8255,6 +8356,27 @@ A: Use EXPLAIN ANALYZE; measure I/O (seeks, scans), CPU, memory; profile hot que
 
 ---
 
+#### 61. Contrast ROW_NUMBER(), RANK(), and DENSE_RANK() window functions in SQL.
+- **Detailed Answer**:
+  All three window functions assign sequential integers to rows in a partition based on an ordering column. The key difference is how they handle ties (rows with identical values in the ordering column):
+  - `ROW_NUMBER()`: Always assigns a unique, sequential number to each row, regardless of ties. If there is a tie, the ordering among tie rows is arbitrary (unless a secondary order column is specified).
+  - `RANK()`: Assigns the same rank to tied rows, but skips subsequent rank numbers. For example, if three rows tie for rank 1, they all get rank 1, and the next row is assigned rank 4.
+  - `DENSE_RANK()`: Assigns the same rank to tied rows, but does not skip any numbers. If three rows tie for rank 1, they all get rank 1, and the next row is assigned rank 2.
+- **Follow-up Questions**: When would you use DENSE_RANK() over RANK()? (Answer: Use `DENSE_RANK()` when you want a continuous list of ranks, such as finding the top 3 highest salaries in a company, where a tie in salaries shouldn't skip rankings).
+- **Interviewer's Expectations**: Define each function, explain how ties are handled, and describe rank-skipping behavior.
+
+---
+
+#### 62. What is a correlated subquery in SQL, how does it differ from a non-correlated subquery, and what is its performance impact?
+- **Detailed Answer**:
+  - **Non-correlated Subquery**: A subquery that is independent of the outer query. It runs exactly once, evaluates to a set of values or a single value, and feeds that static result to the outer query.
+  - **Correlated Subquery**: A subquery that references one or more columns from the outer query. It cannot run independently because its execution depends on the values of the outer row.
+  - **Performance Impact**: A correlated subquery runs conceptually once for *every single row* processed by the outer query. In large datasets, this can lead to an $O(N \times M)$ runtime (nested loop behavior). To optimize, correlated subqueries should often be rewritten as `JOIN`s or `WITH` Common Table Expressions (CTEs) to allow the query planner to optimize execution.
+- **Follow-up Questions**: How does `EXISTS` utilize correlated subqueries efficiently? (Answer: `EXISTS` is evaluated as a semi-join; the database engine halts the subquery execution for a row the moment it finds the first matching record, saving I/O).
+- **Interviewer's Expectations**: Define correlated vs non-correlated, explain the per-row execution loop, discuss performance implications (nested loop cost), and propose alternative optimization strategies like `JOIN`s or CTEs.
+
+---
+
 ## 10. Common Mistakes
 
 **Mistake 1: Missing Indexes on Frequently Searched Columns**
@@ -8466,31 +8588,35 @@ COMMIT;
 
 <div style='page-break-before: always;'></div>
 
-# 10. PostgreSQL & MySQL (Database Systems & Practical SQL)
+# 10. PostgreSQL, MySQL & NoSQL (MongoDB)
 
 ## 1. Introduction
 
 ### What it is
-**PostgreSQL** and **MySQL** are two dominant open-source relational database management systems (RDBMS). PostgreSQL is a feature-rich, standards-compliant database excelling in complex queries, advanced data types, and reliability. MySQL is lightweight, fast, and optimized for web applications (LAMP stack). Both store structured data, execute SQL queries, and provide ACID transactions, but with different trade-offs in performance, features, and use cases.
+**PostgreSQL** and **MySQL** are the two dominant open-source relational database management systems (RDBMS) utilizing structured tables and ACID transactions. **MongoDB** is a leading NoSQL document-oriented database that stores data in flexible, JSON-like documents (BSON). Relational databases excel in schema consistency and complex join operations, while NoSQL databases excel in horizontal scaling, high write throughput, and handling unstructured or rapidly evolving schemas.
 
 ### Why they exist
-MySQL (1995) prioritized speed and simplicity for web development, becoming the backbone of LAMP stack. PostgreSQL (1989, evolved from Ingres) prioritized correctness, advanced features, and SQL compliance. Together, they power most web applications, data warehouses, and startups because they're free, proven, battle-tested at scale, and widely supported by hosting platforms.
+- **MySQL** (1995) was designed for speed, lightweight deployments, and web integration (becoming the M in the LAMP stack).
+- **PostgreSQL** (1989) prioritized strict standards compliance, extensibility, and data correctness over raw speed.
+- **MongoDB** (2009) arose to solve the limitations of relational databases when dealing with massive volumes of semi-structured data, high-velocity writes, and horizontal scale-out requirements.
 
 ### Problems they solve
-- **Reliable Storage**: Durable, ACID-compliant persistence across application crashes.
-- **Performance**: Optimized query execution, intelligent indexing, query caching strategies.
-- **Scalability**: Handle millions of rows with sub-second response times through indexing and partitioning.
-- **Concurrency**: Multiple users simultaneously without race conditions via locking and transaction isolation.
-- **Advanced Data Types**: JSON, arrays, ranges, custom types beyond basic text/numbers.
-- **Replication & HA**: High availability through master-slave or multi-master setups with automatic failover.
-- **Compliance**: Audit trails, immutable logs, compliance with regulatory requirements.
+- **Data Integrity & Consistency**: SQL databases enforce strong constraints and ACID properties.
+- **Scalability**: MongoDB and NoSQL databases enable seamless horizontal scaling (sharding) across clusters of cheap hardware.
+- **Schema Flexibility**: MongoDB lets developers store documents with varying structures without running complex, blocking schema migrations.
+- **Geospatial & Complex Types**: PostgreSQL (via PostGIS) and MongoDB natively support advanced geospatial queries, indexing, and nesting.
 
 ### Industry Use Cases
-- **PostgreSQL**: Financial systems (ACID critical), geospatial data (PostGIS extension), data warehouses (complex analytics), complex schemas with rich constraints.
-- **MySQL**: Web applications (WordPress, Drupal), e-commerce platforms (Magento, WooCommerce), content management systems, high-throughput OLTP systems.
+- **PostgreSQL**: Financial services (high ACID requirements), GIS/location mapping (PostGIS), complex relational data analysis.
+- **MySQL**: High-traffic read-heavy web apps (CMS, blogs, e-commerce stores).
+- **MongoDB**: Content management, catalogs, user profile stores, IoT data logging, real-time analytics, and rapid prototyping.
+
+### SQL (ACID) vs. NoSQL (BASE) Paradigms
+- **ACID (SQL)**: Focuses on **Atomicity, Consistency, Isolation, and Durability**. Ensures that data is always consistent and valid, which is critical for financial transactions.
+- **BASE (NoSQL)**: Focuses on **Basically Available, Soft state, and Eventual consistency**. Prioritizes availability and scale over immediate consistency, allowing values to propagate across nodes asynchronously.
 
 ### Analogy
-PostgreSQL is a **Swiss Army knife**: feature-rich, flexible, powerful for complex tasks requiring precision. MySQL is a **hammer**: simple, reliable, perfect for common tasks and rapid deployment. Choose PostgreSQL for complexity; choose MySQL for speed and simplicity. Both are professional tools excelling in their domain.
+SQL databases are like **pre-fabricated structural frames**: highly structured, rigid, and safe, but difficult to alter once built. NoSQL databases are like **clay**: flexible, dynamic, and easy to mold on the fly, but requiring more application-level control to maintain shape.
 
 ---
 
@@ -8684,6 +8810,73 @@ WHERE MATCH(title, content) AGAINST('machine learning' IN BOOLEAN MODE);
 -- Boolean operators
 WHERE MATCH(title) AGAINST('+python -javascript' IN BOOLEAN MODE);  -- Must have python, exclude javascript
 ```
+
+---
+
+### NoSQL & MongoDB Concepts
+
+#### MongoDB Data Model & Formats
+- **Document Model**: MongoDB stores data as documents in **BSON (Binary JSON)** format. BSON extends JSON with additional data types (such as `Date`, `ObjectId`, and `Binary` data).
+- **Collections**: Equivalent to relational tables. They contain groups of documents. Collections do not enforce a rigid schema, allowing documents to have different structures.
+- **Mongo Shell & Atlas**:
+  - *Mongo Shell (`mongosh`)*: The interactive JavaScript interface used to query and manage database instances.
+  - *MongoDB Atlas*: The fully managed cloud database service that handles provisioning, scaling, backups, and monitoring automatically.
+
+#### MongoDB CRUD Operations
+- **Insert**:
+  - `db.collection.insertOne({name: "Alice", age: 30})`
+  - `db.collection.insertMany([{name: "Bob"}, {name: "Charlie"}])`
+- **Read**:
+  - `db.collection.find({age: {$gt: 25}})` (query operators: `$gt`, `$lt`, `$eq`, `$in`, `$or`).
+  - Projections: `db.collection.find({}, {name: 1, _id: 0})` (returns only `name`).
+- **Update**:
+  - `db.collection.updateOne({name: "Alice"}, {$set: {age: 31}})`
+  - Operators: `$set` (sets value), `$unset` (deletes field), `$push` (appends to array).
+- **Delete**:
+  - `db.collection.deleteOne({name: "Alice"})`
+  - `db.collection.deleteMany({age: {$lt: 18}})`
+
+#### Connecting MongoDB with PyMongo
+PyMongo is the official Python driver for MongoDB:
+```python
+from pymongo import MongoClient
+
+# Establish connection to local or MongoDB Atlas cluster
+client = MongoClient("mongodb://localhost:27017/")
+db = client["my_database"]
+collection = db["users"]
+```
+
+#### Indexing and Performance Optimization
+- **Index Types**:
+  - *Single Field Index*: Created on a single document key.
+  - *Compound Index*: Combines multiple keys (order of keys is critical for matching query prefixes).
+  - *Text Index*: Enables full-text search on string content.
+- **Explain Plan**: Run `.explain("executionStats")` on queries to verify whether they use an index (IXSCAN) or perform a slow collection scan (COLLSCAN).
+
+#### Schema Design & Relationships
+- **Embedding (Denormalization)**: Nesting child documents directly inside parent documents. Ideal for one-to-few relationships or data that is always read together. Maximizes read performance (zero joins).
+- **Referencing (Normalization)**: Storing document IDs to link documents across collections. Ideal for one-to-many or many-to-many relationships where data changes frequently, preventing duplication.
+
+#### Aggregation Framework
+The aggregation framework uses data processing pipelines to transform documents:
+- **Pipeline Stages**:
+  - `$match`: Filters documents (like `WHERE`).
+  - `$group`: Groups documents by key and calculates aggregates (like `GROUP BY`).
+  - `$project`: Re-shapes documents, renaming or extracting fields (like `SELECT`).
+  - `$sort`: Sorts documents (like `ORDER BY`).
+  - `$limit`: Restricts output document count.
+  - `$lookup`: Performs a left outer join with another collection.
+- **Accumulator Operators**: `$sum`, `$avg`, `$max`, `$min`, `$push`.
+
+#### Production Operations
+- **Transactions**: Multi-document transactions are supported in replica sets using sessions (`client.start_session()`), guaranteeing ACID consistency across multiple writes.
+- **Backup and Restore**:
+  - `mongodump` & `mongorestore`: Binary utility tools for backing up and restoring data.
+- **Security**: Handled via Role-Based Access Control (RBAC), TLS/SSL encryption for data in transit, and Field-Level Encryption (FLE) for sensitive values.
+- **Replication & Sharding**:
+  - *Replication (Replica Sets)*: A group of mongod instances that maintain the same data set (Primary node receives writes; Secondary nodes replicate data for high availability and failover).
+  - *Sharding*: Horizontally partitions data across multiple servers (shards) using a shard key to distribute write load and storage capacity.
 
 ---
 
@@ -8882,6 +9075,52 @@ SELECT
 FROM sales;
 ```
 
+### Example 4: Python CRUD Operations using PyMongo
+This example demonstrates how to connect to a MongoDB database (local or Atlas) using PyMongo, insert documents, query them using filters, update fields, and delete records.
+
+```python
+from pymongo import MongoClient
+
+# 1. Connect to MongoDB (use your Atlas connection string in production)
+client = MongoClient("mongodb://localhost:27017/")
+
+# 2. Get/create database and collection
+db = client["company_db"]
+collection = db["employees"]
+
+# 3. Create (Insert Documents)
+collection.delete_many({}) # Reset collection
+new_employees = [
+    {"name": "Alice", "department": "Engineering", "salary": 95000, "skills": ["Python", "MongoDB"]},
+    {"name": "Bob", "department": "Engineering", "salary": 85000, "skills": ["Java", "SQL"]},
+    {"name": "Charlie", "department": "Marketing", "salary": 70000, "skills": ["SEO", "AdWords"]},
+    {"name": "Diana", "department": "Engineering", "salary": 105000, "skills": ["Python", "Rust"]}
+]
+collection.insert_many(new_employees)
+print("Documents inserted successfully.")
+
+# 4. Read (Find with Filter & Projection)
+# Find all employees in Engineering earning > 90000
+query = {"department": "Engineering", "salary": {"$gt": 90000}}
+projection = {"_id": 0, "name": 1, "salary": 1, "skills": 1}
+
+print("\nHigh-earning Engineers:")
+for emp in collection.find(query, projection):
+    print(emp)
+
+# 5. Update (Modify records)
+# Add "Docker" to Alice's skills and bump Charlie's salary by 5000
+collection.update_one({"name": "Alice"}, {"$push": {"skills": "Docker"}})
+collection.update_one({"name": "Charlie"}, {"$inc": {"salary": 5000}})
+
+print("\nUpdated Alice's Document:")
+print(collection.find_one({"name": "Alice"}, {"_id": 0}))
+
+# 6. Delete (Remove records)
+collection.delete_one({"name": "Bob"})
+print(f"\nRemaining count: {collection.count_documents({})}")
+```
+
 ---
 
 ## 6. Intermediate Examples
@@ -8997,6 +9236,57 @@ INSERT INTO customers VALUES (
 -- Query composite type
 SELECT (address).city FROM customers;
 SELECT contact_emails[1] FROM customers;
+```
+
+### Example 2: MongoDB Aggregation Pipelines via PyMongo
+This example demonstrates how to run a MongoDB aggregation pipeline using PyMongo to calculate department-level metrics (employee count, average salary, and accumulated skills).
+
+```python
+from pymongo import MongoClient
+
+# 1. Connect and initialize database
+client = MongoClient("mongodb://localhost:27017/")
+db = client["company_db"]
+collection = db["employees"]
+
+# 2. Define Aggregation Pipeline
+# Aggregates department metrics, filtering out salaries under 75000,
+# sorting by average salary descending
+pipeline = [
+    # Stage 1: Filter documents
+    {"$match": {"salary": {"$gte": 75000}}},
+    
+    # Stage 2: Group by department and calculate metrics
+    {
+        "$group": {
+            "_id": "$department",
+            "employee_count": {"$sum": 1},
+            "average_salary": {"$avg": "$salary"},
+            "unique_skills": {"$addToSet": "$skills"}
+        }
+    },
+    
+    # Stage 3: Project (reshape) the output documents
+    {
+        "$project": {
+            "_id": 0,
+            "department": "$_id",
+            "employee_count": 1,
+            "average_salary": {"$round": ["$average_salary", 2]},
+            "skills_pool": "$unique_skills"
+        }
+    },
+    
+    # Stage 4: Sort by average salary descending
+    {"$sort": {"average_salary": -1}}
+]
+
+# 3. Execute pipeline
+results = list(collection.aggregate(pipeline))
+
+print("Department Aggregation Results:")
+for doc in results:
+    print(doc)
 ```
 
 ---
@@ -9530,6 +9820,27 @@ ALTER TABLE events_partitioned RENAME TO events;
 
 ---
 
+#### 61. Contrast SQL and NoSQL databases in terms of design, consistency models, and horizontal scaling.
+- **Detailed Answer**:
+  - **Design & Schema**: SQL databases (e.g. PostgreSQL, MySQL) are relational, storing data in rigid tables with fixed columns and enforcing relationships via foreign keys. NoSQL databases (e.g. MongoDB) are non-relational and store data as flexible JSON/BSON documents, allowing schemas to evolve dynamically without blocking table migrations.
+  - **Consistency Model**: SQL databases prioritize strict ACID (Atomicity, Consistency, Isolation, Durability) guarantees, ensuring strong immediate consistency. NoSQL databases often adopt the BASE (Basically Available, Soft state, Eventual consistency) model, trading immediate consistency for higher availability and partition tolerance.
+  - **Scaling**: SQL databases scale primarily **vertically** (adding CPU, RAM, or storage to a single server). NoSQL databases scale **horizontally** by partition-sharding data across multiple inexpensive nodes, allowing them to handle massive write volumes.
+- **Follow-up Questions**: Can a SQL database scale horizontally? (Answer: Yes, through read replicas (read scaling) and manual application-level partitioning or specialized engines like CockroachDB/YugabyteDB (distributed SQL), though it is more complex than NoSQL).
+- **Interviewer's Expectations**: Compare schema rigidity, contrast ACID vs BASE consistency models, and explain the architectural difference between vertical and horizontal scaling.
+
+---
+
+#### 62. Explain the difference between Embedding and Referencing documents in MongoDB. When should you use each?
+- **Detailed Answer**:
+  - **Embedding (Denormalization)**: Storing child documents or arrays directly inside a parent document (e.g., nesting an array of `addresses` inside a `user` document).
+    - *When to use*: For one-to-few relationships, where the nested data belongs exclusively to the parent and is always read/written together. It maximizes read performance by eliminating joins.
+  - **Referencing (Normalization)**: Storing the unique ID (`_id`) of a document in one collection to link it to a document in another collection (e.g., storing a `user_id` inside an `orders` collection).
+    - *When to use*: For one-to-many or many-to-many relationships, when the related data is large or updated frequently in isolation, or to avoid exceeding MongoDB's 16MB document size limit. It reduces data redundancy but requires application-level joins (`$lookup`).
+- **Follow-up Questions**: What is the maximum size of a BSON document in MongoDB? (Answer: 16 Megabytes, which is enforced to prevent excessive memory and I/O consumption).
+- **Interviewer's Expectations**: Define embedding vs referencing, contrast read performance vs update consistency, identify specific threshold limits (16MB), and give clear e-commerce or user-profile use cases.
+
+---
+
 ## 10. Common Mistakes
 
 **Mistake 1: Choosing MyISAM for Transactional Data**
@@ -9890,9 +10201,37 @@ np.argmax(a)  # Index of max element
 
 ### Advanced Concepts
 
+#### Memory Strides & Memory Layouts (C-Contiguous vs. Fortran-Contiguous)
+An array's elements are stored in a flat, one-dimensional block of physical memory. The translation from multi-dimensional index to a specific memory offset uses **strides**: the number of bytes to skip in memory to move to the next element along each axis.
+- **C-Contiguous (Row-Major)**: Row elements are contiguous in memory. Strides for shape `(M, N)` of float64 (8 bytes) are `(N * 8, 8)`. The last axis varies fastest. This is the default in NumPy.
+- **Fortran-Contiguous (Column-Major)**: Column elements are contiguous in memory. Strides for shape `(M, N)` of float64 are `(8, M * 8)`. The first axis varies fastest.
+
+```python
+import numpy as np
+
+# C-contiguous (default)
+arr_c = np.array([[1.0, 2.0], [3.0, 4.0]])
+print(arr_c.strides)  # (16, 8) -> 16 bytes (2 float64s) to jump rows, 8 bytes to jump columns
+
+# Fortran-contiguous
+arr_f = np.array([[1.0, 2.0], [3.0, 4.0]], order='F')
+print(arr_f.strides)  # (8, 16) -> 8 bytes to jump rows, 16 bytes to jump columns
+```
+
+#### Zero-Copy Strided Views
+Because strides map indices to memory offsets, operations like transposition, reshaping, or slicing do not need to copy data. They simply return a new view with modified `shape` and `strides`.
+```python
+# Transpose changes strides without copying
+arr_t = arr_c.T
+print(arr_t.strides)  # (8, 16)
+print(arr_t.base is arr_c)  # True (it's a view!)
+```
+
+#### Advanced Vectorization & SIMD
+NumPy ufuncs execute loops in precompiled C code. If the array is contiguous, compilers optimize these loops using **SIMD (Single Instruction Multiple Data)** instructions, applying operations to multiple numbers simultaneously in processor vector registers. Custom Python functions can be vectorized via `np.vectorize` or `np.frompyfunc` (which avoids loop overhead in Python but is still slower than native C ufuncs since it calls a Python function per element).
+
 #### Structured Arrays
 Compound dtypes with named fields for record-oriented storage.
-
 ```python
 # Define dtype with named fields
 dt = np.dtype([('name', 'U10'), ('age', 'i4'), ('salary', 'f8')])
@@ -9908,8 +10247,14 @@ print(employees['name'])  # ['Alice' 'Bob']
 print(employees[0]['age'])  # 30
 ```
 
-#### Memory Mapping
-Map files directly into memory for arrays larger than RAM.
+#### Memory Mapping (np.memmap)
+Map files directly into memory for arrays larger than RAM. Under the hood, this uses virtual memory mapping (`mmap` on POSIX systems) to load and flush data from disk on-demand, skipping standard file I/O streams.
+```python
+# Create memory-mapped file
+arr = np.memmap('large_file.dat', dtype='float32', mode='w+', shape=(1000000, 1000))
+arr[0, 0] = 3.14  # Write to disk seamlessly
+del arr  # Flush automatically on delete
+```
 
 ```python
 # Create memory-mapped file
@@ -10203,6 +10548,72 @@ B = np.ones((5, 4, 2))  # 5 matrices of 4x2
 result = np.einsum('bij,bjk->bik', A, B)  # (5, 3, 2)
 ```
 
+### Example 6: Zero-Copy Sliding Window using Stride Tricks
+By directly manipulating shape and strides, we can create overlapping windows over an array without allocating new memory for the segments.
+
+```python
+from numpy.lib.stride_tricks import as_strided
+
+data = np.array([10, 20, 30, 40, 50, 60], dtype=np.int32)  # 4 bytes per element
+print(data.strides)  # (4,)
+
+# We want 3-element rolling windows: [10,20,30], [20,30,40], [30,40,50], [40,50,60]
+# Output shape: (4 windows, 3 elements per window)
+# Output strides:
+#   To move to the next window, jump 1 element forward (4 bytes)
+#   To move to the next element within a window, jump 1 element forward (4 bytes)
+window_size = 3
+num_windows = len(data) - window_size + 1
+
+windows = as_strided(
+    data,
+    shape=(num_windows, window_size),
+    strides=(data.strides[0], data.strides[0])
+)
+
+print(windows)
+# [[10 20 30]
+#  [20 30 40]
+#  [30 40 50]
+#  [40 50 60]]
+
+print(windows.base is data)  # True (completely zero-copy!)
+```
+
+### Example 7: Cache Locality and Strides Performance Impact
+Demonstrating why iteration along contiguous dimensions is faster due to CPU cache-line prefetching.
+
+```python
+import time
+
+# Create a large 2D C-contiguous array (10000 x 10000)
+size = 10000
+arr_c = np.ones((size, size), dtype=np.float64)
+arr_f = np.ones((size, size), dtype=np.float64, order='F')
+
+# Sum along rows in C-contiguous array (Fast: sequential access hits CPU cache)
+t0 = time.perf_counter()
+sum_rows_c = np.sum(arr_c, axis=1)
+t1 = time.perf_counter()
+c_row_time = t1 - t0
+
+# Sum along columns in C-contiguous array (Slow: jumping strides hits memory)
+t0 = time.perf_counter()
+sum_cols_c = np.sum(arr_c, axis=0)
+t1 = time.perf_counter()
+c_col_time = t1 - t0
+
+# Sum along columns in F-contiguous array (Fast: sequential access column-wise)
+t0 = time.perf_counter()
+sum_cols_f = np.sum(arr_f, axis=0)
+t1 = time.perf_counter()
+f_col_time = t1 - t0
+
+print(f"C-Order row-sum (contiguous): {c_row_time:.4f}s")
+print(f"C-Order col-sum (non-contiguous): {c_col_time:.4f}s")  # Typically 2-5x slower
+print(f"F-Order col-sum (contiguous): {f_col_time:.4f}s")
+```
+
 ---
 
 ## 7. Advanced Examples
@@ -10440,6 +10851,37 @@ A: Operations that respect memory layout are faster. Transposing column-major ma
 A: Use stride tricks or np.convolve(data, np.ones(window)/window, mode='valid').
 
 **Q41-Q60: [Advanced scenarios covering sparse arrays, GPU acceleration with CuPy, integration with pandas/scipy, performance profiling, parallel operations, and real-world machine learning data pipelines with detailed examples and optimizations]**
+
+---
+
+#### 61. Explain how memory strides work in NumPy. How do they enable zero-copy operations?
+- **Detailed Answer**: Memory strides are a tuple representing the number of bytes that must be skipped in the 1D flat memory block to step to the next element along each dimension. For example, a 2D float64 array of shape `(3, 4)` in row-major (C-contiguous) format has strides `(32, 8)`—meaning it takes 32 bytes (4 elements * 8 bytes) to jump to the next row, and 8 bytes to jump to the next column. 
+Because multi-dimensional array access is calculated mathematically as `offset = sum(index[d] * strides[d])`, NumPy can perform operations like transposing, reshaping, slicing, or flipping by simply modifying the metadata (shape and strides) instead of copying the underlying memory buffer. For instance, transposing a row-major array of shape `(M, N)` and strides `(A, B)` returns a view of shape `(N, M)` and strides `(B, A)` pointing to the exact same memory buffer.
+- **Follow-up Questions**: When does reshape fail to return a view and instead perform a copy? (Answer: Reshaping requires a copy if the new shape cannot be represented with a single set of regular strides over the existing data buffer—typically when reshaping a non-contiguous slice of an array).
+- **Interviewer's Expectations**: Describe strides as byte steps per axis, show how index mapping is computed mathematically, and explain that transposes and slices are O(1) metadata changes returning a view.
+
+---
+
+#### 62. What is the difference between C-contiguous and Fortran-contiguous arrays, and how does this affect performance?
+- **Detailed Answer**: C-contiguous arrays store elements row-by-row (row-major order), meaning adjacent columns in the same row are adjacent in memory. Fortran-contiguous arrays store elements column-by-column (column-major order), meaning adjacent rows in the same column are adjacent in memory.
+This affects performance due to **CPU cache locality**:
+  - CPUs load data into cache lines (typically 64 bytes). When you access `arr[i, j]`, the CPU pre-fetches adjacent memory.
+  - In a C-contiguous array, summing along axis 1 (row-wise sum) reads elements sequentially in memory, yielding high cache hit rates and enabling SIMD auto-vectorization. Summing along axis 0 (column-wise sum) jumps strides, causing cache misses.
+  - The opposite is true for Fortran-contiguous arrays: axis 0 operations are fast; axis 1 operations are slow.
+- **Follow-up Questions**: How can you check if an array is contiguous in Python? (Answer: Check `arr.flags['C_CONTIGUOUS']` or `arr.flags['F_CONTIGUOUS']`).
+- **Interviewer's Expectations**: Detail row-major vs. column-major memory ordering, explain cache lines/locality and cache misses, and discuss how choosing the wrong reduction axis can severely bottleneck performance.
+
+---
+
+#### 63. How does np.memmap work under the hood? When would you use it, and what are its limitations?
+- **Detailed Answer**: `np.memmap` creates a memory-mapped file interface. Under the hood, it uses the OS kernel's virtual memory subsystem (via the `mmap` system call). The file on disk is mapped directly into the process's virtual address space without loading it fully into RAM. When a slice of the array is accessed, the OS triggers page faults to load only the required pages from disk into the page cache. When edits are made and `flush()` is called (or the object is garbage collected), the dirty pages are written back to disk.
+  - **When to use**: When processing datasets larger than system RAM, or when you need quick, random read/write access to sub-regions of a large binary array without the memory overhead of reading the entire file.
+  - **Limitations**:
+    1. Performance is heavily dependent on disk I/O speed. Random access can cause thrashing.
+    2. File format must be raw binary data (no headers, unless offset is carefully configured).
+    3. Python's GIL can still limit parallel CPU processing, even though I/O is handled by the OS.
+- **Follow-up Questions**: How does memmap differ from regular file streaming? (Answer: Memmap lets you use standard NumPy indexing and mathematical operations directly on the mapped array as if it were in RAM, letting the OS handle page paging, whereas streaming requires manual chunking and buffer loading).
+- **Interviewer's Expectations**: Explain virtual memory mapping, page faults, demand paging, and identify limitations (disk I/O bottlenecks, RAM page thrashing, and raw binary format requirements).
 
 ---
 
@@ -10901,6 +11343,61 @@ df['phone'].str.replace('-', '')
 df['name'].str.split(' ').str[0]  # First name
 ```
 
+### Example 6: Custom Aggregations & Query Optimization (eval/query)
+Performing complex aggregations using custom functions and optimizing intermediate column math with `pd.eval` or `df.query`.
+
+```python
+# Custom aggregate functions
+def range_range(x):
+    return x.max() - x.min()
+
+agg_df = df.groupby('department').agg(
+    total_salary=('salary', 'sum'),
+    salary_range=('salary', range_range),
+    avg_age=('age', 'mean')
+)
+
+# Optimization using query() and eval()
+# Fast selection and calculations without creating large intermediate DataFrames in memory
+high_sal_eng = df.query("department == 'Engineering' and salary > 100000")
+
+# pd.eval executes string expressions faster on large DataFrames using NumExpr under the hood
+adjusted_salary = pd.eval("df.salary * 1.10 + df.bonus", target=df)
+```
+
+### Example 7: Memory Optimization & Downcasting
+Drastically reducing memory footprint for large datasets by downcasting numeric types and converting string columns to categories.
+
+```python
+import numpy as np
+
+# Mock large dataframe
+np.random.seed(42)
+n_rows = 1_000_000
+large_df = pd.DataFrame({
+    'id': np.arange(n_rows),
+    'age': np.random.randint(18, 90, size=n_rows),
+    'salary': np.random.randint(30000, 200000, size=n_rows).astype(float),
+    'city': np.random.choice(['New York', 'London', 'Paris', 'Tokyo'], size=n_rows)
+})
+
+print("Original Memory Usage:")
+print(large_df.memory_usage(deep=True).sum() / (1024**2), "MB")  # ~56 MB
+
+# 1. Downcast integers (int64 -> int8/int16/int32)
+large_df['id'] = pd.to_numeric(large_df['id'], downcast='integer')      # int32
+large_df['age'] = pd.to_numeric(large_df['age'], downcast='integer')    # int8
+
+# 2. Downcast floats (float64 -> float32)
+large_df['salary'] = pd.to_numeric(large_df['salary'], downcast='float') # float32
+
+# 3. Convert low-cardinality string columns to 'category'
+large_df['city'] = large_df['city'].astype('category')
+
+print("Optimized Memory Usage:")
+print(large_df.memory_usage(deep=True).sum() / (1024**2), "MB")  # ~9.5 MB (83% reduction!)
+```
+
 ---
 
 ## 7. Advanced Examples
@@ -11285,6 +11782,38 @@ A: Read with specific dtypes; fill missing with appropriate values; validate sch
 **Q60: Explain how to optimize groupby for large datasets.**
 A: Ensure groupby key is indexed; consider aggregate over apply; profile with %prun.
 
+---
+
+#### 61. What is the difference between GroupBy.apply() and GroupBy.transform()? When should you use each?
+- **Detailed Answer**:
+  - `GroupBy.apply()` is the most flexible split-apply-combine tool. It passes each sub-DataFrame (group) to the custom function. The function can return a DataFrame, Series, or scalar of any shape. Because it operates on high-level Pandas objects per group, it incurs substantial Python overhead and is relatively slow.
+  - `GroupBy.transform()` applies a function to each column of each group, and must return a Series that is the **same shape** as the input group. Pandas optimizes `transform` internally (especially for built-in strings like `'mean'`, `'std'`, `'sum'`), broadcasting the aggregated values back to the original row indexes.
+  - *When to use*: Use `transform` for broadcasting group statistics back to the original DataFrame (e.g. z-scoring columns within groups). Use `apply` only when the operation cannot be expressed as a standard reduction/transformation (e.g., fitting a regression model per group and returning coefficients).
+- **Follow-up Questions**: What is the difference between `transform` and `agg`? (Answer: `agg` reduces the dimensions by returning one row per group, whereas `transform` retains the original DataFrame's row dimensions).
+- **Interviewer's Expectations**: Contrast the input/output shapes of both methods, explain that `transform` is optimized and vectorized while `apply` has heavy Python loop overhead, and provide a practical use-case (like group-level scaling).
+
+---
+
+#### 62. How does Pandas store data internally? Explain the role of the BlockManager and how heterogeneous dtypes affect performance.
+- **Detailed Answer**: Internally, Pandas DataFrames do not store data as a collection of individual column arrays. Instead, they use a data structure called the **BlockManager**. The BlockManager groups columns of the **same data type** into 2D NumPy arrays (blocks). For example, all float64 columns are stored in one 2D float64 block, and all int64 columns in an int64 block.
+Heterogeneous dtypes affect performance in several ways:
+  - **Memory & Copying**: Operations that force type coercion (e.g., inserting a float into an integer column) require Pandas to split/rebuild blocks, which is slow and memory-intensive.
+  - **Single Dtype Operations**: If a DataFrame consists of a single dtype (e.g., all float64), operations like transposing or `.values` are zero-copy views. If there are mixed dtypes, calling `.values` forces consolidation into a single 2D object array, copying all data and upcasting numeric values.
+- **Follow-up Questions**: How does Pandas 2.0 PyArrow integration change this? (Answer: PyArrow stores data in a column-oriented format (Arrow tables) with contiguous memory chunks per column, avoiding the block-consolidation overhead of BlockManager and improving speed for string and null-value operations).
+- **Interviewer's Expectations**: Define the BlockManager, explain that columns of the same type are grouped into 2D blocks, and identify how mixed-dtype DataFrames cause memory copying and type upcasting during conversions.
+
+---
+
+#### 63. How do df.query() and pd.eval() improve performance and memory efficiency in Pandas?
+- **Detailed Answer**: Standard Pandas expressions like `df[(df['A'] > 5) & (df['B'] < 10)]` evaluate step-by-step, allocating large temporary boolean arrays in memory for each sub-expression. For massive DataFrames, this causes cache misses and high memory overhead.
+  - `df.query()` and `pd.eval()` solve this by taking string expressions and compiling them into optimized bytecode.
+  - Under the hood, they use **NumExpr** (if installed), which evaluates the entire expression in a single pass in C. It splits the array into small chunks that fit into the CPU's L1/L2 cache, executing operations in parallel across multiple CPU cores without allocating intermediate temporary arrays.
+  - *When to use*: Use them when performing mathematical column transformations or complex row filtering on large DataFrames (typically >100,000 rows) to save memory and speed up computation.
+- **Follow-up Questions**: Can you reference local variables inside `df.query()`? (Answer: Yes, by prefixing the variable name with the `@` symbol, e.g., `df.query("salary > @min_sal")`).
+- **Interviewer's Expectations**: Describe how standard Pandas allocations create temporary arrays, explain how NumExpr compiles string expressions to run in C-level loops, and mention CPU cache locality and parallel execution.
+
+---
+
 ## 10. Common Mistakes
 
 **Mistake 1: Using apply() instead of vectorized methods**
@@ -11426,7 +11955,7 @@ df['date'].dt.month
 
 <div style='page-break-before: always;'></div>
 
-# 13. Matplotlib & Seaborn (Data Visualization)
+# 13. Matplotlib, Seaborn, Plotly & Bokeh (Data Visualization)
 
 ## 1. Introduction
 
@@ -11521,6 +12050,17 @@ ax.annotate('Peak', xy=(x, y), xytext=(x+1, y+1),
 ax.axhline(y=10, color='red')
 ax.axvline(x=5, color='blue')
 ```
+
+### Plotly (Interactive Data Exploration)
+Plotly is a declarative, browser-based data visualization library. Unlike Matplotlib which renders static pixels, Plotly serializes figures into a JSON format that is parsed by **Plotly.js** in the client browser, enabling out-of-the-box zoom, pan, hover tooltips, and interactive filtering.
+- **Plotly Express**: The high-level API for rapid figure creation.
+- **Plotly Graph Objects**: The low-level API offering granular control over figures, traces, and layouts.
+
+### Bokeh (Web-Ready Interactive Graphics)
+Bokeh is a Python interactive visualization library designed to render graphics directly in modern web browsers. It maps Python visualization objects to its JavaScript counterpart, **BokehJS**.
+- **ColumnDataSource**: Bokeh's core data container, enabling direct synchronization between Python data and browser-side JS elements.
+- **Layouts & Dashboards**: Built-in support for rows, columns, and gridplots to create responsive web dashboards.
+- **Bokeh Server**: Enables bidirectional python-to-browser communication, allowing real-time Python code execution in response to browser events (like slider adjustments).
 
 ---
 
@@ -11624,6 +12164,42 @@ plt.boxplot(data, labels=['A', 'B', 'C', 'D'])
 plt.show()
 ```
 
+### Example 6: Plotly Express Interactive Line Plot
+Creating an interactive line plot with custom tooltips, zoom, and hover-triggered coordinate displays.
+
+```python
+import plotly.express as px
+import pandas as pd
+import numpy as np
+
+# Create sample time series
+df = pd.DataFrame({
+    'Date': pd.date_range(start='2024-01-01', periods=100),
+    'Revenue': np.cumsum(np.random.normal(100, 10, size=100)),
+    'Region': np.random.choice(['North', 'South'], size=100)
+})
+
+# Generate interactive line plot
+fig = px.line(
+    df, 
+    x='Date', 
+    y='Revenue', 
+    color='Region',
+    title='Interactive Daily Revenue Trends',
+    hover_data={'Date': '|%B %d, %Y', 'Revenue': ':.2f'}
+)
+
+# Customize layout
+fig.update_layout(
+    xaxis_title='Timeline',
+    yaxis_title='Cumulative Revenue ($USD)',
+    template='plotly_dark'
+)
+
+# Open in default browser
+fig.show()
+```
+
 ---
 
 ## 6. Intermediate Examples
@@ -11684,6 +12260,40 @@ ax.plot(dates, values)
 ax.xaxis.set_major_formatter(mdates.DateFormatter('%Y-%m'))
 plt.xticks(rotation=45)
 plt.show()
+```
+
+### Example 6: Interactive Dashboard Layout with Bokeh
+Creating a dual-plot dashboard with linked panning (changing zoom on one plot automatically updates the other) and hover tools.
+
+```python
+from bokeh.io import show
+from bokeh.layouts import column, row
+from bokeh.models import ColumnDataSource, HoverTool
+from bokeh.plotting import figure
+import numpy as np
+import pandas as pd
+
+# Generate sample data
+x = np.linspace(0, 10, 100)
+y1 = np.sin(x)
+y2 = np.cos(x)
+
+# Create ColumnDataSource (shares data between Bokeh and JS)
+source = ColumnDataSource(data=dict(x=x, y1=y1, y2=y2))
+
+# 1. First Plot: Sine Wave
+p1 = figure(title="Linked Sine Wave", height=300, width=450, tools="pan,wheel_zoom,box_zoom,reset")
+p1.line('x', 'y1', source=source, color="navy", alpha=0.8, line_width=2)
+p1.add_tools(HoverTool(tooltips=[("x", "@x{0.00}"), ("y", "@y1{0.00}")]))
+
+# 2. Second Plot: Cosine Wave (linked x_range to p1 for synchronized zooming/panning)
+p2 = figure(title="Linked Cosine Wave", x_range=p1.x_range, height=300, width=450, tools="pan,wheel_zoom,box_zoom,reset")
+p2.line('x', 'y2', source=source, color="firebrick", alpha=0.8, line_width=2)
+p2.add_tools(HoverTool(tooltips=[("x", "@x{0.00}"), ("y", "@y2{0.00}")]))
+
+# Arrange plots in a row layout and open in browser
+dashboard = row(p1, p2)
+# show(dashboard)  # Commented out for non-interactive execution
 ```
 
 ---
@@ -11906,6 +12516,43 @@ A: Use `mdates.DateFormatter('%Y-%m')`
 A: High dpi (300+), vector format (pdf/svg), good colormap.
 
 **Q51-Q60: [Additional advanced scenarios with visualization best practices]**
+
+---
+
+#### 61. Contrast static plotting (Matplotlib/Seaborn) with interactive plotting (Plotly/Bokeh). What are the tradeoffs?
+- **Detailed Answer**:
+  - **Static Plotting (Matplotlib/Seaborn)**:
+    - *Pros*: Renders directly to pixel arrays or vector paths (PNG, PDF, SVG). High speed, low memory overhead, and absolute pixel-perfect control. Best for academic publications, PDF reports, and large-scale automated batch generation.
+    - *Cons*: Cannot zoom, pan, hover, or filter dynamically without replotting or running a local UI backend like Tkinter.
+  - **Interactive Plotting (Plotly/Bokeh)**:
+    - *Pros*: Renders to HTML/JS canvas in the browser. Allows native panning, zooming, hovering tooltips, and interactive legend toggling. Best for business intelligence dashboards, exploratory web apps, and user-facing presentations.
+    - *Cons*: High memory footprint in the browser (storing data points in JS memory), slower rendering for large arrays, and complex setup for vector-graphic export.
+- **Follow-up Questions**: Which library is best for a web app built with React or Flask? (Answer: Plotly or Bokeh, since they natively output JSON or HTML/JS components that can be embedded directly in web layouts).
+- **Interviewer's Expectations**: Compare rendering outputs (pixels/vectors vs browser DOM/Canvas), discuss user engagement vs. rendering overhead, and identify specific use cases (academic papers vs BI dashboards).
+
+---
+
+#### 62. How does Bokeh's ColumnDataSource work under the hood, and why is it preferred over raw dictionaries or DataFrames?
+- **Detailed Answer**: The `ColumnDataSource` (CDS) is the fundamental data structure in Bokeh. Under the hood, it maps column names (strings) to arrays of data. 
+  - **Synchronization**: CDS acts as the bridge between the Python runtime and the browser's JavaScript engine (BokehJS). When a plot is rendered, Bokeh serializes the CDS into a JSON object and sends it to the browser.
+  - **Shared Data**: Multiple glyphs (e.g. circles, lines, hover labels) can share the same CDS. When you hover over or select a point on one plot, BokehJS uses the shared CDS references to update selection states or values across all linked plots dynamically without roundtrips to Python.
+  - **Efficiency**: Passing data via CDS is highly optimized; updates only transmit modified columns rather than recreating the entire figure structure.
+- **Follow-up Questions**: Can you update a ColumnDataSource in real-time? (Answer: Yes, by using the `.stream()` or `.patch()` methods on the CDS object, which push incremental updates to the browser rather than re-sending the whole dataset).
+- **Interviewer's Expectations**: Explain the Python-to-JS bridge, discuss shared references for linked panning/hovering, and identify optimization advantages (differential updates).
+
+---
+
+#### 63. How do you optimize rendering performance in Matplotlib and Plotly when dealing with large datasets (e.g., 1M+ points)?
+- **Detailed Answer**:
+  - **Matplotlib**:
+    - Use `rasterized=True` inside vector-format plots (like PDF/SVG) so scatter points are rendered as a flat bitmap while keeping text and axes as sharp vectors.
+    - Use low-level artists like `LineCollection` instead of calling `plt.plot()` repeatedly.
+    - Aggdownsample or use `hexbin` / `hist2d` to aggregate points into density bins before plotting, reducing 1M points to a fixed grid.
+  - **Plotly**:
+    - Use **WebGL-backed traces** instead of standard SVG traces (e.g., `go.Scattergl` instead of `go.Scatter`). WebGL delegates point rendering to the system GPU, allowing Plotly to render millions of points smoothly at 60 FPS.
+    - Downsample data using algorithms like LTTB (Largest Triangle Three Buckets) before passing it to Plotly.
+- **Follow-up Questions**: Why does SVG fail for large scatter plots? (Answer: SVG creates a separate DOM element for each scatter point, causing the browser's layout and rendering engines to freeze when handling hundreds of thousands of elements).
+- **Interviewer's Expectations**: Discuss vector vs. raster tradeoffs, introduce GPU-acceleration (WebGL/Scattergl), and suggest pre-aggregation strategies (binning, hexbin, downsampling).
 
 ---
 
@@ -12268,7 +12915,21 @@ Statistics is like a detective: given incomplete clues (samples), deduce truth (
 
 ---
 
-## 2. Core Concepts
+### 2. Core Concepts
+
+### Sampling & Levels of Measurement
+- **Sampling Methods**:
+  - *Simple Random Sampling*: Every member of the population has an equal chance of selection.
+  - *Stratified Sampling*: Population is split into homogenous groups (strata), and random samples are drawn from each stratum proportionally.
+  - *Cluster Sampling*: Population is split into heterogeneous groups (clusters), and whole clusters are randomly selected.
+- **Levels of Measurement**:
+  - *Nominal*: Categorical data with no order (e.g., city, gender).
+  - *Ordinal*: Ordered categories with unequal intervals (e.g., rating scale 1-5, education level).
+  - *Interval*: Ordered categories with equal intervals, but no true zero (e.g., Temperature in Celsius).
+  - *Ratio*: Ordered categories with equal intervals and a true zero (e.g., height, weight, salary).
+- **Shape of Data**:
+  - *Skewness*: Measures asymmetry. Positive/right skew (tail on right, mean > median). Negative/left skew (tail on left, mean < median).
+  - *Kurtosis*: Measures tailedness. Leptokurtic (fat tails, high peak). Platykurtic (thin tails, flat peak). Mesokurtic (normal distribution).
 
 ### Descriptive Statistics
 ```python
@@ -12295,9 +12956,26 @@ q3 = np.percentile(data, 75)
 iqr = q3 - q1  # Interquartile range
 ```
 
-### Probability Distributions
+### Probability Distributions: PMF, PDF & CDF
+- **PMF vs. PDF vs. CDF**:
+  - **Probability Mass Function (PMF)**: Probability of a discrete random variable taking a exact value: $P(X = x)$.
+  - **Probability Density Function (PDF)**: Relative likelihood of a continuous random variable taking a value; probability is calculated over an interval (area under the curve): $P(a \le X \le b) = \int_a^b f(x)dx$.
+  - **Cumulative Distribution Function (CDF)**: Probability that the variable takes a value less than or equal to $x$: $F(x) = P(X \le x)$.
+
+- **Discrete Distributions**:
+  - *Bernoulli*: Single trial with success probability $p$ (e.g., coin toss).
+  - *Binomial*: Number of successes in $n$ independent Bernoulli trials.
+  - *Poisson*: Number of events occurring in a fixed interval of time/space given a constant rate $\lambda$.
+  - *Geometric*: Number of Bernoulli trials until the first success.
+
+- **Continuous Distributions**:
+  - *Normal (Gaussian)*: Symmetric, bell-shaped distribution defined by mean $\mu$ and standard deviation $\sigma$.
+  - *Exponential*: Time between events in a Poisson process (memoryless).
+  - *Uniform*: Constant probability over a finite interval.
+  - *Student's t*: Similar to Normal but with heavier tails; used for small sample sizes ($n < 30$).
+
 ```python
-from scipy.stats import norm, binom, poisson
+from scipy.stats import norm, binom, poisson, expon
 
 # Normal distribution N(μ=0, σ=1)
 x = np.linspace(-3, 3, 100)
@@ -12310,28 +12988,65 @@ p_5heads = binom.pmf(5, n=10, p=0.5)  # P(X=5 | n=10, p=0.5)
 # Poisson: events/time with rate λ
 p_3events = poisson.pmf(3, mu=2)  # P(X=3 | λ=2)
 
-# Sample from distributions
-normal_sample = np.random.normal(0, 1, 1000)
+# Exponential: time between events (lambda=2)
+p_time = expon.cdf(1.5, scale=1/2) # P(T <= 1.5)
 ```
 
-### Hypothesis Testing
+### Central Limit Theorem (CLT) & Hypothesis Testing
+- **Central Limit Theorem**: As sample size $n$ increases ($n \ge 30$), the sampling distribution of the sample mean approaches a normal distribution, regardless of the population distribution shape. The mean of sample means equals the population mean ($\mu$), and the standard deviation of sample means (Standard Error) is $\sigma/\sqrt{n}$.
+- **Z-Test vs. T-Test**:
+  - *Z-Test*: Used when population variance ($\sigma^2$) is known and sample size is large.
+  - *T-Test*: Used when population variance is unknown (estimated from sample standard deviation $s$) and/or sample size is small.
+    - *One-Sample*: Test if sample mean differs from a hypothesized value.
+    - *Two-Sample Independent*: Test if means of two independent groups differ.
+    - *Paired T-Test*: Test if means of two dependent groups (same subjects before/after) differ.
+- **Chi-Square Tests**:
+  - *Goodness-of-Fit*: Tests if sample distribution matches a theoretical distribution.
+  - *Independence*: Tests if two categorical variables are associated.
+- **ANOVA (Analysis of Variance)**:
+  - Tests if means of 3 or more groups differ.
+  - **One-Way ANOVA**: One categorical factor. Partitioning variance:
+    $$SS_{Total} = SS_{Between} + SS_{Within}$$
+    F-Statistic is ratio of Mean Square Between to Mean Square Within.
+  - **Two-Way ANOVA**: Two categorical factors; checks main effects of each factor and their interaction.
+- **Errors & Power**:
+  - **Type I Error ($\alpha$)**: Rejecting the null hypothesis when it is true (False Positive). Significance level $\alpha$ is the probability of Type I error.
+  - **Type II Error ($\beta$)**: Failing to reject the null hypothesis when it is false (False Negative).
+  - **Power ($1 - \beta$)**: Probability of correctly rejecting a false null hypothesis (True Positive).
+
 ```python
 from scipy import stats
 
-# One-sample t-test: Does sample mean = 0?
+# One-sample t-test
 data = np.array([1.2, 0.9, 1.1, 1.0, 0.8])
 t_stat, p_value = stats.ttest_1samp(data, popmean=0)
-# p < 0.05 → reject null hypothesis
 
-# Two-sample t-test: Are two groups different?
+# Two-sample independent t-test
 group1 = [1, 2, 3, 4, 5]
 group2 = [2, 3, 4, 5, 6]
 t_stat, p_value = stats.ttest_ind(group1, group2)
 
-# Chi-square test: Association between categories?
+# Paired t-test
+before = [10, 12, 15, 11]
+after = [12, 14, 15, 13]
+t_stat, p_value = stats.ttest_rel(before, after)
+
+# One-Way ANOVA
+f_stat, p_val = stats.f_oneway([1, 2, 3], [2, 3, 4], [5, 6, 7])
+
+# Chi-square test of independence
 contingency = np.array([[10, 20], [30, 40]])
-chi2, p_value, dof, expected = stats.chi2_contingency(contingency)
+chi2, p_val, dof, expected = stats.chi2_contingency(contingency)
 ```
+
+### Bayesian Statistics
+Bayesian inference treats parameters as random variables with prior probability distributions, updating them as new data is observed.
+- **Bayes' Theorem**:
+  $$P(\theta | \text{Data}) = \frac{P(\text{Data} | \theta) \cdot P(\theta)}{P(\text{Data})}$$
+  - **Prior $P(\theta)$**: Initial belief about parameter $\theta$.
+  - **Likelihood $P(\text{Data} | \theta)$**: Probability of observing data given $\theta$.
+  - **Posterior $P(\theta | \text{Data})$**: Updated belief after seeing the data.
+  - **Evidence $P(\text{Data})$**: Normalizing constant over all possible parameters.
 
 ### Correlation and Covariance
 ```python
@@ -12357,6 +13072,9 @@ mean = np.mean(data)
 sem = stats.sem(data)  # Standard error of mean
 ci = stats.t.interval(0.95, len(data)-1, loc=mean, scale=sem)
 # 95% confident mean is between ci[0] and ci[1]
+```
+
+---]
 ```
 
 ---
@@ -12786,6 +13504,42 @@ A: Linear model for binary outcome; outputs probability via logistic function.
 
 **Q60: What is survival analysis?**
 A: Analyze time-to-event data; handles censoring (incomplete observations).
+
+---
+
+#### 61. Explain the Central Limit Theorem and its practical significance in statistics.
+- **Detailed Answer**: The Central Limit Theorem (CLT) states that if you take sufficiently large random samples (usually $n \ge 30$) from any population with mean $\mu$ and finite variance $\sigma^2$, the distribution of the sample means will be approximately normally distributed. This holds true regardless of the underlying population distribution (whether it is uniform, skewed, or bimodal). The mean of this sampling distribution equals the population mean $\mu$, and its standard deviation (known as the Standard Error of the Mean, or SEM) is equal to $\sigma / \sqrt{n}$.
+  - *Practical significance*: The CLT allows us to use parametric statistical tests (like Z-tests and t-tests) and construct confidence intervals for population means even when the raw population data is not normally distributed, which is common in real-world settings.
+- **Follow-up Questions**: How does sample size affect the Standard Error? (Answer: As sample size $n$ increases, the Standard Error decreases proportionally to $\sqrt{n}$, making the sample mean estimate more precise and narrowing the distribution).
+- **Interviewer's Expectations**: State the CLT definition clearly, mention the threshold sample size ($n \ge 30$), define the Standard Error formula, and explain its importance in making parametric assumptions for non-normal populations.
+
+---
+
+#### 62. Contrast One-Way ANOVA and Two-Way ANOVA. How is variance partitioned in a One-Way ANOVA?
+- **Detailed Answer**:
+  - **One-Way ANOVA**: Compares the means of three or more independent groups based on a single categorical independent variable (factor) to see if at least one group mean is significantly different from the others.
+  - **Two-Way ANOVA**: Compares the means across groups classified by two categorical factors. It tests three null hypotheses: the main effect of Factor A, the main effect of Factor B, and the interaction effect between A and B.
+  - **Partitioning of Variance**: In a One-Way ANOVA, the total sum of squares ($SS_{Total}$) represents the total variation in the data and is partitioned into two independent components:
+    $$SS_{Total} = SS_{Between} + SS_{Within}$$
+    - $SS_{Between}$ measures the variation between the group means and the grand mean (due to the treatment factor).
+    - $SS_{Within}$ (or $SS_{Error}$) measures the random variation within each group (residual noise).
+    The F-statistic is calculated as the Ratio of Mean Square Between ($SS_{Between}/df_{Between}$) to Mean Square Within ($SS_{Within}/df_{Within}$). A high F-ratio indicates the group difference is larger than random noise.
+- **Follow-up Questions**: What post-hoc tests do you run if the ANOVA F-test is significant? (Answer: Pairwise comparison tests with correction, such as Tukey's HSD or Bonferroni, to find exactly which groups differ while controlling the family-wise Type I error rate).
+- **Interviewer's Expectations**: Define the difference between one factor and two factors, explain the mathematical partitioning of variance ($SS_{Between}$ vs. $SS_{Within}$), define the F-statistic ratio, and mention the need for post-hoc testing.
+
+---
+
+#### 63. State Bayes' Theorem mathematically. Explain the concept of Prior, Likelihood, and Posterior in Bayesian inference.
+- **Detailed Answer**: Bayes' Theorem is expressed mathematically as:
+  $$P(\theta | \text{Data}) = \frac{P(\text{Data} | \theta) \cdot P(\theta)}{P(\text{Data})}$$
+  Where:
+  - **Prior $P(\theta)$**: The initial probability of the parameter $\theta$ representing our belief before observing the current data.
+  - **Likelihood $P(\text{Data} | \theta)$**: The probability of observing the data given that the parameter $\theta$ takes a specific value.
+  - **Posterior $P(\theta | \text{Data})$**: The updated probability of the parameter $\theta$ after incorporating the evidence from the observed data.
+  - **Evidence $P(\text{Data})$**: The marginal probability of the data, acting as a normalization constant ensuring the posterior distribution integrates to 1.
+  - *Concept*: Bayesian inference updates the prior belief as new data arrives, producing a full probability distribution over the parameters (Posterior), whereas frequentists treat parameters as fixed values and only compute the probability of the data (Likelihood/P-value).
+- **Follow-up Questions**: What is a conjugate prior? (Answer: A prior distribution is conjugate to the likelihood if the resulting posterior distribution belongs to the same probability family as the prior, simplifying analytical calculation—e.g., Beta prior with Binomial likelihood yields a Beta posterior).
+- **Interviewer's Expectations**: Write down the Bayes formula correctly, define prior, likelihood, and posterior clearly, and explain how Bayesian inference differs conceptually from frequentist approaches.
 
 ---
 
@@ -13263,6 +14017,120 @@ probs = model.predict_proba(X_test)
 ```
 Use calibrated probabilities for threshold-based decisions or cost-sensitive applications.
 
+### Example 5: Unsupervised Learning Pipeline (PCA + KMeans & DBSCAN Clustering)
+```python
+from sklearn.datasets import make_blobs
+from sklearn.preprocessing import StandardScaler
+from sklearn.decomposition import PCA
+from sklearn.cluster import KMeans, DBSCAN
+from sklearn.pipeline import Pipeline
+
+# Generate synthetic high-dimensional cluster data
+X_raw, _ = make_blobs(n_samples=500, n_features=10, centers=4, random_state=42)
+
+# Preprocessing and Dimensionality Reduction Pipeline
+preprocessor = Pipeline([
+    ("scaler", StandardScaler()),
+    ("pca", PCA(n_components=2, random_state=42))
+])
+
+# Fit and transform
+X_proj = preprocessor.fit_transform(X_raw)
+
+# 1. KMeans Clustering (parametric, expects spherical clusters)
+kmeans = KMeans(n_clusters=4, random_state=42, n_init="auto")
+kmeans_labels = kmeans.fit_predict(X_proj)
+
+# 2. DBSCAN Clustering (non-parametric density-based, handles arbitrary shapes & noise)
+dbscan = DBSCAN(eps=0.3, min_samples=5)
+dbscan_labels = dbscan.fit_predict(X_proj)
+
+print("KMeans cluster centers:\n", kmeans.cluster_centers_)
+print("DBSCAN noise points detected:", sum(dbscan_labels == -1))
+```
+
+### Example 6: Ensemble Models (AdaBoost & XGBoost Integration)
+```python
+from sklearn.datasets import make_classification
+from sklearn.model_selection import train_test_split
+from sklearn.ensemble import AdaBoostClassifier
+from sklearn.tree import DecisionTreeClassifier
+from xgboost import XGBClassifier
+
+X, y = make_classification(n_samples=1000, n_features=20, random_state=42)
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+# 1. AdaBoost with Decision Tree stump base estimator
+ada = AdaBoostClassifier(
+    estimator=DecisionTreeClassifier(max_depth=1),
+    n_estimators=100,
+    learning_rate=0.1,
+    random_state=42
+)
+ada.fit(X_train, y_train)
+print("AdaBoost Test Accuracy:", ada.score(X_test, y_test))
+
+# 2. XGBoost Classifier using scikit-learn API wrapper
+xgb = XGBClassifier(
+    n_estimators=100,
+    max_depth=3,
+    learning_rate=0.1,
+    random_state=42,
+    eval_metric="logloss"
+)
+xgb.fit(X_train, y_train)
+print("XGBoost Test Accuracy:", xgb.score(X_test, y_test))
+```
+
+### Example 7: Anomaly Detection with Isolation Forest
+```python
+from sklearn.ensemble import IsolationForest
+import numpy as np
+
+# Generate clean training data and some anomalous test data
+rng = np.random.default_rng(42)
+X_train = rng.normal(loc=0.0, scale=1.0, size=(200, 2))
+X_test = np.vstack([
+    rng.normal(loc=0.0, scale=1.0, size=(20, 2)),      # Normal points
+    rng.uniform(low=-4.0, high=4.0, size=(10, 2))      # Potential outliers
+])
+
+# Fit Isolation Forest (contamination is the expected ratio of outliers)
+iso_forest = IsolationForest(contamination=0.1, random_state=42)
+iso_forest.fit(X_train)
+
+# Predict anomaly labels (-1: anomaly, 1: normal)
+predictions = iso_forest.predict(X_test)
+anomaly_scores = iso_forest.decision_function(X_test)  # Lower values indicate anomaly
+
+print("Outliers predicted in test set:", sum(predictions == -1))
+```
+
+### Example 8: Time-Series Split and Modeling
+```python
+from sklearn.model_selection import TimeSeriesSplit
+from sklearn.linear_model import Ridge
+import numpy as np
+
+# Generate mock daily time-series target and features
+timesteps = 100
+X_ts = np.random.randn(timesteps, 5)
+y_ts = np.arange(timesteps) * 0.5 + np.random.randn(timesteps)
+
+# TimeSeriesSplit prevents lookahead bias (future leakage into past)
+tscv = TimeSeriesSplit(n_splits=5)
+
+for fold, (train_index, test_index) in enumerate(tscv.split(X_ts)):
+    X_train, X_test = X_ts[train_index], X_ts[test_index]
+    y_train, y_test = y_ts[train_index], y_ts[test_index]
+    
+    model = Ridge(alpha=1.0)
+    model.fit(X_train, y_train)
+    score = model.score(X_test, y_test)
+    print(f"Fold {fold} - Train Range: [{train_index[0]}-{train_index[-1]}], "
+          f"Test Range: [{test_index[0]}-{test_index[-1]}], R^2 Score: {score:.3f}")
+```
+
 ---
 
 ## 7. Advanced Concepts
@@ -13464,6 +14332,37 @@ Interviewers test whether you can build end-to-end ML workflows with scikit-lear
 
 ---
 
+#### 61. Explain how ColumnTransformer prevents data leakage. How does it handle heterogeneous datasets?
+- **Detailed Answer**: `ColumnTransformer` allows you to apply different preprocessing pipelines to specific subsets of columns (numeric, categorical, text) in a heterogeneous dataset, and concatenate the output features into a single matrix.
+  It prevents **data leakage** because:
+  1. It respects the standard estimator contract: fitting statistics (e.g., mean/standard deviation for `StandardScaler`, category mapping for `OneHotEncoder`) occurs strictly on the training folds/sets when calling `ColumnTransformer.fit()`.
+  2. These parameters are then statically applied during `ColumnTransformer.transform()` on validation or test folds.
+  3. When combined within an overall `Pipeline`, the entire preprocessing graph is executed within cross-validation folds, guaranteeing that no test/validation data statistics leak into the training transformations.
+- **Follow-up Questions**: How do you pass through specific columns unmodified or drop columns inside a ColumnTransformer? (Answer: Use the `"passthrough"` or `"drop"` string literals as the transformer parameter in the tuple specification).
+- **Interviewer's Expectations**: Define `ColumnTransformer`'s column-specific mapping capability, explain why fit-on-train and transform-on-test prevents leakages of means/categories, and describe integrating it inside a scikit-learn `Pipeline`.
+
+---
+
+#### 62. What is the contract for custom estimators and transformers in scikit-learn? How do you implement a custom transformer?
+- **Detailed Answer**: To create custom, pipeline-compatible components in scikit-learn, you must adhere to the estimator/transformer contract:
+  1. Subclass `BaseEstimator` to automatically inherit parameter inspection helpers, get/set parameter mechanisms for hyperparameter tuning (`get_params`, `set_params`), and avoid using `*args` or `**kwargs` in your `__init__`.
+  2. Subclass `TransformerMixin` to automatically get the `fit_transform()` implementation from your `fit` and `transform` methods.
+  3. Implement `fit(self, X, y=None)`: Learn data-driven parameters from `X` and store them as public attributes ending with a trailing underscore (e.g., `self.mean_`). It must return `self`.
+  4. Implement `transform(self, X)`: Apply the learned parameters to `X` and return a new array or DataFrame without modifying the original input.
+- **Follow-up Questions**: Why should learned attributes in a custom transformer end with a trailing underscore? (Answer: It is a scikit-learn convention that separates hyperparameters set in `__init__` from parameters computed during the `fit` phase).
+- **Interviewer's Expectations**: Describe the inheritance of `BaseEstimator` and `TransformerMixin`, explain the signature contracts of `fit` and `transform`, and identify the trailing underscore convention for learned parameters.
+
+---
+
+#### 63. What is target leakage/pipeline leakage? How do you detect and fix it in scikit-learn pipelines?
+- **Detailed Answer**: **Target leakage** occurs when features used to train a model contain information about the target variable that would not be available at inference time (e.g., customer transaction IDs representing fraud outcomes, or raw target values incorporated in calculation steps). **Pipeline leakage** occurs when preprocessing calculations (like scaling, mean imputation, or target encoding) are fit on the entire dataset *before* splitting into train/test or cross-validation folds, leaking test distribution data into the training process.
+  - **Detection**: Check if cross-validation scores are unrealistically high compared to out-of-sample/production test scores. Inspect feature importances to see if a feature explains nearly 100% of target variance.
+  - **Fix**: Package all preprocessing transformers and final estimators in a scikit-learn `Pipeline` object. Enforce validation splits *before* calling `.fit()`. Never compute global statistics on the entire dataset.
+- **Follow-up Questions**: What is the difference between target encoding leakage and data leakage? (Answer: Data leakage is a general term for test data informing training, whereas target encoding leakage specifically refers to a feature calculation using target labels of the same row or fold, causing overfitting).
+- **Interviewer's Expectations**: Define target leakage and pipeline leakage, identify symptoms (e.g., optimistic CV scores, dominant features), and detail how wrapping steps in a `Pipeline` resolves preprocessing leakage.
+
+---
+
 ## 10. Common Mistakes
 - Scaling using full dataset before split (data leakage).
 - Hyperparameter tuning on the test set.
@@ -13568,6 +14467,50 @@ ML is like a student learning from practice problems (data) rather than memorizi
 - **Bayesian Learning**: Bayesian linear regression, Gaussian processes.
 - **Online Learning**: Stochastic gradient descent, bandit algorithms.
 - **Causal ML**: Uplift modeling, causal forests, treatment effects.
+
+### Deep-Dive: Machine Learning Paradigms
+- **Supervised Learning**: Learning a mapping function $f: X \to Y$ using labeled training pairs $(x_i, y_i)$. Includes **Classification** (predicting discrete class labels) and **Regression** (predicting continuous numerical outcomes).
+- **Unsupervised Learning**: Discovering underlying structures, clusters, or distributions in unlabeled data $X$. Key tasks include **Clustering** (e.g., KMeans, DBSCAN), **Dimensionality Reduction** (e.g., PCA, t-SNE), and **Association Rule Learning**.
+- **Semi-Supervised Learning**: Combining a small set of labeled data with a large amount of unlabeled data to train models, leveraging the data distribution shape from unlabeled points.
+- **Reinforcement Learning (RL)**: An agent learning to make sequential decisions by interacting with an environment. The goal is to learn a policy $\pi(s)$ that maps states $s$ to actions $a$ in order to maximize cumulative reward over time, guided by environmental feedback.
+
+### Deep-Dive: Mathematical Foundations of Algorithms
+- **Linear & Logistic Regression**: Linear regression assumes $y = \mathbf{w}^T \mathbf{x} + b$. Parameters are solved either via the closed-form **Normal Equation** $\mathbf{w} = (\mathbf{X}^T \mathbf{X})^{-1} \mathbf{X}^T \mathbf{y}$ or iteratively using **Gradient Descent**. Logistic regression models binary classification probabilities using the Sigmoid (logistic) function: $P(y=1|\mathbf{x}) = \sigma(\mathbf{w}^T \mathbf{x} + b) = \frac{1}{1 + e^{-(\mathbf{w}^T \mathbf{x} + b)}}$, mapping log-odds linearly.
+- **Support Vector Machines (SVM)**: A discriminative classifier that finds the optimal hyperplane maximizing the geometric margin between classes. The objective is formulated as minimizing $\frac{1}{2} \|\mathbf{w}\|^2$ subject to class separation constraints. The **Kernel Trick** maps input features into high-dimensional inner-product spaces (Hilbert spaces) using a kernel function $K(\mathbf{x}_i, \mathbf{x}_j) = \langle \Phi(\mathbf{x}_i), \Phi(\mathbf{x}_j) \rangle$ (such as RBF or polynomial), allowing linear separation of non-linear patterns without explicit coordinate mapping.
+- **Naive Bayes**: A probabilistic classifier based on Bayes' Theorem: $P(Y|X) = \frac{P(X|Y)P(Y)}{P(X)}$. It makes the **naive conditional independence assumption**: features $x_i$ are conditionally independent given the class label $Y$, simplifying the likelihood calculation to $P(X|Y) = \prod P(x_i|Y)$.
+- **K-Nearest Neighbors (KNN)**: An instance-based, non-parametric, lazy learning algorithm. It classifies a query point by taking the majority vote (or average for regression) of its $k$ closest neighbors in the feature space, measured via Euclidean, Manhattan, or Minkowski distance. Highly sensitive to the **Curse of Dimensionality** since distances in high dimensions converge.
+- **Decision Trees**: Hierarchical structures that partition the feature space based on splitting criteria: **Gini Impurity** $1 - \sum p_i^2$, **Entropy** $-\sum p_i \log_2 p_i$ (for classification), or **Variance Reduction** (for regression). Pruning is used to control depth and prevent overfitting.
+- **Ensemble Architectures**:
+  - **Bagging (Bootstrap Aggregating)**: Trains multiple independent models on random subsets of the training data sampled with replacement (bootstrap). Aggregates predictions to reduce variance (e.g., Random Forest, which also shuffles features per split).
+  - **Boosting**: Sequentially trains weak learners (usually decision tree stumps). Each subsequent learner focuses on correcting the errors (residuals or reweighted samples) of its predecessors, minimizing a loss function (e.g., AdaBoost, Gradient Boosting, XGBoost) to reduce bias.
+  - **Stacking**: Trains a meta-model (e.g., logistic regression) to combine the predictions of diverse base classifiers (e.g., SVM, Random Forest) trained on the same dataset.
+- **Clustering Mechanics**:
+  - **KMeans**: An iterative partitioning algorithm. It minimizes the within-cluster sum of squares (inertia): $\sum \sum \|\mathbf{x} - \boldsymbol{\mu}_j\|^2$ by alternately assigning points to the nearest centroid and recomputing centroids. Assumes spherical, isotropic cluster shapes.
+  - **DBSCAN (Density-Based Spatial Clustering of Applications with Noise)**: Groups points that are close to each other based on distance radius ($\epsilon$) and a minimum number of points ($MinPts$). Labels points as core, border, or noise. Can discover clusters of arbitrary shapes and is robust to outliers.
+- **Anomaly Detection**:
+  - **Isolation Forest**: An ensemble of random decision trees. It isolates anomalies by randomly selecting a feature and a split value. Since anomalies require fewer random splits to isolate, they appear closer to the root of the trees (shorter path length).
+  - **One-Class SVM**: Fits a boundary around the normal data points in a high-dimensional kernel space, treating any points lying outside this boundary as anomalies.
+- **Time-Series Analysis**:
+  - **Components**: Decomposes series into **Trend** (long-term movement), **Seasonality** (repeating patterns over fixed intervals), **Cyclicity** (long-term non-fixed fluctuations), and **Irregular/Noise** residuals.
+  - **Stationarity**: A time series is stationary if its mean, variance, and autocorrelation structure are constant over time. Checked using the **Augmented Dickey-Fuller (ADF) test**. Stationarity is required for traditional autoregressive (AR) and moving average (MA) models.
+
+### Deep-Dive: Feature Engineering & Data Preparation
+- **Feature Scaling**: Brings features to a common scale.
+  - **Standardization (Z-score)**: $\frac{x - \mu}{\sigma}$. Centers data to mean 0, variance 1. Good for linear models, SVMs, and neural networks.
+  - **Normalization (MinMax)**: $\frac{x - x_{min}}{x_{max} - x_{min}}$. Scales data to $[0, 1]$. Good for distance-based models (KNN) and image pixels.
+  - **Robust Scaling**: $\frac{x - \text{median}}{\text{IQR}}$. Uses median and Interquartile Range, making it robust to outliers.
+- **Categorical Encodings**:
+  - **One-Hot Encoding**: Creates binary columns for each category. Causes dimension explosion on high-cardinality features.
+  - **Ordinal Encoding**: Maps categories to integers. Assumes a natural order.
+  - **Target Encoding**: Replaces categories with the mean target value for that category. Can lead to severe target leakage; resolved using cross-validation smoothing.
+- **Missing Value Imputation**:
+  - **Mechanisms**: **MCAR** (Missing Completely At Random), **MAR** (Missing At Random), and **MNAR** (Missing Not At Random).
+  - **Strategies**: Simple imputation (mean, median, mode), KNN imputation (using nearest neighbor averages), and iterative regression-based imputation (MICE). Adding a binary missingness indicator column is highly recommended to capture MNAR patterns.
+- **Outlier Treatment**: Detected using Z-scores ($|Z| > 3$) or IQR bounds ($Q_1 - 1.5 \times \text{IQR}$, $Q_3 + 1.5 \times \text{IQR}$). Resolved by dropping (if noise), **Winsorization** (capping at percentiles), or transformation (log, Box-Cox).
+- **Imbalanced Class Strategies**:
+  - **Resampling**: Oversampling the minority class (SMOTE - Synthetic Minority Over-sampling Technique, ADASYN) or undersampling the majority class.
+  - **Algorithmic Weighting**: Using class weights to penalize minority class classification errors inversely proportional to class frequencies.
+  - **Focal Loss**: Modifies cross-entropy loss by adding a modulating factor $(1 - p_t)^\gamma$ to down-weight easy-to-classify examples, focusing the model's training on hard, rare examples.
 
 ---
 
@@ -13813,6 +14756,32 @@ class_weights = dict(zip(classes, weights))
 ```
 Alternatives: SMOTE, ADASYN, focal loss proxies.
 
+### Exploratory Data Analysis (EDA) Case Studies
+
+#### Case Study 1: Google Play Store App Analytics
+- **Objective**: Clean and analyze app store data to determine factors driving high ratings and installations.
+- **Workflow & Techniques**:
+  1. **Data Cleaning**: Parse columns like `Reviews` to integers, `Size` to float (converting 'M' to megabytes and 'k' to kilobytes), and `Installs` (removing '+' and commas). Drop or impute rows where ratings are missing (since target `Rating` is vital).
+  2. **Outlier Filtering**: Find rating values $> 5.0$ (erroneous data) and drop them. Check price columns for apps priced at $400 (suspicious spam/fraud apps) and investigate.
+  3. **High-Cardinality Handling**: The `Genres` and `Category` fields contain many values. Group infrequent categories into an `"Other"` category to reduce dimensions during visualization.
+  4. **Analysis & Insights**: Use bivariate scatter plots of Size vs. Rating and Price vs. Installs. Analyze the correlation matrix of numerical features. Discover that app rating has a positive correlation with review count but a negative correlation with pricing.
+
+#### Case Study 2: US Visa Application Approvals
+- **Objective**: Predict whether a visa application will be certified or denied based on employer and job properties.
+- **Workflow & Techniques**:
+  1. **Handling Missing Data**: Identify columns like `wage_offered_to` and `job_title` with missing values. For categorical columns with high null rates ($>40\%$), drop them. For essential ones like wages, impute using the median grouped by job category.
+  2. **Geographical Feature Engineering**: Extract state codes from applicant addresses and group them into broader economic regions (Northeast, West, South, Midwest) to simplify categorical feature models.
+  3. **Class Imbalance Management**: The target variable (`case_status`) is highly skewed (90% Certified, 10% Denied). Analyze minority class distributions and plan for class-weighted training.
+  4. **Collinearity Checking**: Calculate Variance Inflation Factor (VIF) on wage rate, prevailing wage, and company size columns. Drop redundant collinear columns where VIF $> 10$.
+
+#### Case Study 3: Flight Price Prediction
+- **Objective**: Analyze flight itineraries and booking details to build a regression model predicting ticket prices.
+- **Workflow & Techniques**:
+  1. **Datetime Parsing**: Extract temporal features from flight departure and arrival times: `dep_hour` (morning, afternoon, night), `day_of_week` (weekday vs. weekend peak pricing), and calculate `flight_duration_minutes`.
+  2. **Stopover Encoding**: The `total_stops` column is ordinal (0 stops, 1 stop, 2+ stops). Map these to integers. Encode airline names using Target Encoding, adding a smoothing factor to prevent leakage.
+  3. **Target Transformation**: The target variable `Price` is highly right-skewed. Apply a log transformation $y' = \log(y)$ to normalize the distribution, satisfying homoscedasticity assumptions for linear models.
+  4. **Feature Selection**: Compute Mutual Information scores between engineered features (airline, duration, stops, weekday) and price. Drop features with mutual information scores close to zero.
+
 ---
 
 ## 8. How Interviewers Think
@@ -13965,6 +14934,51 @@ They test your ability to take raw data to production model with proper validati
 
 ---
 
+#### 61. How do you handle severe class imbalance in tabular datasets? Compare SMOTE, class weights, and Focal Loss.
+- **Detailed Answer**: Handling class imbalance involves adjusting how models learn from rare events (minority class).
+  - **SMOTE (Synthetic Minority Over-sampling Technique)**: Generates synthetic training instances along the line segments joining k-nearest neighbors of the minority class.
+    - *Pros*: Explores new regions of the minority feature space rather than duplicating rows.
+    - *Cons*: Ignorant of majority class distributions, potentially introducing noise and causing overlap/decision boundary blurring. Must *never* be applied to validation/test sets.
+  - **Class Weights**: Modifies the loss function to penalize misclassification of minority class instances by a factor inversely proportional to class frequencies ($w_c = \frac{N}{C \times N_c}$).
+    - *Pros*: Computational simplicity, no dataset modifications, directly supported in most frameworks.
+    - *Cons*: Does not change the density of data, which can limit complex decision boundary learning in sparse regions.
+  - **Focal Loss**: Modifies standard Cross-Entropy Loss by adding a modulating factor: $\text{FL}(p_t) = -\alpha_t (1 - p_t)^\gamma \log(p_t)$. When $\gamma > 0$, the loss for well-classified ("easy") examples ($p_t > 0.5$) is down-weighted, focusing the model's training on hard, rare examples.
+    - *Pros*: Dynamically shifts focus during training; highly robust to noise in imbalanced classes.
+    - *Cons*: Requires hyperparameter tuning ($\gamma$, $\alpha$).
+- **Follow-up Questions**: Why is ROC AUC misleading for severely imbalanced datasets? (Answer: ROC AUC plots TPR against FPR. If the majority class is huge, the False Positive Rate (FP / (FP + TN)) remains artificially low even with many false positives, causing the model to look better than it is. Precision-Recall AUC is preferred because it focuses on the minority class).
+- **Interviewer's Expectations**: Compare data-level resampling (SMOTE) vs. cost-level weighting (Class Weights) vs. loss-level focus (Focal Loss), identify SMOTE's data leakage risk if applied globally, and explain metric choices like PR AUC.
+
+---
+
+#### 62. How do you diagnose and resolve high bias vs. high variance using learning curves?
+- **Detailed Answer**: A **learning curve** plots training score and validation score against the training set size.
+  - **High Bias (Underfitting)**:
+    - *Diagnosis*: Both training and validation curves converge to a low score (high error) as training size increases, with a very small gap between them. Adding more data does not improve the score.
+    - *Remedies*: Increase model complexity (e.g., deeper trees, more neural network layers), engineer new features, perform polynomial expansions, or reduce regularization parameters (decrease $\lambda$ or increase $C$).
+  - **High Variance (Overfitting)**:
+    - *Diagnosis*: Training score remains high (low error) while the validation score is much lower, resulting in a wide gap (generalization gap) between the curves. As training size increases, the validation score may slowly rise but the gap remains.
+    - *Remedies*: Collect more training data, add regularization (L1/L2 penalty, dropout, weight decay), simplify model architecture, perform feature selection to drop noisy inputs, or use bagging ensembles.
+- **Follow-up Questions**: Can cross-validation alone diagnose bias-variance issues? (Answer: Yes, by comparing average train vs. validation scores. However, learning curves add value by showing if the model would benefit from more data or if it has reached its asymptotic capacity limit).
+- **Interviewer's Expectations**: Describe the shape of train/val curves for high bias (converging low scores, small gap) and high variance (high train, low validation, wide gap), and prescribe specific matching remedies for each.
+
+---
+
+#### 63. Explain the mathematical difference between PCA using Eigenvalue Decomposition versus Singular Value Decomposition (SVD).
+- **Detailed Answer**: Principal Component Analysis (PCA) identifies orthogonal axes of maximum variance in a dataset $\mathbf{X}$ (shape $N \times D$, centered to mean zero).
+  - **Eigenvalue Decomposition (EVD)**:
+    - Computes the $D \times D$ sample covariance matrix $\mathbf{\Sigma} = \frac{1}{N-1} \mathbf{X}^T \mathbf{X}$.
+    - Performs EVD on the covariance matrix: $\mathbf{\Sigma} = \mathbf{V} \mathbf{\Lambda} \mathbf{V}^T$, where $\mathbf{V}$ is the orthogonal matrix of eigenvectors (principal components) and $\mathbf{\Lambda}$ is the diagonal matrix of eigenvalues (representing variance along each component).
+  - **Singular Value Decomposition (SVD)**:
+    - Bypasses covariance matrix construction and directly decomposes the centered data matrix $\mathbf{X}$ as: $\mathbf{X} = \mathbf{U} \mathbf{S} \mathbf{V}^T$, where $\mathbf{U}$ is an $N \times N$ orthogonal matrix (left singular vectors), $\mathbf{V}$ is a $D \times D$ orthogonal matrix (right singular vectors), and $\mathbf{S}$ is an $N \times D$ diagonal matrix of singular values ($\sigma_i$).
+  - **Mathematical Connection & Tradeoffs**:
+    - The right singular vectors $\mathbf{V}$ from SVD are identical to the eigenvectors of the covariance matrix $\mathbf{X}^T\mathbf{X}$.
+    - The eigenvalues $\lambda_i$ are related to singular values $\sigma_i$ by: $\lambda_i = \frac{\sigma_i^2}{N-1}$.
+    - SVD is numerically preferred over EVD because calculating the covariance matrix $\mathbf{X}^T\mathbf{X}$ can lead to loss of numerical precision (underflow/overflow) and is computationally expensive ($O(N D^2)$) if $D$ is large.
+- **Follow-up Questions**: Why do we center the data before applying PCA? (Answer: If the data is not centered to mean zero, the first principal component will point towards the mean of the data rather than along the axis of maximum variance).
+- **Interviewer's Expectations**: Define the covariance matrix and EVD formulation, show the direct direct factorization of SVD, explain the mathematical equivalence of singular values and eigenvalues, and explain why SVD is numerically superior.
+
+---
+
 ## 10. Common Mistakes
 - **Data leakage**: Using test information in training.
 - **Overfitting to validation set**: Tuning too many times on same validation.
@@ -14077,6 +15091,46 @@ Traditional ML is like a craftsman with specialized tools for each material. Dee
 - **Gradient Issues**: Vanishing/exploding gradients and solutions.
 - **Architecture Search**: Neural Architecture Search (NAS), AutoML.
 - **Quantization and Pruning**: Model compression for deployment.
+
+### Deep-Dive: Perceptron Mathematics
+A Single Layer Perceptron computes output $y$ from inputs $\mathbf{x} = [x_1, x_2, \dots, x_d]^T$ using:
+$$y = f\left(\sum_{i=1}^d w_i x_i + b\right) = f(\mathbf{w}^T \mathbf{x} + b)$$
+- **Activation Rule**: The transfer function $f(z)$ is a step function:
+  $$f(z) = \begin{cases} 1 & \text{if } z \ge 0 \\ 0 & \text{if } z < 0 \end{cases}$$
+- **Update Rule**: For learning rate $\eta$, target label $y$, and prediction $\hat{y}$, weights and bias are updated iteratively:
+  $$\mathbf{w} \leftarrow \mathbf{w} + \eta (y - \hat{y}) \mathbf{x}$$
+  $$b \leftarrow b + \eta (y - \hat{y})$$
+  The update occurs only on misclassifications. If the dataset is linearly separable, the perceptron learning algorithm is guaranteed to converge in a finite number of steps (Novikoff's convergence theorem).
+
+### Deep-Dive: 10 Core Loss Functions
+1. **Mean Squared Error (MSE)**: $L = \frac{1}{N}\sum (y_i - \hat{y}_i)^2$. Heavily penalizes large errors; sensitive to outliers.
+2. **Mean Absolute Error (MAE)**: $L = \frac{1}{N}\sum |y_i - \hat{y}_i|$. Robust to outliers, but gradient is discontinuous at zero.
+3. **Categorical Cross-Entropy**: $L = -\sum_{c=1}^C y_{i,c} \log(\hat{y}_{i,c})$ for multi-class classification.
+4. **Binary Cross-Entropy**: $L = -\frac{1}{N}\sum [y_i \log(\hat{y}_i) + (1-y_i)\log(1-\hat{y}_i)]$ for binary outcomes.
+5. **Focal Loss**: $L = -\alpha_t (1 - p_t)^\gamma \log(p_t)$. Down-weights easy-to-classify examples, focusing on hard/minority instances.
+6. **Huber Loss**: Smooth combination of MSE and MAE. Quadratic for small errors, linear for large errors:
+   $$L_\delta(a) = \begin{cases} \frac{1}{2} a^2 & \text{if } |a| \le \delta \\ \delta(|a| - \frac{1}{2}\delta) & \text{otherwise} \end{cases}$$
+7. **Hinge Loss**: $L = \max(0, 1 - y\hat{y})$; standard loss for maximum-margin classification (SVMs).
+8. **Kullback-Leibler (KL) Divergence**: $L = \sum P(x) \log\left(\frac{P(x)}{Q(x)}\right)$; measures distribution shift. Used for reconstruction regularization in VAEs.
+9. **Triplet Loss**: $L = \max(0, d(a, p) - d(a, n) + \alpha)$, where $a$ is anchor, $p$ is positive, $n$ is negative, and $\alpha$ is margin. Learns compact embedding representations.
+10. **Cosine Proximity Loss**: $L = 1 - \frac{\mathbf{u} \cdot \mathbf{v}}{\|\mathbf{u}\|_2 \|\mathbf{v}\|_2}$; optimizes alignment direction of embedding vectors.
+
+### Deep-Dive: 10 Optimizers
+1. **SGD**: $W_{t+1} = W_t - \eta g_t$. Can get stuck in local minima or saddle points.
+2. **Momentum**: $v_t = \beta v_{t-1} + \eta g_t$, $W_{t+1} = W_t - v_t$. Dampens oscillations by adding historical velocity.
+3. **Nesterov Accelerated Gradient (NAG)**: $v_t = \beta v_{t-1} + \eta \nabla L(W_t - \beta v_{t-1})$. Computes gradient at look-ahead position.
+4. **AdaGrad**: $W_{t+1} = W_t - \frac{\eta}{\sqrt{G_t} + \epsilon} g_t$, where $G_t = \sum g_\tau^2$. Adapts learning rate per parameter; step size decays over time.
+5. **RMSprop**: $G_t = \beta G_{t-1} + (1-\beta)g_t^2$; resolves AdaGrad's learning rate decay using an exponentially decaying average.
+6. **AdaDelta**: Eliminates explicit learning rate parameter by tracking exponential moving averages of both gradients and weight updates.
+7. **Adam**: $m_t = \beta_1 m_{t-1} + (1-\beta_1)g_t$, $v_t = \beta_2 v_{t-1} + (1-\beta_2)g_t^2$, with bias-corrected terms $\hat{m}_t, \hat{v}_t$. Updates weights as: $W_{t+1} = W_t - \frac{\eta}{\sqrt{\hat{v}_t} + \epsilon} \hat{m}_t$.
+8. **AdaMax**: Variant of Adam replacing the $L_2$-norm scaled running average with $L_\infty$-norm scaling.
+9. **Nadam**: Integrates Nesterov accelerated gradient momentum directly into the Adam update formulation.
+10. **AdamW**: Decouples weight decay ($L_2$ penalty) from the adaptive gradient steps, preventing weight regularization decay distortion.
+
+### Deep-Dive: Weight Initializations
+- **Xavier/Glorot**: Samples weights from $\mathcal{N}\left(0, \sqrt{\frac{2}{d_{in} + d_{out}}}\right)$ or $\mathcal{U}\left(-\sqrt{\frac{6}{d_{in} + d_{out}}}, \sqrt{\frac{6}{d_{in} + d_{out}}}\right)$. Preserves signal variance across layers for tanh/sigmoid activations.
+- **He/Kaiming**: Samples weights from $\mathcal{N}\left(0, \sqrt{\frac{2}{d_{in}}}\right)$ or $\mathcal{U}\left(-\sqrt{\frac{6}{d_{in}}}, \sqrt{\frac{6}{d_{in}}}\right)$. Corrects variance drop due to half-zero outputs of ReLUs.
+- **Orthogonal**: Initializes weight tensors as orthogonal matrices, helping to mitigate gradient scaling explosions or vanishing trends in recurrent configurations.
 
 ---
 
@@ -14317,6 +15371,64 @@ for batch in loader:
 ```
 Mixed precision reduces memory by ~50% with minimal accuracy impact on modern GPUs.
 
+### Convolutional Neural Network (CNN) Architectures
+- **LeNet-5 (1998)**: 5 layers (2 Conv, 2 Subsampling, 1 FC). Uses average pooling, sigmoid/tanh activations. Engineered for handwritten digit recognition.
+- **AlexNet (2012)**: 8 layers (5 Conv, 3 FC). Key innovations: ReLU activation, Dropout regularization, Overlapping Max Pooling, and dual-GPU parallelization. Won ImageNet 2012.
+- **VGG-16/19 (2014)**: Replaced large filters with stacks of small $3 \times 3$ convolutions. Proved that deep architectures with simple filters yield high representational capacity.
+- **GoogLeNet / Inception (2014)**: Stacks **Inception Modules** performing multi-scale parallel convolutions ($1 \times 1$, $3 \times 3$, $5 \times 5$) and pooling, concatenated along channels. Uses auxiliary classifiers to maintain gradient flow.
+- **ResNet (2015)**: Stacks **Residual Blocks** introducing identity skip-connections: $H(x) = F(x) + x$. Allows training of extremely deep networks (152+ layers) by letting gradients flow directly through skip connections during backpropagation.
+
+### Computer Vision Paradigms
+- **Object Detection (Localization & Classification)**:
+  - **Two-Stage Detectors**:
+    - **R-CNN (2014)**: Extracts 2k region proposals (Selective Search) -> CNN feature extraction -> SVM classifier & bounding box regressor. Computationally expensive ($O(N)$ CNN runs).
+    - **Fast R-CNN (2015)**: Entire image runs once through CNN. RoI Pooling extracts fixed-length vectors from feature maps for classification/regression.
+    - **Faster R-CNN (2015)**: Replaces Selective Search with a **Region Proposal Network (RPN)** sharing convolutional features with the detection head, creating a single unified network.
+  - **One-Stage Detectors**:
+    - **YOLOv9 (2024)**: Directly predicts classes and bounding boxes in a single pass. Integrates **Programmable Gradient Information (PGI)** to solve the information bottleneck in deep networks, and **Generalized Efficient Layer Aggregation Network (GELAN)** to optimize parameters and speed.
+- **Image Segmentation**:
+  - **Mask R-CNN (2017)**: Extends Faster R-CNN by adding a third parallel branch predicting pixel-level segmentation masks. Replaces RoIPool with **RoIAlign** (using bilinear interpolation) to preserve exact spatial locations.
+- **Multi-Object Tracking (MOT)**:
+  - **DeepSORT**: Tracks objects across video frames. Uses a **Kalman Filter** to predict state coordinates, the **Hungarian Algorithm** to match tracks to new detections, and a deep CNN appearance descriptor to associate IDs based on visual similarity (handling occlusions).
+- **Generative Adversarial Networks (GANs)**:
+  - **DCGAN (Deep Convolutional GAN)**: Standardizes spatial CNNs for stable generation, removing pooling (using strided/fractionally-strided convs) and using Batch Normalization.
+  - **WGAN (Wasserstein GAN)**: Optimizes Earth Mover's Distance. Uses weight clipping or Gradient Penalty (WGAN-GP) to satisfy Lipschitz constraints, eliminating mode collapse.
+  - **StyleGAN**: Separates latent code mapping into a style generator. Controls synthesis scale using Adaptive Instance Normalization (AdaIN) at each layer.
+
+### Practical Computer Vision Project Blueprints
+
+#### Blueprint 1: Custom PyTorch CNN for Image Classification
+- **Stack**: PyTorch, Torchvision.
+- **Design**:
+  - Stacks `Conv2d` -> `BatchNorm2d` -> `ReLU` -> `MaxPool2d` blocks.
+  - Flatten layer followed by fully connected `Linear` layers and Dropout.
+  - Trained using Cross-Entropy loss and AdamW optimizer.
+  - Employs data augmentation (random horizontal flips, rotations, normalization).
+
+#### Blueprint 2: YOLOv9 Object Detection Pipeline
+- **Stack**: Ultralytics / YOLOv9 PyTorch repo.
+- **Design**:
+  - Format dataset into YOLO TXT format: `<class_id> <x_center> <y_center> <width> <height>` (normalized).
+  - Configure `data.yaml` defining train, val, and class counts.
+  - Initialize YOLOv9 model with pre-trained weights and fine-tune.
+  - Run inference script saving bounding box overlays.
+
+#### Blueprint 3: Detectron2 Mask R-CNN Instance Segmentation
+- **Stack**: Detectron2, PyTorch.
+- **Design**:
+  - Register custom dataset in COCO JSON format.
+  - Instantiate a pre-trained Mask R-CNN config (`COCO-InstanceSegmentation/mask_rcnn_R_50_FPN_3x`).
+  - Train model on custom dataset; adjust learning rate and iterations.
+  - Use `DefaultPredictor` and `Visualizer` to draw segmentation boundaries.
+
+#### Blueprint 4: YOLOv9 + DeepSORT Object Tracking System
+- **Stack**: OpenCV, PyTorch, YOLOv9, DeepSORT.
+- **Design**:
+  - Run YOLOv9 object detector on each video frame to extract bounding boxes.
+  - Extract appearance feature vectors from bounding box crops using a pre-trained Re-ID network.
+  - Pass bounding box coordinates, confidence scores, and feature vectors to the DeepSORT tracker.
+  - Retrieve matched track IDs and draw bounding boxes with persistent labels across frames.
+
 ---
 
 ## 8. How Interviewers Think
@@ -14469,6 +15581,55 @@ They test whether you understand neural network fundamentals: forward/backward p
 
 ---
 
+#### 61. Write down the step-by-step mathematical proof of backpropagation for a single neuron using the chain rule.
+- **Detailed Answer**: Consider a single neuron with input $x$, weight $w$, bias $b$, and output $a = \sigma(z)$ where $z = wx + b$. Let the loss be $L = \frac{1}{2}(y - a)^2$. We seek the gradients $\frac{\partial L}{\partial w}$ and $\frac{\partial L}{\partial b}$ to perform weight updates.
+  Using the **Chain Rule**, we decompose the derivative of the loss with respect to the weight $w$:
+  $$\frac{\partial L}{\partial w} = \frac{\partial L}{\partial a} \cdot \frac{\partial a}{\partial z} \cdot \frac{\partial z}{\partial w}$$
+  1. Compute the derivative of the loss with respect to the activation $a$:
+     $$\frac{\partial L}{\partial a} = -(y - a)$$
+  2. Compute the derivative of the activation $a$ with respect to the pre-activation $z$:
+     $$\frac{\partial a}{\partial z} = \sigma'(z) = \sigma(z)(1 - \sigma(z)) = a(1 - a)$$
+  3. Compute the derivative of the pre-activation $z$ with respect to the weight $w$:
+     $$\frac{\partial z}{\partial w} = x$$
+  4. Multiply the terms together:
+     $$\frac{\partial L}{\partial w} = -(y - a) \cdot a(1 - a) \cdot x$$
+     Defining the error term $\delta = \frac{\partial L}{\partial z} = \frac{\partial L}{\partial a} \cdot \frac{\partial a}{\partial z} = -(y - a)a(1-a)$, we get:
+     $$\frac{\partial L}{\partial w} = \delta x$$
+  5. Similarly, for the bias $b$, since $\frac{\partial z}{\partial b} = 1$:
+     $$\frac{\partial L}{\partial b} = \frac{\partial L}{\partial a} \cdot \frac{\partial a}{\partial z} \cdot \frac{\partial z}{\partial b} = \delta \cdot 1 = \delta$$
+- **Follow-up Questions**: How does this scale to a multi-layer network? (Answer: The error term $\delta_j^l$ at node $j$ in layer $l$ is computed recursively from the error terms in the subsequent layer: $\delta_j^l = \left(\sum_k \delta_k^{l+1} w_{kj}^{l+1}\right) \sigma'(z_j^l)$, which is propagated backward through the network).
+- **Interviewer's Expectations**: Correctly break down the chain rule steps, write the derivatives of the squared loss and sigmoid function, define the error term ($\delta$), and show the final gradient products for both weight and bias.
+
+---
+
+#### 62. Discuss the mathematical diagnostics of vanishing vs. exploding gradients. How do you resolve them in deep models?
+- **Detailed Answer**: During backpropagation in an $L$-layer network, the gradient of the loss with respect to the first layer's weights $W_1$ involves product terms of Jacobian matrices:
+  $$\frac{\partial L}{\partial W_1} \propto \prod_{l=2}^L \left( W_l^T \operatorname{diag}(\sigma'(z_l)) \right)$$
+  - **Vanishing Gradients**:
+    - *Diagnostic*: If the weights $W_l$ are initialized small (eigenvalues $< 1$) and/or we use saturating activations like sigmoid/tanh whose derivatives $\sigma'(z) \le 0.25$, the product $\prod_{l=2}^L W_l^T \operatorname{diag}(\sigma'(z_l))$ approaches zero exponentially as $L$ increases. As a result, early layers learn extremely slowly or stop training entirely.
+    - *Remedies*: Use non-saturating activations (ReLU, LeakyReLU, GELU), implement residual skip-connections (which add $1$ to the Jacobian, preserving gradient flow), apply Batch/Layer Normalization, and initialize weights using He/Xavier protocols.
+  - **Exploding Gradients**:
+    - *Diagnostic*: If the weights $W_l$ are initialized large (eigenvalues $> 1$), the matrix product grows exponentially with the network depth, causing the gradients to become extremely large, leading to numerical overflow (NaN losses) and unstable oscillations.
+    - *Remedies*: Implement **Gradient Clipping** (capping the norm of the gradient vector: $g \leftarrow g \cdot \frac{\tau}{\max(\tau, \|g\|)}$), use weight regularization (weight decay), and employ proper initialization (He/Kaiming).
+- **Follow-up Questions**: Why does Batch Normalization prevent vanishing/exploding gradients? (Answer: It normalizes the inputs to each activation function, preventing activations from sliding into saturating regimes where derivatives are close to zero, and bounds the scale of outputs).
+- **Interviewer's Expectations**: Write or explain the product-of-Jacobians backprop formulation, describe how sigmoid/tanh derivatives cause vanishing gradients, explain how weight scale causes exploding gradients, and outline multiple concrete engineering resolutions.
+
+---
+
+#### 63. Explain the architecture of YOLOv9. What are the key innovations compared to previous YOLO versions?
+- **Detailed Answer**: YOLOv9 (2024) is a state-of-the-art single-stage object detector. It addresses the **information bottleneck** problem in deep feedforward neural networks, where input data details are gradually lost as features pass through successive convolutional layers.
+  Key Innovations:
+  1. **Programmable Gradient Information (PGI)**:
+     - Deep networks suffer from lost input signal pathways. PGI generates gradients for the main branch through a auxiliary reversible network.
+     - An **Auxiliary Reversible Branch** is trained alongside the main branch, ensuring that the backpropagated error signals retain complete semantic data from the inputs.
+     - Crucially, this auxiliary branch is completely **discarded during inference**, resulting in zero additional computational overhead at runtime.
+  2. **Generalized Efficient Layer Aggregation Network (GELAN)**:
+     - Optimizes the network's backbone. GELAN combines features of ELAN (Efficient Layer Aggregation Network) and CSPNet, allowing developers to choose arbitrary computational blocks (e.g., standard convolutions, ResNet blocks) while maintaining high inference speed and low parameter counts.
+- **Follow-up Questions**: Why is YOLOv9 faster than two-stage detectors like Mask R-CNN? (Answer: It processes the entire image and directly regresses class probabilities and bounding box coordinates in a single forward pass, bypassing the region proposal and crop alignment steps).
+- **Interviewer's Expectations**: Describe the information bottleneck problem in deep vision backbones, explain the PGI concept (auxiliary reversible branch training, zero-cost inference discarding), and detail the composition of GELAN.
+
+---
+
 ## 10. Common Mistakes
 - Using sigmoid/tanh in hidden layers instead of ReLU.
 - Forgetting to call `model.train()` / `model.eval()`.
@@ -14583,6 +15744,32 @@ TensorFlow is a commercial shipyard: massive infrastructure, standardized parts,
 - **Custom Autograd Functions**: Extend autograd with custom forward/backward.
 - **Meta-devices and Lazy Execution**: PyTorch 2.0 `torch.compile`, lazy tensors.
 - **Accelerator Orchestration**: TPU pods, GPU clusters, pipeline parallelism.
+
+### Deep-Dive: Framework Syntax Comparison
+- **Tensor Operations**:
+  - *PyTorch*: `x = torch.tensor([1.0, 2.0], dtype=torch.float32, requires_grad=True)`
+  - *TensorFlow*: `x = tf.Variable([1.0, 2.0], dtype=tf.float32)`
+- **Auto-differentiation**:
+  - *PyTorch*: Uses dynamic graph execution under `autograd`. Gradients computed by running `loss.backward()`, populating `tensor.grad`.
+  - *TensorFlow*: Uses `tf.GradientTape()` context manager. Tapes operations on variables, then `tape.gradient(loss, variables)` is called.
+- **Layers & Model Definition**:
+  - *PyTorch*: Class subclasses `nn.Module`. Defines layers in `__init__` and computation in `forward(x)`.
+  - *TensorFlow*: Class subclasses `tf.keras.Model` or uses Keras Sequential API. Defines layers in `__init__` and computation in `call(x)`.
+
+### Deep-Dive: Netron Visualization & Colab Pro Configuration
+- **Netron Model Visualizer**:
+  - Netron is a structural visualization tool for deep learning models. It inputs serialized model binaries (e.g., `.onnx`, `.tflite`, `.pb`, `.h5`, `.pt`) and produces an interactive, graphical representation of the model's computational DAG.
+  - Useful for: validating layer connectivity, checking output shape matching, auditing parameter dimensions, and debugging custom tensor operations.
+- **Google Colab Pro Optimization**:
+  - **GPU Runtimes**: Access to high-performance accelerators: NVIDIA T4 (standard), V100, and A100 Tensor Core GPUs (delivering up to 40GB VRAM, critical for batch sizes of large LLMs/Vision models).
+  - **Memory Management**: High-RAM runtimes allow up to 51GB RAM, avoiding Out-Of-Memory (OOM) crashes during large dataset transformations.
+  - **Drive Mount**:
+    ```python
+    from google.colab import drive
+    drive.mount('/content/drive')
+    ```
+    Allows direct reading and writing of checkpoints to Google Drive, securing parameters against unexpected session timeouts.
+  - **Command Terminal**: Colab Pro features a Linux terminal access, allowing developers to execute git commands, pip installations, and custom training launch scripts directly.
 
 ---
 
@@ -14775,6 +15962,105 @@ optimizer = optim.Adam(backbone.fc.parameters(), lr=1e-3)
 ```
 Freezing backbone is essential when target dataset is small or fine-tuning budget is limited.
 
+### Example 5: PyTorch vs. TensorFlow Custom Training Loops
+Here we contrast the native API architectures for custom training loops on synthetic regression data.
+
+**PyTorch Implementation:**
+```python
+import torch
+import torch.nn as nn
+import torch.optim as optim
+
+# 1. Setup Model, Optimizer, and Loss
+model = nn.Linear(10, 1)
+optimizer = optim.SGD(model.parameters(), lr=0.01)
+criterion = nn.MSELoss()
+
+# 2. Training Loop
+for epoch in range(100):
+    inputs = torch.randn(32, 10)
+    targets = torch.randn(32, 1)
+    
+    # Forward Pass
+    outputs = model(inputs)
+    loss = criterion(outputs, targets)
+    
+    # Backward Pass & Optimize
+    optimizer.zero_grad()
+    loss.backward()
+    optimizer.step()
+    
+    if epoch % 20 == 0:
+        print(f"PyTorch Epoch {epoch} Loss: {loss.item():.4f}")
+```
+
+**TensorFlow Implementation:**
+```python
+import tensorflow as tf
+
+# 1. Setup Model, Optimizer, and Loss
+model = tf.keras.layers.Dense(1)
+optimizer = tf.keras.optimizers.SGD(learning_rate=0.01)
+loss_fn = tf.keras.losses.MeanSquaredError()
+
+# 2. Training Loop with tf.function (graphs compilation)
+@tf.function
+def train_step(x, y):
+    with tf.GradientTape() as tape:
+        predictions = model(x)
+        loss = loss_fn(y, predictions)
+    gradients = tape.gradient(loss, model.trainable_variables)
+    optimizer.apply_gradients(zip(gradients, model.trainable_variables))
+    return loss
+
+for epoch in range(100):
+    inputs = tf.random.normal((32, 10))
+    targets = tf.random.normal((32, 1))
+    loss = train_step(inputs, targets)
+    
+    if epoch % 20 == 0:
+        print(f"TensorFlow Epoch {epoch} Loss: {loss.numpy():.4f}")
+```
+
+### Example 6: TensorBoard Tracking and Netron Visualization Setup
+Exporting computational logs for profiling and visualizing a model using Netron.
+
+```python
+import torch
+import torch.nn as nn
+from torch.utils.tensorboard import SummaryWriter
+
+# 1. Define Model
+class SimpleMLP(nn.Module):
+    def __init__(self):
+        super().__init__()
+        self.net = nn.Sequential(
+            nn.Linear(28*28, 128),
+            nn.ReLU(),
+            nn.Linear(128, 10)
+        )
+    def forward(self, x):
+        return self.net(x)
+
+model = SimpleMLP()
+
+# 2. Export model graph to TensorBoard
+writer = SummaryWriter("runs/netron_tb_demo")
+dummy_input = torch.randn(1, 28*28)
+writer.add_graph(model, dummy_input)
+writer.close()
+
+# 3. Export model structure to ONNX for Netron visualization
+torch.onnx.export(
+    model, 
+    dummy_input, 
+    "mlp_model.onnx", 
+    input_names=["input_pixels"], 
+    output_names=["class_logits"]
+)
+print("ONNX model saved. You can now open 'mlp_model.onnx' in Netron (https://netron.app) to inspect it.")
+```
+
 ---
 
 ## 7. Advanced Concepts
@@ -14961,6 +16247,60 @@ They test whether you understand the frameworks as tools, not magic. They want t
 
 ---
 
+#### 61. Contrast PyTorch dynamic graphs with TensorFlow static graphs. Discuss eagerness, trace compiling, and debugging.
+- **Detailed Answer**: The core architectural difference lies in how they construct and execute the computational graph:
+  - **PyTorch (Dynamic / Define-by-Run)**:
+    - *Mechanism*: PyTorch builds the computation graph on-the-fly during the forward pass. Every operation (e.g., adding two tensors) dynamically appends a node to the execution graph.
+    - *Eagerness*: Execution is immediate. Tensors contain concrete values.
+    - *Debugging*: Standard Python debugging tools (e.g., `pdb`, print statements) work seamlessly. Error traces point exactly to the offending line of Python code.
+    - *JIT Compilation*: Can compile graphs using `torch.compile` or TorchScript for production optimization.
+  - **TensorFlow (Static / Define-then-Run)**:
+    - *Mechanism*: Historically (TF 1.x), the graph structure was defined using symbolic placeholders before execution, and run inside a `Session`. Modern TF (2.x) runs in **Eager Execution** mode by default.
+    - *Trace Compiling*: By wrapping a function in `@tf.function`, TF traces the Python operations, constructs a static computation graph (polymorphic tracing), and optimizes it using the XLA (Accelerated Linear Algebra) compiler.
+    - *Debugging*: Harder to debug traced functions since variables contain symbolic nodes rather than concrete values. Error traces map to the compiled C++ runtime, rather than Python lines.
+- **Follow-up Questions**: When should you disable `@tf.function` tracing? (Answer: During debugging, or when your function has dynamic Python control flow that changes execution logic per call, which would trigger constant re-tracing overhead).
+- **Interviewer's Expectations**: Explain the concepts of define-by-run vs. define-then-run, discuss eager execution vs. static graphs, explain how tracing works in `@tf.function`, and compare their debugging profiles.
+
+---
+
+#### 62. What is the API contract for writing custom layers in PyTorch vs. TensorFlow Keras?
+- **Detailed Answer**:
+  - **PyTorch (`nn.Module`)**:
+    - Subclass `nn.Module`.
+    - Instantiate sub-layers or custom parameter tensors in `__init__`. Parameters must be wrapped in `nn.Parameter(tensor)` to register them in the model's parameter list so that optimizers can track them.
+    - Implement `forward(*input)` defining the forward pass logic. Autograd automatically builds the backward pass.
+    - Example:
+      ```python
+      class MyLinear(nn.Module):
+          def __init__(self, in_features, out_features):
+              super().__init__()
+              self.weight = nn.Parameter(torch.randn(out_features, in_features))
+              self.bias = nn.Parameter(torch.zeros(out_features))
+          def forward(self, x):
+              return x @ self.weight.t() + self.bias
+      ```
+  - **TensorFlow Keras (`tf.keras.layers.Layer`)**:
+    - Subclass `tf.keras.layers.Layer`.
+    - Implement `__init__` to handle input-independent configurations.
+    - Implement `build(self, input_shape)`: This is where variables are created once the input shape is known, using `self.add_weight`. This avoids hardcoding input dimensions.
+    - Implement `call(self, inputs)` defining the computation.
+    - Example:
+      ```python
+      class MyLinear(tf.keras.layers.Layer):
+          def __init__(self, units):
+              super().__init__()
+              self.units = units
+          def build(self, input_shape):
+              self.w = self.add_weight(shape=(input_shape[-1], self.units), initializer="random_normal", trainable=True)
+              self.b = self.add_weight(shape=(self.units,), initializer="zeros", trainable=True)
+          def call(self, inputs):
+              return tf.matmul(inputs, self.w) + self.b
+      ```
+- **Follow-up Questions**: Why is the `build` method useful in Keras? (Answer: It enables shape inference. Layers can be declared without specifying input feature dimensions, which are dynamically resolved during the first forward pass).
+- **Interviewer's Expectations**: Compare PyTorch's `nn.Parameter` initialization in `__init__` to Keras's `add_weight` execution in `build`, show basic code snippets for both frameworks, and explain the dynamic shape inference benefits of the Keras `build` stage.
+
+---
+
 ## 10. Common Mistakes
 - Forgetting `.to(device)` on model and data.
 - Using `model.eval()` only for inference, not validation.
@@ -15045,6 +16385,24 @@ Modern corporate data is fragmented across various repositories: SQL databases, 
 ### Analogy
 If Microsoft Excel is like a single workbench where you manually copy, paste, and format data tables, Power BI is an automated assembly line: raw materials (data sources) are ingested, cleaned and stamped by machines (Power Query), stored in standardized bins (VertiPaq), and assembled into final products (visual dashboards) that are delivered automatically to clients.
 
+### Power BI Desktop Installation & Setup
+To begin developing Power BI reports, download and install **Power BI Desktop**, which is a free application running on Windows OS.
+1. **System Requirements**: 64-bit Windows operating system (Windows 10/11 or Windows Server), at least 4 GB RAM (8 GB or more recommended), and .NET Framework 4.8 or later.
+2. **Download Methods**:
+   - **Microsoft Store (Recommended)**: Automates updates and ensures you always have the latest monthly release without admin privileges.
+   - **Direct MSI Download**: Downloaded from the official Microsoft download page. Useful for offline installs or managed corporate deployment.
+
+### User Interface Elements
+The Power BI Desktop interface is structured into three primary workspace views accessible from the left-hand navigation pane, along with helper configuration panels:
+1. **Report View**: The primary canvas layout where you design and construct interactive visualizations (charts, tables, slicers).
+2. **Table/Data View**: Allows you to inspect, filter, and format the data loaded in the tables after Power Query transformations.
+3. **Model View**: Shows the relationship diagram of all loaded tables, where you configure cardinalities, cross-filtering directions, and database schemas (like Star Schemas).
+4. **Power Query Editor**: A separate window triggered by clicking "Transform Data", used to perform ETL operations (cleaning, merging, transforming data) using the functional **M Language**.
+5. **Configuration Panes (Right Side)**:
+   - **Fields/Data Pane**: Lists all columns and measures across loaded tables.
+   - **Visualizations Pane**: Provides the chart template selection library and data field mappings (X-axis, Y-axis, tooltips).
+   - **Format Pane**: Allows detailed visual styling configurations (colors, titles, borders, page sizes).
+
 ---
 
 ## 2. Core Concepts
@@ -15071,6 +16429,51 @@ If Microsoft Excel is like a single workbench where you manually copy, paste, an
   - **Import Mode**: Loads a copy of the data into the in-memory VertiPaq engine (fastest query speeds).
   - **DirectQuery**: Queries the target database directly at runtime (slower, but supports real-time data and large volumes).
 
+### Visualizations Deep-Dive
+Visual elements convert calculated metrics into interactive insights. Selecting the appropriate visual type is essential for optimal user experience:
+1. **Bar & Column Charts**: 
+   - **Clustered Bar/Column**: Displays categories side-by-side. Best for comparing independent categories.
+   - **Stacked Bar/Column**: Stacks categories on top of each other. Best for comparing part-to-whole relationships across categories.
+   - **100% Stacked Bar/Column**: Standardizes the total height to 100%, showing relative percentage weights.
+2. **Pie & Donut Charts**: Used to show part-to-whole compositions. Limit categories to 3-4; high cardinality makes these charts unreadable.
+3. **Waterfall Charts**: Shows the cumulative effect of sequentially introduced positive or negative values (e.g. tracking revenue from Gross Sales to Net Profit).
+4. **Treemap Charts**: Displays nested colored rectangles representing category values by size. Best for high-cardinality hierarchical structures (e.g., product subcategories).
+5. **Table & Matrix Visuals**:
+   - **Table**: A flat, row-by-row representation of data.
+   - **Matrix**: A pivot-table style structure supporting multi-dimensional groupings (rows and columns) with collapsible hierarchies and dynamic totals.
+6. **Line & Area Charts**: 
+   - **Line Chart**: Best for displaying continuous trends over time.
+   - **Area Chart**: Shades the region under the line; best for showing the magnitude of volume changes over time.
+7. **KPI & Slicers**:
+   - **KPI Visual**: Shows a current value (e.g. sales this month), its target goal, and a colored status indicator (red/green) based on threshold differences.
+   - **Slicers**: Interactive visual filters placed on the canvas, allowing users to dynamically filter report visuals (supports single-select, multi-select, dropdowns, and search).
+8. **Funnel Charts**: Shows stages in a linear process (e.g. recruitment pipelines or sales pipelines) to identify conversion bottlenecks.
+9. **Scatter Plot**: Displays relationships between two numeric values using X and Y coordinates. Useful for spotting correlations, clusters, and outliers.
+10. **Maps**:
+    - **Bubble Map**: Places dots on geographical coordinates, using dot size to represent value.
+    - **Filled Map**: Colors administrative boundaries (countries/states) based on value intensity.
+11. **Gauge & Card Visuals**:
+    - **Card**: Displays a single, highlighted numeric metric (e.g., Total Profit).
+    - **Gauge**: A circular arc visual showing progress toward a defined target.
+12. **Custom Visuals**: Visual layouts not available in the default panel. Developers can import them from **Microsoft AppSource** (e.g., Sankey diagrams, Gantt charts) or write custom code using TypeScript.
+
+### Data Modeling & Relationships
+A robust data model is the foundation of high-performance calculations and clean dashboards:
+1. **Fact vs. Dimension Tables**:
+   - **Fact Table**: Stores quantitative transactions, values, or metrics (e.g., `SalesAmount`, `Quantity`, `DateKey`, `ProductKey`). It is tall, narrow, and grows continuously.
+   - **Dimension Table**: Stores descriptive attributes or lookup context (e.g., `ProductName`, `CustomerEmail`, `RegionCode`). It is wide, relatively short, and has unique primary keys.
+2. **Star Schema vs. Snowflake Schema**:
+   - **Star Schema**: Direct one-to-many relationships pointing from descriptive dimension tables to a central fact table. Highly recommended because the VertiPaq engine optimizes dictionary joins in this shape, leading to faster queries and simplified DAX.
+   - **Snowflake Schema**: Normalized dimension tables containing sub-dimensions (e.g. `Product` links to `Subcategory` which links to `Category`). This normalizes schemas but degrades query performance by forcing VertiPaq to traverse multiple relationship steps to propagate filters.
+3. **Relationship Cardialities**:
+   - **One-to-Many (1:M)**: The standard relationship type. One row in the dimension table filters multiple rows in the fact table.
+   - **One-to-One (1:1)**: Links two tables sharing a unique key. Use sparingly; consider merging tables instead.
+   - **Many-to-Many (M:N)**: Both tables share non-unique keys. Can cause ambiguity and performance lag. Best resolved using a **Bridge Table** with unique key lists.
+4. **Filter Propagation & Direction**:
+   - **Single Direction**: Filters flow only from the "one" side of the relationship to the "many" side. 
+   - **Both (Bidirectional)**: Filters flow in both directions. Avoid setting this globally, as it creates performance overhead, double-counting bugs, and ambiguous circular paths.
+   - **Active vs. Inactive**: Only one active relationship path can exist between two tables. If you link a Sales table to a Date table on both `OrderDate` and `ShipDate`, one is active (solid line) and the other is inactive (dotted line). Inactive relationships are dormant by default but can be activated in specific DAX queries using `USERELATIONSHIP`.
+
 ---
 
 ## 3. Internal Working
@@ -15094,6 +16497,32 @@ Analytical queries typically aggregate single columns (e.g., summing total sales
 1. **Value Encoding**: Converts integers into smaller mathematical representation spaces.
 2. **Dictionary Encoding**: Replaces text strings with integer index keys, storing the actual strings once in a lookup dictionary.
 3. **Run-Length Encoding (RLE)**: Compresses repeating consecutive values in a column by storing the value and its count (e.g., storing `(10, 5x)` instead of `10, 10, 10, 10, 10`).
+
+### Connectivity Modes in Power BI
+Power BI Desktop connects to data sources using four distinct data connectivity models:
+1. **Import Mode**: 
+   - **How it works**: VertiPaq takes a full copy of the data from the source, compresses it, and loads it into the host machine's RAM. 
+   - **Pros/Cons**: Extremely fast queries because operations happen in memory. However, dataset size is limited by RAM capacity (1 GB limit for shared capacity, up to 10-100 GB in Premium capacity), and the data remains static until a scheduled refresh runs.
+2. **DirectQuery Mode**: 
+   - **How it works**: No data is copied or stored in Power BI. When a user interacts with a visual, Power BI dynamically translates the visual's request into a native SQL query and executes it directly against the source database.
+   - **Pros/Cons**: Supports massive databases (multi-terabyte scale) and real-time updates. However, report performance is limited by the source database's speed and network latency, and DAX calculations are restricted to functions that can translate directly to SQL.
+3. **Live Connection Mode**:
+   - **How it works**: Connects directly to pre-built analysis models (e.g. Azure Analysis Services, SQL Server Analysis Services (SSAS), or published Power BI datasets).
+   - **Pros/Cons**: The data modeling and calculations are managed centrally on the remote server; the local desktop report acts strictly as a visualization layer. No data modeling or custom tables can be created locally in this mode.
+4. **Dual (Composite) Mode**:
+   - **How it works**: Individual tables are set to either "Import" or "DirectQuery", and some dimension tables can be set to "Dual".
+   - **Pros/Cons**: Tables in Dual mode can behave as Import (for fast local joins with imported facts) or DirectQuery (for joining with DirectQuery facts), maximizing performance while supporting real-time detail views.
+
+### Power BI Service & Publishing Architecture
+Once a report is created in Power BI Desktop, it is published to the cloud-based **Power BI Service** (app.powerbi.com) for distribution and sharing:
+1. **Workspaces**: Collaborative shared spaces where developers publish reports, dashboards, and datasets. Access is managed through roles: Admin, Member, Contributor, and Viewer.
+2. **Reports vs. Dashboards**:
+   - **Report**: Multi-page interactive canvases showing multiple visuals built from a single dataset.
+   - **Dashboard**: A single-page canvas showing pinned tiles from *multiple* different reports. They are static, intended for high-level monitoring, and do not support slicing or drill downs.
+3. **Scheduled Refresh**: Automated data re-imports configured in the Service. Import models on Shared capacity support up to 8 refreshes per day, while Premium capacity supports up to 48 refreshes per day.
+4. **Power BI Gateways**: Secure link proxies installed on on-premises networks to allow the cloud-based Power BI Service to query local databases.
+   - **On-premises Data Gateway (Personal Mode)**: Runs as an application under a single user's Windows account. Cannot be shared; useful for individual reporting.
+   - **On-premises Data Gateway (Standard/Enterprise Mode)**: Runs as a Windows background service. Can be shared by multiple users, supports central administration, direct DirectQuery tunnels, and scheduled refreshes across multiple databases.
 
 ---
 
@@ -15134,6 +16563,25 @@ ProfitColumn = Sales[Revenue] - Sales[Cost]
 TotalSalesMeasure = SUM(Sales[Revenue])
 ```
 
+### Example 3: Basic DAX Aggregators
+These measures calculate basic column summaries over the active filter context:
+```dax
+-- MIN: Find the lowest unit price sold
+LowestPrice = MIN(Sales[UnitPrice])
+
+-- MAX: Find the highest quantity in a single transaction
+MaxQuantity = MAX(Sales[Quantity])
+
+-- AVERAGE: Calculate the average sales transaction amount
+AverageSales = AVERAGE(Sales[Amount])
+
+-- COUNT: Count all transaction rows (includes duplicates/non-blanks)
+TransactionCount = COUNT(Sales[TransactionID])
+
+-- DISTINCTCOUNT: Count unique customers who made a purchase
+UniqueCustomers = DISTINCTCOUNT(Sales[CustomerID])
+```
+
 ---
 
 ## 6. Intermediate Examples
@@ -15163,6 +16611,88 @@ RETURN
 TotalWeightedProfit = SUMX(
     Sales,
     (Sales[Quantity] * Sales[UnitPrice]) - Sales[CostAmount]
+)
+```
+
+### Example 3: Dynamic Context Modifiers (ALL, ALLEXCEPT, ALLSELECTED)
+These examples show how to manipulate filter context for percentages and running totals:
+```dax
+-- 1. ALL: Calculates total sales across all products, ignoring visual product filters
+AllProductSales = CALCULATE(
+    [TotalSales],
+    ALL(Products)
+)
+
+-- Percentage of Total Product Sales
+PctOfTotalSales = DIVIDE([TotalSales], [AllProductSales], 0)
+
+-- 2. ALLEXCEPT: Clears all filters on the Customers table EXCEPT for the CustomerRegion
+RegionTotalSales = CALCULATE(
+    [TotalSales],
+    ALLEXCEPT(Customers, Customers[CustomerRegion])
+)
+
+-- 3. ALLSELECTED: Clears filters from grouping columns in the visual, but keeps external slicers
+VisualTotalSales = CALCULATE(
+    [TotalSales],
+    ALLSELECTED(Products)
+)
+```
+
+### Example 4: Advanced Iterators (MINX, MAXX, AVERAGEX)
+```dax
+-- MAXX: Finds the maximum daily sales amount by iterating over a list of dates
+MaxDailySales = MAXX(
+    VALUES('Calendar'[Date]),
+    [TotalSales]
+)
+
+-- AVERAGEX: Calculates the average monthly sales across months
+AverageMonthlySales = AVERAGEX(
+    VALUES('Calendar'[MonthYear]),
+    [TotalSales]
+)
+```
+
+### Example 5: Date-Time, String, and Logical Functions
+```dax
+-- 1. Date-Time: Year-to-Date (YTD) Sales
+SalesYTD = TOTALYTD(
+    [TotalSales],
+    'Calendar'[Date]
+)
+
+-- 2. String: Create a customer display label
+CustomerLabel = CONCATENATE(
+    UPPER(Customers[LastName]),
+    CONCATENATE(", ", Customers[FirstName])
+)
+
+-- 3. Logical: Categorize sales size using SWITCH
+SalesCategory = SWITCH(
+    TRUE(),
+    Sales[Amount] > 10000, "High Value",
+    Sales[Amount] > 1000, "Medium Value",
+    "Low Value"
+)
+
+-- 4. Logical: Handle blanks with COALESCE
+CleanedDescription = COALESCE(Products[Description], "No Description Provided")
+```
+
+### Example 6: Dynamic Relationship Modifiers (USERELATIONSHIP, CROSSFILTER)
+```dax
+-- USERELATIONSHIP: Force query to use the inactive relationship on Shipping Date
+ShippedSales = CALCULATE(
+    [TotalSales],
+    USERELATIONSHIP(Sales[ShipDateKey], 'Calendar'[DateKey])
+)
+
+-- CROSSFILTER: Force the relationship between Sales and Products to be bidirectional
+-- for this calculation only, allowing product properties to filter bridging tables
+SalesWithBidirectional = CALCULATE(
+    [TotalSales],
+    CROSSFILTER(Sales[ProductKey], Products[ProductKey], Both)
 )
 ```
 
@@ -15856,6 +17386,20 @@ Earlier NLP models (RNNs, LSTMs) processed text sequentially, making parallel tr
 ### Analogy
 An LLM is a highly trained paralegal who has read every document in a massive library. It doesn't "know" facts like databases; it predicts plausible continuations based on statistical patterns in training data.
 
+### Introduction to Generative AI
+Generative AI refers to a class of artificial intelligence systems designed to create new content—such as text, images, music, audio, or code—based on the statistical patterns they learned from training datasets. Unlike traditional discriminative AI (which classifies or predicts labels from inputs, such as identifying spam emails), generative AI constructs entirely new data instances that are structurally similar to its training data.
+
+### History of Generative AI & The GPT Evolution
+1. **Early Probabilistic Models**: Early text generators relied on N-gram models and Markov chains, predicting the next word based purely on the frequency of adjacent word combinations. These models had no semantic understanding and struggled with contexts longer than a few words.
+2. **Deep Representation & NLU (Natural Language Understanding)**: The introduction of Recurrent Neural Networks (RNNs) and Long Short-Term Memory (LSTM) networks enabled models to maintain a hidden state (memory) over sequences, laying the groundwork for NLU (parsing sentence structure, sentiment, and intent).
+3. **Sequence-to-Sequence (Seq2Seq)**: Developed for machine translation, Seq2Seq mapped variable-length input sequences to variable-length outputs using an encoder-decoder architecture. However, sequential processing remained a major performance bottleneck.
+4. **The Transformer Revolution (2017)**: The "Attention is All You Need" paper introduced parallelized self-attention, unlocking the ability to train massive models on web-scale datasets.
+5. **The GPT Family Evolution (OpenAI)**:
+   - **GPT-1 (2018)**: Demonstrated that unsupervised pre-training on a large corpus followed by supervised fine-tuning on specific tasks could achieve strong generalization.
+   - **GPT-2 (2019)**: Expanded parameter size to 1.5 billion. It showed powerful zero-shot learning capabilities—meaning the model could generate highly coherent paragraphs, write poetry, translate languages, and compose stories without task-specific fine-tuning.
+   - **GPT-3 (2020)**: Scaled to 175 billion parameters. It unlocked few-shot prompt learning (in-context learning), enabling users to program the model simply by providing a few input-output examples in the text prompt, bypassing the need for weight-updating fine-tuning.
+   - **GPT-4 & Multimodal Models (2023+)**: Introduced multimodal capabilities, allowing the network to process and reason across text, code, images, and audio simultaneously.
+
 ---
 
 ## 2. Core Concepts
@@ -15888,6 +17432,13 @@ An LLM is a highly trained paralegal who has read every document in a massive li
 - **Mixture of Experts (MoE)**: Sparse models activate only subset of parameters per token (e.g., Mixtral), increasing capacity without proportional compute.
 - **KV Cache Optimization**: MQA (Multi-Query Attention), GQA (Grouped Query Attention) reduce KV cache memory.
 - **Speculative Decoding**: Small draft model proposes tokens; large model verifies. Faster inference without sampling quality loss.
+- **Autoencoders**: Unsupervised neural networks designed to compress input data into a low-dimensional **latent space** representation (Encoder) and then reconstruct the original input from this latent code (Decoder). They are trained by minimizing reconstruction error (e.g. Mean Squared Error).
+- **Variational Autoencoders (VAEs)**: Probabilistic generative variants of autoencoders. Instead of mapping an input to a fixed point in the latent space, the encoder outputs the parameters of a probability distribution (mean $\mu$ and variance $\sigma^2$). The decoder then samples from this distribution to generate new, unseen data instances. VAEs are optimized using the **ELBO (Evidence Lower Bound)** loss, which balances reconstruction quality and **KL Divergence** (forcing the latent distribution to match a standard normal distribution $\mathcal{N}(0, I)$).
+- **LLM Fine-Tuning Approaches**: Modifying pre-trained LLM weights to specialize them on domain-specific datasets:
+  - **Full Fine-Tuning**: Updates all parameters of the model. Extremely expensive and prone to **catastrophic forgetting**.
+  - **PEFT (Parameter-Efficient Fine-Tuning)**: Keeps the base model weights frozen and trains a small subset of additional weights (e.g., Prefix Tuning, Prompt Tuning).
+  - **LoRA / QLoRA**: Low-Rank Adaptation. Decomposes weight updates into two smaller low-rank matrices, reducing trainable parameters by >99%. QLoRA runs this over a quantized 4-bit base model, allowing fine-tuning on consumer hardware.
+  - **Instruction Tuning**: Fine-tuning pre-trained base models on prompt-response pairs to teach them to follow conversational instructions.
 
 ---
 
@@ -16031,6 +17582,55 @@ input_text = tokenizer.apply_chat_template(messages, tokenize=False)
 ```
 System prompt sets behavior; chat template formats multi-turn conversations.
 
+### Example 4: VAE Demo 1 - Basic Autoencoder in PyTorch
+This example shows a simple Autoencoder that compresses 28x28 images (like MNIST) into a 2D latent space and reconstructs them, showing the bottleneck effect and MSE loss optimization.
+
+```python
+import torch
+import torch.nn as nn
+import torch.optim as optim
+
+class Autoencoder(nn.Module):
+    def __init__(self, latent_dim=2):
+        super(Autoencoder, self).__init__()
+        # Encoder: 784 -> 128 -> 64 -> latent_dim
+        self.encoder = nn.Sequential(
+            nn.Linear(28 * 28, 128),
+            nn.ReLU(),
+            nn.Linear(128, 64),
+            nn.ReLU(),
+            nn.Linear(64, latent_dim)
+        )
+        # Decoder: latent_dim -> 64 -> 128 -> 784
+        self.decoder = nn.Sequential(
+            nn.Linear(latent_dim, 64),
+            nn.ReLU(),
+            nn.Linear(64, 128),
+            nn.ReLU(),
+            nn.Linear(128, 28 * 28),
+            nn.Sigmoid() # Scale outputs between 0 and 1
+        )
+
+    def forward(self, x):
+        # Flatten input from (batch, 1, 28, 28) to (batch, 784)
+        x_flat = x.view(x.size(0), -1)
+        latent = self.encoder(x_flat)
+        reconstruction = self.decoder(latent)
+        # Reshape back to image dimensions
+        return reconstruction.view(x.size(0), 1, 28, 28)
+
+# Initialize model, loss function, and optimizer
+model = Autoencoder(latent_dim=2)
+criterion = nn.MSELoss() # Reconstruction loss
+optimizer = optim.Adam(model.parameters(), lr=1e-3)
+
+# Mock training step
+dummy_batch = torch.rand(16, 1, 28, 28) # 16 dummy MNIST images
+reconstructed = model(dummy_batch)
+loss = criterion(reconstructed, dummy_batch)
+print(f"Reconstruction Loss: {loss.item():.4f}")
+```
+
 ---
 
 ## 6. Intermediate Examples
@@ -16091,6 +17691,102 @@ print(f"Perplexity: {perplexity.item():.2f}")
 ```
 Perplexity measures how "surprised" the model is by the text. Lower = more predictable.
 
+### Example 4: VAE Demo 2 - Variational Autoencoder (VAE) Model in PyTorch
+Unlike standard Autoencoders, a VAE encoder outputs mean ($\mu$) and log-variance ($\log(\sigma^2)$). It uses the **reparameterization trick** to sample latent vectors while allowing backpropagation: $z = \mu + \epsilon \odot \sigma$, where $\epsilon \sim \mathcal{N}(0, I)$.
+
+```python
+import torch
+import torch.nn as nn
+
+class VAE(nn.Module):
+    def __init__(self, latent_dim=2):
+        super(VAE, self).__init__()
+        # Shared Encoder backbone
+        self.encoder_backbone = nn.Sequential(
+            nn.Linear(28 * 28, 128),
+            nn.ReLU(),
+            nn.Linear(128, 64),
+            nn.ReLU()
+        )
+        # Latent parameter projections
+        self.fc_mu = nn.Linear(64, latent_dim)
+        self.fc_logvar = nn.Linear(64, latent_dim)
+        
+        # Decoder
+        self.decoder = nn.Sequential(
+            nn.Linear(latent_dim, 64),
+            nn.ReLU(),
+            nn.Linear(64, 128),
+            nn.ReLU(),
+            nn.Linear(128, 28 * 28),
+            nn.Sigmoid()
+        )
+
+    def encode(self, x):
+        h = self.encoder_backbone(x)
+        return self.fc_mu(h), self.fc_logvar(h)
+
+    def reparameterize(self, mu, logvar):
+        # Calculate standard deviation from log variance
+        std = torch.exp(0.5 * logvar)
+        # Sample standard normal noise epsilon
+        eps = torch.randn_like(std)
+        # Return reparameterized latent code z
+        return mu + eps * std
+
+    def decode(self, z):
+        return self.decoder(z)
+
+    def forward(self, x):
+        x_flat = x.view(x.size(0), -1)
+        mu, logvar = self.encode(x_flat)
+        z = self.reparameterize(mu, logvar)
+        reconstruction = self.decode(z)
+        return reconstruction.view(x.size(0), 1, 28, 28), mu, logvar
+
+# VAE Loss Function: Reconstruction (Binary Cross Entropy) + KL Divergence
+def vae_loss_function(recon_x, x, mu, logvar):
+    # Flatten outputs and targets
+    recon_flat = recon_x.view(recon_x.size(0), -1)
+    x_flat = x.view(x.size(0), -1)
+    
+    # 1. Reconstruction Loss (BCE)
+    BCE = nn.functional.binary_cross_entropy(recon_flat, x_flat, reduction='sum')
+    
+    # 2. KL Divergence: -0.5 * sum(1 + log(sigma^2) - mu^2 - sigma^2)
+    KLD = -0.5 * torch.sum(1 + logvar - mu.pow(2) - logvar.exp())
+    
+    return BCE + KLD
+```
+
+### Example 5: VAE Demo 3 - Latent Space Sampling and Image Generation
+This example demonstrates how to generate new synthetic image instances by sampling random coordinate vectors directly from the latent Gaussian space and decoding them:
+
+```python
+import torch
+
+def generate_new_images(vae_model, num_samples=10, latent_dim=2):
+    # Set model to evaluation mode
+    vae_model.eval()
+    
+    with torch.no_grad():
+        # 1. Sample random noise from standard normal distribution
+        random_latent_coords = torch.randn(num_samples, latent_dim)
+        
+        # 2. Pass latent samples through decoder
+        generated_images_flat = vae_model.decode(random_latent_coords)
+        
+        # 3. Reshape flat vectors back to MNIST image dimensions
+        generated_images = generated_images_flat.view(num_samples, 1, 28, 28)
+        
+    print(f"Successfully generated {num_samples} synthetic images from latent space.")
+    return generated_images
+
+# Sample run
+vae_model = VAE(latent_dim=2)
+new_digits = generate_new_images(vae_model, num_samples=5)
+```
+
 ---
 
 ## 7. Advanced Concepts
@@ -16140,6 +17836,60 @@ LLMs can be structured as autonomous agents that orchestrate multi-step planning
 - **Anthropic Claude's Native Tool Use (Function Calling)**: Instead of arbitrary text, Claude accepts a list of tool definitions (name, description, input schema in JSON). In its forward pass, Claude decides if a tool is needed, pauses generation, and returns a structured `tool_use` JSON response specifying the tool and arguments. The application executes the tool and passes the results back in a `tool_result` block.
 - **Agentic Loops (ReAct)**: The "Reason-Act-Observe" loop patterns. The agent reasons about the current state, acts by using a tool, observes the results, and repeats until the goal is met.
 - **Claude Computer Use API**: Enables Claude to interact directly with standard OS desktop interfaces by simulating mouse clicks, cursor movements, and keyboard inputs on screenshots.
+
+### Project | Code Autocompletion and Bug Detection
+This project demonstrates parameter-efficient fine-tuning (PEFT) of a pre-trained programming model (e.g., CodeLlama-7B) using **QLoRA** (Quantized Low-Rank Adaptation) on custom code bug-fix datasets.
+
+#### Implementation Architecture
+1. **Base Model Quantization**: Load the base model in 4-bit precision using `bitsandbytes` to reduce VRAM requirements:
+   ```python
+   from transformers import AutoModelForCausalLM, BitsAndBytesConfig
+   import torch
+   
+   bnb_config = BitsAndBytesConfig(
+       load_in_4bit=True,
+       bnb_4bit_quant_type="nf4",
+       bnb_4bit_compute_dtype=torch.bfloat16
+   )
+   base_model = AutoModelForCausalLM.from_pretrained(
+       "codellama/CodeLlama-7b-hf",
+       quantization_config=bnb_config,
+       device_map="auto"
+   )
+   ```
+2. **LoRA Adapter Setup**: Wrap the model with a PEFT configuration, targeting target linear projection modules (specifically attention layers):
+   ```python
+   from peft import LoraConfig, get_peft_model
+   
+   peft_config = LoraConfig(
+       r=16, # Rank of decomposed update matrices
+       lora_alpha=32, # Scaling factor
+       target_modules=["q_proj", "k_proj", "v_proj", "o_proj"], # Target attention layers
+       lora_dropout=0.05,
+       bias="none",
+       task_type="CAUSAL_LM"
+   )
+   peft_model = get_peft_model(base_model, peft_config)
+   peft_model.print_trainable_parameters()
+   ```
+3. **Training Configuration**: Set up Hugging Face `SFTTrainer` (Supervised Fine-Tuning) using cosine learning decay, mixed-precision `bf16`, and gradient accumulation to simulate large batch sizes:
+   ```python
+   from trl import SFTTrainer
+   from transformers import TrainingArguments
+   
+   training_args = TrainingArguments(
+       output_dir="./code_qlora_results",
+       learning_rate=2e-4,
+       per_device_train_batch_size=4,
+       gradient_accumulation_steps=4,
+       logging_steps=10,
+       max_steps=100,
+       fp16=False,
+       bf16=True, # Recommended for modern GPUs
+       optim="paged_adamw_32bit"
+   )
+   ```
+4. **Evaluation**: After training, merge weights and test the model on buggy code segments to verify that it generates syntactically correct autocompletions and detects code bugs zero-shot.
 
 ---
 
@@ -16234,6 +17984,21 @@ They test whether you understand LLMs as statistical sequence models, not magic.
 
 20. What is the difference between open and closed LLM APIs?
 - Open: weights available for self-hosting and modification. Closed: API-only, no weight access.
+
+20a. What is the difference between an Autoencoder and a Variational Autoencoder (VAE)?
+- **Detailed Answer**: An Autoencoder compresses input data into a deterministic bottleneck vector (latent representation) and reconstructs it. A Variational Autoencoder (VAE) maps inputs to a probability distribution (mean and variance) in latent space. This allows VAEs to act as true generative models by sampling new coordinate vectors from the distribution to construct novel data instances.
+- **Follow-up Questions**: What is the loss function of a VAE? (Answer: ELBO loss, combining Reconstruction loss (e.g. MSE/BCE) and KL Divergence).
+- **Interviewer's Expectations**: Distinguish deterministic compression from probabilistic generative mapping.
+
+20b. How does the reparameterization trick work in a VAE and why is it necessary?
+- **Detailed Answer**: In a VAE, the encoder outputs distribution parameters ($\mu$ and $\log(\sigma^2)$) and the latent code is sampled as $z \sim \mathcal{N}(\mu, \sigma^2)$. Sampling is a stochastic process, which has no derivative and blocks backpropagation. The reparameterization trick resolves this by isolating the stochasticity: sampling $\epsilon \sim \mathcal{N}(0, I)$ and computing $z = \mu + \epsilon \odot \sigma$. Now, the model weights can be updated during training because the gradient flows through $\mu$ and $\sigma$ deterministically.
+- **Follow-up Questions**: Can we train a VAE without this trick? (Answer: No, because backpropagation cannot calculate gradients through random sampling).
+- **Interviewer's Expectations**: Explain the gradient bottleneck of stochastic nodes and how the trick isolates random noise.
+
+20c. Explain the difference between full fine-tuning, PEFT, and LoRA/QLoRA.
+- **Detailed Answer**: Full fine-tuning updates all model parameters, which is computationally expensive and requires high VRAM. PEFT (Parameter-Efficient Fine-Tuning) freezes the base model weights and trains only a small set of adapter weights. LoRA (Low-Rank Adaptation) decomposes weight changes by inserting two low-rank matrices ($W_0 + \Delta W$, where $\Delta W = A \times B$) into attention layers. QLoRA (Quantized LoRA) quantizes the base model to 4-bit NormalFloat (NF4) and uses a double quantization technique, drastically reducing memory footprint so a 7B model can be fine-tuned on a single 16GB GPU.
+- **Follow-up Questions**: What are the trade-offs of QLoRA vs. Full Fine-Tuning? (Answer: QLoRA saves >90% VRAM with very minimal loss in model performance).
+- **Interviewer's Expectations**: Detail rank decomposition, parameter savings, and quantization benefits.
 
 ### Scenario-Based Questions
 21. You need to deploy a 70B parameter model on a single A100 80GB GPU.
@@ -17212,6 +18977,15 @@ In production systems, the database must accept inserts and updates while proces
 #### Streaming Ingestion and Write Amplification
 When a vector is inserted, the database writes it to a Write-Ahead Log (WAL) and stores it in an in-memory buffer index. In the background, worker processes merge buffer segments into the main HNSW index and recalculate graph links. This background merging process can cause high disk write amplification and temporary CPU spikes.
 
+#### Chroma DB Architecture
+Chroma DB is an open-source, AI-native vector database designed to be embedded directly into Python applications or run as a standalone client-server setup. It defaults to using an in-memory database or storing data locally on disk via SQLite for metadata storage and hnswlib for vector index serialization. It is popular for rapid prototyping, local development, and lightweight desktop search engines because of its minimal setup overhead and simple API.
+
+#### Pinecone DB Architecture
+Pinecone DB is a proprietary, fully managed, cloud-native vector database service. Unlike embedded databases, Pinecone abstracts away all infrastructure, indexing algorithms, and scaling concerns. It offers two main hosting paradigms:
+- **Pod-based Indexing**: Uses dedicated cloud resources (pods) optimized for either storage capacity (s1/p2 pods) or performance/low-latency (p1 pods).
+- **Serverless Indexing**: Dynamically provisions compute and storage resources, charging only for read, write, and storage footprints.
+Pinecone partitions indices using **Namespaces**, allowing multiple isolated datasets to coexist in a single index, and supports dynamic metadata filtering to prune the search space during the query phase.
+
 ---
 
 ## 3. Internal Working
@@ -17353,6 +19127,51 @@ distances, indices = index.search(xq, k)
 print("\nIVF-PQ Match indices:", indices)
 ```
 
+### Example 3: Local Collection Setup, Ingestion, and Querying in Chroma DB
+Chroma DB is ideal for local embedding storage. This example demonstrates how to initialize an in-memory Chroma client, create a collection, ingest document texts (with auto-generated embeddings via Chroma's default sentence-transformers model), and run a semantic query.
+
+```python
+import chromadb
+
+# 1. Initialize ephemeral (in-memory) Chroma client
+# For disk persistence, use chromadb.PersistentClient(path="./chroma_db")
+client = chromadb.EphemeralClient()
+
+# 2. Create or retrieve a collection
+# Chroma will use its default sentence-transformers model (all-MiniLM-L6-v2) for auto-embedding
+collection = client.create_collection(name="legal_documents")
+
+# 3. Add documents, metadata, and unique IDs
+# The client will automatically generate 384-dimensional embeddings for the documents
+collection.add(
+    documents=[
+        "Section 402 of the Clean Water Act prohibits the discharge of pollutants without a permit.",
+        "Under Section 101 of the Patent Act, anyone who invents a new process or machine may obtain a patent.",
+        "The Equal Protection Clause of the 14th Amendment prohibits states from denying equal protection under the law."
+    ],
+    metadatas=[
+        {"source": "environmental_law", "clause": "402"},
+        {"source": "patent_law", "clause": "101"},
+        {"source": "constitutional_law", "clause": "14"}
+    ],
+    ids=["doc1", "doc2", "doc3"]
+)
+
+# 4. Query the collection using natural language
+query_results = collection.query(
+    query_texts=["water pollution discharge permit"],
+    n_results=1,
+    include=["documents", "metadatas", "distances"]
+)
+
+# 5. Output search results
+print("Chroma DB Query Results:")
+for doc, meta, dist in zip(query_results["documents"][0], query_results["metadatas"][0], query_results["distances"][0]):
+    print(f"Document: {doc}")
+    print(f"Metadata: {meta}")
+    print(f"L2 Distance Score: {dist:.4f}")
+```
+
 ---
 
 ## 6. Intermediate Examples
@@ -17400,6 +19219,82 @@ results = store.query([0.1, 0.9, 0.0], category_filter="shoes", k=2)
 print("Search results:")
 for rank, (idx, score, meta) in enumerate(results):
     print(f"Rank {rank+1}: ID={meta['id']}, Score={score:.4f}")
+```
+
+### Example 2: Remote Index Setup, Namespace Querying, and Metadata Filtering in Pinecone DB
+Pinecone DB operates as a remote cloud vector database. This example demonstrates using the official Python client (`pinecone-client`) to set up a serverless index, upsert high-dimensional vectors with metadata, and perform similarity queries restricted to specific namespaces and metadata filters.
+
+```python
+from pinecone import Pinecone, ServerlessSpec
+import numpy as np
+
+# 1. Initialize Pinecone client with an API key
+# Make sure PINECONE_API_KEY is configured in your environment variables
+pc = Pinecone(api_key="your-api-key-here")
+
+index_name = "retail-catalog"
+dimension = 1536  # Standard embedding dimension (e.g. OpenAI text-embedding-3)
+
+# 2. Create a serverless index if it doesn't already exist
+if index_name not in pc.list_indexes().names():
+    pc.create_index(
+        name=index_name,
+        dimension=dimension,
+        metric="cosine",
+        spec=ServerlessSpec(
+            cloud="aws",
+            region="us-east-1"
+        )
+    )
+
+# 3. Connect to the remote index
+index = pc.Index(index_name)
+
+# 4. Generate dummy vectors representing retail products
+# Each item has an ID, a vector, and a metadata dictionary
+items = [
+    {
+        "id": "prod_1",
+        "values": np.random.uniform(-1, 1, dimension).tolist(),
+        "metadata": {"category": "shoes", "price": 89.99}
+    },
+    {
+        "id": "prod_2",
+        "values": np.random.uniform(-1, 1, dimension).tolist(),
+        "metadata": {"category": "clothing", "price": 45.00}
+    },
+    {
+        "id": "prod_3",
+        "values": np.random.uniform(-1, 1, dimension).tolist(),
+        "metadata": {"category": "shoes", "price": 120.00}
+    }
+]
+
+# 5. Upsert vectors into a specific namespace to isolate datasets
+namespace_name = "us-catalog"
+index.upsert(vectors=items, namespace=namespace_name)
+
+# 6. Perform a similarity query with metadata filtering within the namespace
+query_vector = np.random.uniform(-1, 1, dimension).tolist()
+
+query_response = index.query(
+    namespace=namespace_name,
+    vector=query_vector,
+    top_k=2,
+    include_values=False,
+    include_metadata=True,
+    filter={
+        "category": {"$eq": "shoes"},
+        "price": {"$lt": 100.00}
+    }
+)
+
+# 7. Print results
+print("Pinecone Query Results:")
+for match in query_response["matches"]:
+    print(f"Product ID: {match['id']}")
+    print(f"Similarity Score: {match['score']:.4f}")
+    print(f"Metadata: {match['metadata']}")
 ```
 
 ---
@@ -17802,6 +19697,21 @@ $$\text{RRF Score}(d) = \sum_{m \in M} \frac{1}{k + r_m(d)}$$
 #### Reranking
 A two-stage retrieval pipeline. First, a fast Bi-Encoder retrieves the top 100 candidate chunks. Second, a heavy **Cross-Encoder reranking model** evaluates the query and candidate chunks together, scoring their relevance. This keeps search latency low while maintaining high accuracy.
 
+#### Navigating the Hugging Face Hub
+The Hugging Face Hub serves as the central repository for open-source AI models, hosting datasets, embeddings, rerankers, and large language models (LLMs). When building RAG pipelines:
+- **Model Formats**: Models are stored in formats like `safetensors` (for standard PyTorch/TensorFlow execution) or `GGUF` (quantized format optimized for CPU and local running).
+- **Hugging Face Hub Library (`huggingface_hub`)**: Programmatic API to search, download, and cache weights locally, facilitating offline inferences.
+- **Pipelines**: The `transformers` library abstracts model loading, tokenization, and generation into simple API calls (e.g., `pipeline("text-generation", model="...")`).
+
+#### Ollama for Local Model Execution
+Ollama is a lightweight framework that packages open-source LLMs (like Llama 3, Mistral, and Gemma) and embeddings into self-contained local services.
+- **Local API Endpoint**: Runs a background daemon exposing a standard REST API (usually at `http://localhost:11434/api/generate`) compatible with OpenAI SDKs and orchestration engines like LangChain.
+- **Benefits for RAG**:
+  - **Zero Data Leakage**: Sensitive enterprise or user data never leaves the local machine.
+  - **Zero Cost**: Eliminates token fees associated with commercial APIs.
+  - **Offline Functionality**: RAG pipelines can run completely offline.
+- **Modelfile**: A configuration file used to define system prompts, temperature settings, and base model parameters for custom local models.
+
 ### Advanced Concepts
 
 #### Query Expansion & HyDE
@@ -17998,6 +19908,10 @@ expanded_queries = generate_query_variations(query)
 print("Generated Query Variations:")
 for q in expanded_queries:
     print("-", q)
+```
+
+---
+
 ### Example 3: Gemini RAG with Firestore Vector Search & Vertex AI
 This example demonstrates generating dense vectors with Vertex AI, executing a vector query on Firestore Vector Search, and feeding the context to Gemini using System Instructions and Structured Output (Pydantic schema).
 
@@ -18084,6 +19998,103 @@ def gemini_rag_query(query: str) -> RAGResponse:
 # result = gemini_rag_query("What is the refund policy for active members?")
 # print(f"Answer: {result.answer}")
 # print(f"Citations: {result.citations}")
+```
+
+---
+
+### Example 4: Local RAG with Ollama, Chroma DB, and Hugging Face Embeddings
+
+This example shows how to configure a local RAG pipeline using only open-source libraries and a local model. 
+
+#### Part A: Creating a Custom Model via Ollama Modelfile
+To build a custom model with system instructions, we create a file named `Modelfile`:
+```dockerfile
+# 1. Specify the base model (pulled from Hugging Face / Ollama registry)
+FROM llama3
+
+# 2. Set the temperature (lower values are better for factual RAG)
+PARAMETER temperature 0.0
+
+# 3. Set the system prompt to enforce context constraints
+SYSTEM """
+You are a local RAG assistant. Answer user questions using only the provided context.
+If the answer is not present in the context, respond with 'Answer not found in context'.
+Do not use pre-trained external knowledge.
+"""
+```
+To build this custom model, run:
+```bash
+ollama create local-rag-assistant -f ./Modelfile
+```
+
+#### Part B: Running the Python local RAG Pipeline
+This script runs the query using Chroma DB for local vector search, Hugging Face's `all-MiniLM-L6-v2` for embeddings, and queries our custom local Ollama model.
+
+```python
+import os
+import requests
+import chromadb
+from chromadb.utils import embedding_functions
+
+# 1. Setup local Chroma DB and load embedding function from Hugging Face Hub
+# Requires: pip install chromadb sentence-transformers requests
+chroma_client = chromadb.PersistentClient(path="./local_chroma")
+
+# Use a local Sentence Transformer model from Hugging Face
+hf_embedding_func = embedding_functions.SentenceTransformerEmbeddingFunction(
+    model_name="all-MiniLM-L6-v2"
+)
+
+# 2. Get or create collection
+collection = chroma_client.get_or_create_collection(
+    name="local_knowledge_base",
+    embedding_function=hf_embedding_func
+)
+
+# 3. Ingest documents
+documents = [
+    "Project Orion is scheduled for launch in Q4 2026 under lead developer Sarah Jenkins.",
+    "The codebase coding standard mandates using explicit type hints for all public APIs.",
+    "We use pre-receive git hooks to prevent committing secret keys to the repo."
+]
+collection.upsert(
+    ids=["doc1", "doc2", "doc3"],
+    documents=documents,
+    metadatas=[{"source": "management"}, {"source": "guidelines"}, {"source": "security"}]
+)
+
+# 4. Search local collection
+query = "When is Project Orion launching?"
+results = collection.query(
+    query_texts=[query],
+    n_results=1
+)
+
+retrieved_doc = results["documents"][0][0]
+retrieved_meta = results["metadatas"][0][0]
+print(f"Retrieved Document: {retrieved_doc} (Source: {retrieved_meta['source']})")
+
+# 5. Format prompt and query local Ollama API
+ollama_url = "http://localhost:11434/api/generate"
+prompt = f"""Context: {retrieved_doc}
+
+Question: {query}
+Answer:"""
+
+payload = {
+    "model": "local-rag-assistant",
+    "prompt": prompt,
+    "stream": False
+}
+
+try:
+    response = requests.post(ollama_url, json=payload)
+    response_data = response.json()
+    print("\nOllama Local Answer:")
+    print(response_data.get("response"))
+except Exception as e:
+    print(f"\nFailed to connect to local Ollama API: {e}")
+    print("Ensure Ollama is running (`ollama serve`) and the custom model is created.")
 ```
 
 ---
@@ -18392,6 +20403,20 @@ Interviewers want to see if you can evaluate system trade-offs. They will check 
 
 ---
 
+#### 24. How do you build a completely offline RAG system using Hugging Face and Ollama? What are the limitations?
+- **Detailed Answer**: To build a completely offline RAG system, you load local Hugging Face embeddings (e.g. `all-MiniLM-L6-v2`) via libraries like `sentence-transformers`, index the vectors in a local database like Chroma DB or FAISS, and query a local model hosted on Ollama (e.g. Llama 3) via REST requests. Limitations include performance bottlenecks on local hardware (CPUs vs GPUs), high memory footprints, and potential quality drops compared to massive cloud models.
+- **Follow-up Questions**: How can you run a local model on CPU with acceptable latency? (Answer: Use quantized GGUF models via llama.cpp or Ollama which compress model weights and run fast on CPU).
+- **Interviewer's Expectations**: Describe the offline pipeline steps (local embeddings, local DB, local model) and identify key resource constraints (CPU/GPU, quantization, memory limits).
+
+---
+
+#### 25. What is a Modelfile in Ollama and how do you use it to configure a local RAG assistant's behavior?
+- **Detailed Answer**: A Modelfile is a configuration script for creating and sharing models with Ollama. It defines the base model (using `FROM`), system instructions (using `SYSTEM`), runtime parameters like temperature and context size (using `PARAMETER`), and template formatting (using `TEMPLATE`). In a local RAG setup, you use the Modelfile to lock down the temperature to `0.0` and set system prompts that enforce the model to only answer using retrieved context.
+- **Follow-up Questions**: What parameters are crucial in a RAG Modelfile? (Answer: `PARAMETER temperature 0.0` to minimize randomness, and `PARAMETER num_ctx 4096` to ensure the model has enough context window size for the retrieved documents).
+- **Interviewer's Expectations**: Explain the purpose of a Modelfile, its main commands (FROM, SYSTEM, PARAMETER), and how custom prompt restrictions ground local generation.
+
+---
+
 ## 10. Common Mistakes
 
 - **Splitting chunks without overlap**: Cuts sentences in half, causing the model to lose context at boundaries.
@@ -18421,6 +20446,7 @@ Interviewers want to see if you can evaluate system trade-offs. They will check 
 - **Hybrid Search RAG with Reranking**: Build an API server that implements hybrid search:
   - Connect a search database (Elasticsearch/BM25) with a vector database (Qdrant).
   - Search both databases using a query, merge the results using RRF, rerank the top candidates using a Cross-Encoder, and generate the final answer using an LLM.
+- **Historical Figure Chatbot**: Implement a conversational interface where the user chats with a simulated historical figure (e.g., Abraham Lincoln). Ingest public historical letters/speeches of the figure, store conversation history in memory, and feed both history and retrieved context to the LLM.
 
 ### Advanced/Resume-worthy
 - **Agentic RAG with Iterative Retrieval**: Develop a production-ready conversational agent:
@@ -18428,6 +20454,7 @@ Interviewers want to see if you can evaluate system trade-offs. They will check 
   - If the retrieved context is incomplete, the agent dynamically generates follow-up queries.
   - Integrate a reflection loop to validate citations and check for hallucinations before returning responses.
   - Wrap the system in Docker containers and expose REST API endpoints.
+- **Legal Document Assistant with Chat History**: Build a tool to parse multi-page legal contracts. Set up parent-child retrieval so details are retrieved but whole clauses are returned. Implement a conversational buffer memory window to maintain context over a multi-turn dialogue, and add citation validation to ensure all claims references exist in the source document.
 
 ---
 
@@ -18494,16 +20521,24 @@ If an LLM is a high-performance engine, prompt engineering is the steering wheel
   - **User Message**: The input containing the specific task, query, or data to be processed.
   - **Assistant Message**: The output generated by the model, or historical responses provided in chat history.
 - **Zero-Shot Prompting**: Querying the model without providing any examples of the expected output. Useful for simple, standard tasks.
-- **Few-Shot Prompting**: Providing one or more input-output examples to establish format, tone, and style constraints. It is highly effective for teaching models complex structures.
-- **Role Prompting**: Assigning a specific persona to the model (e.g., "You are an expert compiler engineer") to bias its vocabulary selection toward technical terms and precision.
+- **Few-Shot Prompting**: Providing one or more input-output examples to establish format, tone, and style constraints.
+  - *Dynamic Selection*: In production, retrieval systems (like vector search) fetch the most semantically relevant examples for the user's specific query, feeding them dynamically as few-shot context.
+  - *Order Sensitivity*: LLMs suffer from recency bias (over-weighting the last example) and label-distribution bias (skewing predictions toward the class with more examples). Balancing example classes and shuffling their order prevents these biases.
+- **Role Prompting / Role-Play**: Assigning a specific persona to the model (e.g., "You are an expert compiler engineer") to bias its vocabulary selection toward technical terms and precision.
+  - *Persona Robustness*: Personas shape the self-attention weights by activating a specific subset of the model's parameters (hidden states) associated with the specialized domain.
 
 ### Intermediate Concepts
-- **Chain-of-Thought (CoT) Prompting**: Instructing the model to break down its reasoning step-by-step before outputting the final answer. This forces the model to generate intermediate tokens, which it then attends to when predicting the final response.
+- **Chain-of-Thought (CoT) Prompting**: Instructing the model to break down its reasoning step-by-step before outputting the final answer.
+  - *Zero-Shot CoT*: Appending phrases like "Let's think step by step" to the prompt, which triggers the model's logical prediction paths.
+  - *Few-Shot CoT*: Providing examples containing both mathematical or logical problems and their step-by-step explanations, teaching the model the desired structure.
 - **XML Tag Delimitation**: Using XML-like tags (e.g., `<input>`, `<thinking>`, `<output>`) to isolate inputs, guide internal reasoning, and simplify downstream parser logic.
 - **Few-Shot formatting robustness**: Formatting examples consistently (e.g., `Input: {x} \nOutput: {y}`) to maximize the pattern-matching capability of the model's attention heads.
 - **Structured JSON Schema Constraints**: Specifying the exact keys, data types, and default values required in JSON responses, and providing a template.
 
 ### Advanced Concepts
+- **Decoding Parameter Tuning**:
+  - **Temperature ($T$)**: Controls the probability distribution of predicted tokens. At $T = 0$, the model performs greedy decoding (always picking the most likely token), which is ideal for RAG, classification, and code generation. Higher temperatures ($T > 0.7$) flatten the probability distribution, encouraging creativity and variety but increasing hallucination rates.
+  - **Top-P (Nucleus Sampling)**: Restricts token selection to a subset whose cumulative probability reaches $P$. Combining Top-P (e.g., $P = 0.9$) with low temperature ensures logical coherence while pruning low-probability garbage tokens.
 - **ReAct (Reasoning and Acting)**: A prompting pattern that instructs the model to alternate between generating a thought ("Thought"), selecting a tool and arguments ("Action"), and receiving the tool's execution result ("Observation") in a loop.
 - **Self-Consistency**: Generating multiple reasoning paths (e.g., 5 CoT responses) at a higher temperature, then taking a majority vote on the final answer to improve reliability.
 - **Tree of Thoughts (ToT)**: Generalizing CoT by allowing the model to explore multiple reasoning branches, evaluate its own progress, and backtrack when a branch fails.
@@ -19386,6 +21421,34 @@ chain = prompt | model | parser
 # print(result)
 ```
 
+### Example 2: Gemini Text Generation with Structured Output
+This example demonstrates configuring a Google Gemini chat model to return a strictly formatted JSON output using Pydantic.
+
+```python
+# To run this, install: pip install langchain-google-genai pydantic
+from langchain_google_genai import ChatGoogleGenerativeAI
+from pydantic import BaseModel, Field
+
+# 1. Initialize Gemini Model (requires GEMINI_API_KEY environment variable)
+# Using gemini-2.5-flash for fast and structured reasoning
+model = ChatGoogleGenerativeAI(model="gemini-2.5-flash", temperature=0.1)
+
+# 2. Define Pydantic Schema for structured outputs
+class BookAnalysis(BaseModel):
+    title: str = Field(description="The title of the book")
+    author: str = Field(description="The author of the book")
+    genres: list[str] = Field(description="List of genres")
+    main_summary: str = Field(description="A concise 3-sentence summary of the main plot")
+
+# 3. Bind the model to enforce structured output
+structured_model = model.with_structured_output(BookAnalysis)
+
+# 4. Execute the call directly
+# response = structured_model.invoke("Analyze the book 'The Hobbit' by J.R.R. Tolkien")
+# print(response.title, response.author)
+# print(response.main_summary)
+```
+
 ---
 
 ## 6. Intermediate Examples
@@ -19438,6 +21501,98 @@ agent_executor = AgentExecutor(
 #     "chat_history": history
 # })
 # print(response["output"])
+```
+
+### Example 2: Local Agent CLI Project with Custom Tools
+This example demonstrates a command-line interface agent that can run local calculations, check file sizes in the workspace, and answer general user queries using local tools.
+
+```python
+import os
+import sys
+from langchain.agents import AgentExecutor, create_openai_tools_agent
+from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
+from langchain_core.tools import tool
+from langchain_openai import ChatOpenAI
+
+# 1. Define local CLI utility tools
+@tool
+def calculate_expression(expression: str) -> str:
+    """Evaluates simple mathematical calculations. Inputs must be standard Python math expressions (e.g. '15 * 100 / 4')."""
+    try:
+        # Safe eval-like behavior for basic arithmetic
+        allowed_chars = "0123456789+-*/(). "
+        if not all(c in allowed_chars for c in expression):
+            return "Error: Invalid characters in math expression."
+        return str(eval(expression, {"__builtins__": None}))
+    except Exception as e:
+        return f"Error evaluating expression: {e}"
+
+@tool
+def list_workspace_files(directory_path: str = ".") -> str:
+    """Lists files in the current workspace directory to help the user navigate."""
+    try:
+        files = os.listdir(directory_path)
+        file_list = [f for f in files if os.path.isfile(os.path.join(directory_path, f))]
+        if not file_list:
+            return "No files found in directory."
+        return "\n".join(file_list[:10])  # limit to top 10
+    except Exception as e:
+        return f"Error reading workspace directory: {e}"
+
+tools = [calculate_expression, list_workspace_files]
+
+# 2. Build agent prompt template
+prompt = ChatPromptTemplate.from_messages([
+    ("system", "You are a terminal CLI assistant helper. Help the user perform tasks and calculations using tools."),
+    MessagesPlaceholder(variable_name="chat_history"),
+    ("human", "{input}"),
+    MessagesPlaceholder(variable_name="agent_scratchpad"),
+])
+
+# 3. Setup LLM and construct Agent Executor
+llm = ChatOpenAI(model="gpt-4o-mini", temperature=0)
+agent = create_openai_tools_agent(llm, tools, prompt)
+agent_executor = AgentExecutor(agent=agent, tools=tools, verbose=False)
+
+# 4. Interactive CLI execution loop
+def run_cli_agent():
+    print("=== LangChain CLI Assistant Initialized ===")
+    print("Type 'exit' or 'quit' to terminate.")
+    chat_history = []
+    
+    while True:
+        try:
+            user_input = input("\nYou > ")
+            if user_input.lower() in ["exit", "quit"]:
+                print("Goodbye!")
+                break
+            
+            if not user_input.strip():
+                continue
+                
+            response = agent_executor.invoke({
+                "input": user_input,
+                "chat_history": chat_history
+            })
+            
+            output = response["output"]
+            print(f"\nAssistant:\n{output}")
+            
+            # Update history window (keep last 5 turns)
+            chat_history.append(("human", user_input))
+            chat_history.append(("assistant", output))
+            chat_history = chat_history[-10:]
+            
+        except KeyboardInterrupt:
+            print("\nExiting CLI...")
+            break
+        except Exception as e:
+            print(f"Error executing agent loop: {e}")
+
+if __name__ == "__main__":
+    # To run: python cli_agent.py
+    # run_cli_agent()
+    pass
 ```
 
 ---
@@ -19623,7 +21778,19 @@ def get_user_balance(user_id):
 - **Follow-up Questions**: Can you use LlamaIndex retrievers inside a LangChain pipeline? (Answer: Yes).
 - **Interviewer's Expectations**: Compare the strengths and primary focus areas of both frameworks.
 
-*(Remaining questions available in the interactive reader...)*
+---
+
+#### 8. How do you implement structured data generation in LangChain using Google Gemini?
+- **Detailed Answer**: In LangChain, structured data generation with Gemini is implemented using the `with_structured_output` method on the `ChatGoogleGenerativeAI` class. First, define a Pydantic schema class specifying the fields, data types, and descriptions. Next, instantiate the Gemini model and call `model.with_structured_output(YourSchemaClass)`. Under the hood, LangChain formats the schema as a JSON schema and passes it to the Gemini API parameters. The API forces the model output logits to strictly match the requested JSON format, ensuring a 100% parseable structured response.
+- **Follow-up Questions**: What is the difference between passing a Pydantic class vs a raw dict schema? (Answer: Pydantic validates input types automatically and returns a Python object instance, whereas a raw dict schema returns a raw JSON/dictionary structure without type validation).
+- **Interviewer's Expectations**: Explain `with_structured_output`, Pydantic models, JSON schema injection, and native model-level output parsing.
+
+---
+
+#### 9. Why are custom tools registered with Pydantic schemas in LangChain, and how does the model access them?
+- **Detailed Answer**: LangChain tools are registered with schemas (typically generated automatically from Pydantic or function type-hints and docstrings) to define the tool's interface. When the model runs, LangChain serializes this metadata into a tool descriptor JSON object (containing tool name, description, and parameter types) and injects it into the LLM context or functions parameter list. The model uses this description to decide if a tool should be called and how to format the arguments.
+- **Follow-up Questions**: What is the purpose of the `@tool` decorator? (Answer: The `@tool` decorator simplifies tool registration by automatically parsing the function's name, docstring, and argument type annotations to build the underlying `BaseTool` object).
+- **Interviewer's Expectations**: Describe schema serialization, function descriptions, API injection, and the LLM tool-selection process.
 
 ---
 
@@ -19744,6 +21911,14 @@ A restaurant menu: The menu is the REST API (standardized interface). The items 
 - **Rate Limiting**: Enforcing thresholds on API calls to prevent Denial of Service (DoS). Implemented using algorithms like Token Bucket (allows bursts), Leaky Bucket (smooths outflow), and Sliding Window Log (precise window checks).
 - **Idempotency Keys**: Generates a unique token for transactional operations. The server stores the initial response in a database/cache associated with the key. If a duplicate request arrives, the server returns the cached response instead of re-processing.
 - **Webhooks**: An event-driven architecture where a server notifies external clients of state changes via HTTP POST callbacks. Requires signature verification (e.g., using HMAC-SHA256) to ensure the webhook payload was not tampered with.
+
+### Deep-Dive: Flask Core Web Framework
+- **Routing & Variable Rules**: Flask uses Werkzeug's routing system to map URLs to view functions. Dynamic variables can be embedded in paths using `<converter:name>`, where converters include `string`, `int`, `float`, `path`, and `uuid` (e.g., `/users/<int:user_id>`).
+- **Context Locals**: Flask manages concurrency using local proxy contexts bound to the current thread or greenlet.
+  - **Application Context**: Exposes application-level variables like `current_app` (the active application instance) and `g` (a temporary global namespace for a single request).
+  - **Request Context**: Exposes request-specific data like `request` (headers, args, form data) and `session` (signed cookie-based user session).
+- **Database Session Management**: Flask-SQLAlchemy integrates SQLAlchemy. It binds a scoped session to Flask's request lifecycle. A transaction starts when database actions are called and automatically rolls back if an uncaught exception is raised, with the session closing (`session.remove()`) at request teardown.
+- **Modular Blueprints**: Blueprints allow dividing a large Flask application into independent modules. Each blueprint can define its own routing rules, template folders, static paths, and error handlers, registered to the central application object using a common prefix.
 
 ---
 
@@ -19895,6 +22070,44 @@ def get_active_users(api_url: str, token: str) -> list:
     except requests.exceptions.Timeout:
         print("The request timed out.")
     return []
+
+### Example 4: Basic Flask Application with Custom Routing
+Setting up a minimal Flask application with dynamic URL route converters and JSON responses.
+
+```python
+from flask import Flask, jsonify, request
+
+app = Flask(__name__)
+
+# Mock database
+USERS = {
+    1: {"name": "Alice", "role": "Developer"},
+    2: {"name": "Bob", "role": "Designer"}
+}
+
+# Dynamic route parameters using type converters
+@app.route("/users/<int:user_id>", methods=["GET"])
+def get_user(user_id):
+    user = USERS.get(user_id)
+    if not user:
+        # Return JSON error and matching 404 client error code
+        return jsonify({"error": "User not found"}), 404
+    
+    # Return user details with standard 200 OK status
+    return jsonify(user), 200
+
+# Route handling request arguments (query parameters)
+@app.route("/users", methods=["GET"])
+def list_users():
+    role_filter = request.args.get("role")
+    results = USERS
+    if role_filter:
+        results = {k: v for k, v in USERS.items() if v["role"].lower() == role_filter.lower()}
+    
+    return jsonify(list(results.values())), 200
+
+if __name__ == "__main__":
+    app.run(debug=True)
 ```
 
 ---
@@ -20103,6 +22316,75 @@ async def create_employee(
 #     uvicorn.run("main:app", host="127.0.0.1", port=8000, reload=True)
 ```
 
+### Example 5: Flask CRUD API with Flask-SQLAlchemy
+A Flask REST API integrated with SQLAlchemy database schemas to perform CRUD operations.
+
+```python
+from flask import Flask, jsonify, request
+from flask_sqlalchemy import SQLAlchemy
+
+app = Flask(__name__)
+# Configure SQLite memory database for testing
+app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///:memory:"
+app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
+db = SQLAlchemy(app)
+
+# 1. Model Definition
+class Book(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    title = db.Column(db.String(100), nullable=False)
+    author = db.Column(db.String(100), nullable=False)
+
+    def to_dict(self):
+        return {"id": self.id, "title": self.title, "author": self.author}
+
+# Initialize database tables
+with app.app_context():
+    db.create_all()
+
+# 2. CRUD Route Handlers
+@app.route("/books", methods=["POST"])
+def create_book():
+    data = request.get_json()
+    if not data or "title" not in data or "author" not in data:
+        return jsonify({"error": "Missing title or author"}), 400
+    
+    new_book = Book(title=data["title"], author=data["author"])
+    db.session.add(new_book)
+    db.session.commit()  # Save changes to database
+    return jsonify(new_book.to_dict()), 201
+
+@app.route("/books", methods=["GET"])
+def get_books():
+    books = Book.query.all()
+    return jsonify([b.to_dict() for b in books]), 200
+
+@app.route("/books/<int:book_id>", methods=["PUT"])
+def update_book(book_id):
+    book = Book.query.get(book_id)
+    if not book:
+        return jsonify({"error": "Book not found"}), 404
+    
+    data = request.get_json()
+    book.title = data.get("title", book.title)
+    book.author = data.get("author", book.author)
+    db.session.commit()
+    return jsonify(book.to_dict()), 200
+
+@app.route("/books/<int:book_id>", methods=["DELETE"])
+def delete_book(book_id):
+    book = Book.query.get(book_id)
+    if not book:
+        return jsonify({"error": "Book not found"}), 404
+    
+    db.session.delete(book)
+    db.session.commit()
+    return jsonify({"message": "Book deleted"}), 200
+
+if __name__ == "__main__":
+    app.run(debug=True)
+```
+
 ---
 
 ## 7. Advanced Concepts & Examples
@@ -20245,7 +22527,54 @@ def verify_webhook_signature(
     ).hexdigest()
     
     # 5. Use constant-time comparison to prevent timing attacks
+    # 5. Use constant-time comparison to prevent timing attacks
     return hmac.compare_digest(expected_signature, received_signature)
+```
+
+### Example 4: Modular Flask Microservice with Blueprints
+Structuring a scalable Flask application using blueprints, middleware pre-request actions, and application configurations.
+
+`project/auth.py`:
+```python
+from flask import Blueprint, jsonify
+
+auth_bp = Blueprint("auth", __name__)
+
+@auth_bp.route("/login", methods=["POST"])
+def login():
+    return jsonify({"token": "jwt_token_secret_123"}), 200
+```
+
+`project/main.py`:
+```python
+from flask import Flask, jsonify, g, request
+import time
+from auth import auth_bp
+
+app = Flask(__name__)
+
+# Register Blueprint module under route prefix
+app.register_blueprint(auth_bp, url_prefix="/api/v1/auth")
+
+# Application middleware: hook executed before every request
+@app.before_request
+def start_timer():
+    g.start_time = time.time()  # Store timestamp in request context 'g'
+
+# Application middleware: hook executed after every request
+@app.after_request
+def log_request_performance(response):
+    duration = time.time() - g.start_time
+    # Inject profiling metadata into response headers
+    response.headers["X-Response-Time-Ms"] = str(int(duration * 1000))
+    return response
+
+@app.route("/api/v1/health", methods=["GET"])
+def health_check():
+    return jsonify({"status": "healthy"}), 200
+
+if __name__ == "__main__":
+    app.run(port=8000)
 ```
 
 ---
@@ -20531,6 +22860,39 @@ Security measures:
 - **SSL Termination**: The gateway decrypts SSL/TLS traffic, allowing internal service-to-service communication to run on HTTP to reduce CPU overhead.
 - **Follow-up Questions**: How does SSL termination improve backend service performance? (Answer: It offloads SSL handshake calculations from individual microservice containers to the gateway hardware).
 - **Interviewer's Expectations**: Propose reverse proxying, token authorization delegation, centralized rate-limiting, and SSL termination.
+
+---
+
+#### 61. Explain Flask's application and request contexts. How do they work under the hood, and how are they managed in multi-threaded environments?
+- **Detailed Answer**: Flask uses a context-based design to make variables like `request` or `current_app` globally accessible inside view functions without explicitly passing them as arguments.
+  - **The Two Contexts**:
+    1. **Application Context**: Bound to the lifespan of the Flask application object. It manages variables like `current_app` (the active application instance) and `g` (a temporary global namespace for a single request, often used for database connections or timers).
+    2. **Request Context**: Bound to the lifespan of a single HTTP request. It manages variables like `request` (incoming request payload/headers) and `session` (signed cookie data).
+  - **Under the Hood (Werkzeug Local Proxies)**:
+    - Flask uses **Thread-Local Storage** (specifically Werkzeug's `LocalStack` and `LocalProxy`). 
+    - When an HTTP request arrives, Flask identifies the thread handling the request and pushes the corresponding application and request context objects onto their respective thread-local stacks.
+    - Global variables like `request` are actually `LocalProxy` objects. When accessed (e.g. `request.args`), the proxy dynamically forwards the attribute lookup to the top item on the active thread's local stack.
+    - In multi-threaded or asynchronous environments (like greenlets or asyncio), Werkzeug uses greenlet/task identifiers instead of OS thread IDs to isolate stacks, ensuring that parallel requests do not leak data or access other clients' payloads.
+    - At the end of the request-response lifecycle, Flask pops both contexts from the stack, clearing the thread-local storage to prevent memory leaks.
+- **Follow-up Questions**: Why do you get a `RuntimeError: Working outside of application context` when running background tasks or scripts? (Answer: Outside of an active HTTP request, the local stacks are empty. You must manually push an application context using the `with app.app_context():` context manager to access variables like `current_app` or database models).
+- **Interviewer's Expectations**: Define the two context types (application vs. request), explain thread-local storage stacks, describe how `LocalProxy` resolves variables dynamically, and detail context creation/cleanup on request lifecycle.
+
+---
+
+#### 62. Describe the database session lifecycle in Flask-SQLAlchemy. How does it handle connection pools, transaction boundaries, and request teardown?
+- **Detailed Answer**: Flask-SQLAlchemy manages database connections and ORM transactions by linking the SQLAlchemy `Session` to Flask's request lifecycle:
+  - **Initialization & Scoped Session**:
+    - Flask-SQLAlchemy creates a `scoped_session`, which acts as a thread-safe registry of database sessions. When `db.session` is called, it returns a session unique to the active request context/thread.
+  - **Connection Pool**:
+    - Under the hood, SQLAlchemy maintains a connection pool (e.g., `QueuePool`). When the session needs to query the database, it checks out a physical TCP connection from the pool.
+  - **Transaction Boundaries**:
+    - A transaction begins automatically (lazy initialization) when the first SQL statement is executed.
+    - The developer staging changes using `db.session.add(item)` or `db.session.delete(item)` updates the session's internal state. Calling `db.session.commit()` commits the active database transaction and returns the connection to the pool.
+  - **Request Teardown & Cleanup**:
+    - Flask registers a teardown handler (`@app.teardown_request` or `@app.teardown_appcontext`).
+    - At the end of every request (after the response is sent), Flask invokes `db.session.remove()`. This method calls `session.close()`, which rolls back any uncommitted transactions (preventing dangling locks), clears all cached objects in the session identity map, and returns the physical database connection to the pool.
+- **Follow-up Questions**: What is the danger of not closing or removing a session in a web application? (Answer: Unclosed sessions keep database connections checked out, eventually exhausting the database server's connection limits and causing subsequent requests to time out or crash).
+- **Interviewer's Expectations**: Define scoped sessions, explain connection pooling, detail automatic transaction rollback/closure during request teardown, and identify resource exhaustion risks of unmanaged sessions.
 
 ---
 
@@ -33333,3 +35695,838 @@ Interviewers evaluate your technical skills, problem-solving approach, and commu
 - [ ] Prepare 3 STAR stories from your projects that cover technical challenges and teamwork.
 - [ ] Update your LinkedIn headline to include search keywords for your target roles.
 - [ ] Practice explaining your project architectures and design decisions out loud.
+
+<div style='page-break-before: always;'></div>
+
+# 43. MLOps, Model Serving & Pipelines (FastAPI, Triton, ONNX, MLflow, CI/CD)
+
+## 1. Introduction
+
+### What it is
+Machine Learning Operations (MLOps) is an engineering discipline that merges machine learning, software engineering, and DevOps practices to automate, standardize, and scale the entire lifecycle of ML models in production. It encompasses model design, experiment tracking, continuous integration/continuous delivery (CI/CD), automated model testing, low-latency deployment, live serving optimization, and real-time observability.
+
+### Why it exists
+Historically, data scientists trained models in offline environments (like Jupyter notebooks) and handed over serialized weights to software engineers to manually port into production applications. This siloed workflow led to massive deployment delays, training-serving behavior mismatches, performance bottlenecks, and a lack of transparency regarding which model version generated a specific prediction. MLOps establishes standardized pipelines that treat models, code, and data with equal rigor, ensuring production systems remain reliable, fast, and reproducible.
+
+### Problems it solves
+- **Training-Serving Skew**: Differences in data processing libraries, feature transformations, or runtime environments between development and production that lead to degraded prediction quality.
+- **Inference Latency & GPU Underutilization**: Heavy deep learning models running natively in simple web wrappers often block threads, leading to high response times and idle GPU cores.
+- **Model Traceability & Compliance**: The inability to audit and reconstruct the exact training run, dataset, and hyperparameter configuration of a deployed model.
+- **Silent Model Decay**: Models decay over time due to shifts in user behavior or external data distributions. MLOps provides real-time monitoring to detect drift before performance craters.
+
+### Industry Use Cases
+- **Real-Time Recommendation Systems**: Serving personalized content to millions of users with sub-50ms latency using high-throughput serving systems (e.g., Triton Inference Server).
+- **Large Language Model (LLM) Chatbots**: Optimizing token generation speed and reducing hosting costs through memory-virtualized LLM engines (e.g., vLLM).
+- **Automated Credit Scoring**: Continuously validating incoming financial application distributions against historical data to trigger automated retrain pipelines.
+- **Autonomous Driving & Edge AI**: Deploying compressed and optimized neural networks to resource-constrained vehicles via edge deployment pipelines.
+
+### Analogy
+Imagine a custom craft chocolate maker (Research ML) who creates exquisite recipes one batch at a time in their kitchen. If they want to supply a global supermarket chain, they cannot simply hire a thousand home cooks. They must design an automated factory (MLOps) where raw ingredients are automatically inspected (Data Validation), recipes are mixed under strictly recorded temperatures (Experiment Tracking), chocolates are molded into standardized sizes (Optimization/ONNX), and a robotic conveyor belt packages them for shipping (CI/CD and Serving).
+
+---
+
+## 2. Core Concepts
+
+### Beginner Concepts
+- **Model Serialization**: The process of converting an in-memory model object (such as a scikit-learn pipeline or a PyTorch model state dict) into a byte stream (e.g., `.pkl`, `.joblib`, `.pt`, `.h5`) that can be saved to disk, version-controlled, and reloaded in a separate serving environment.
+- **REST Serving vs. Batch Inference**:
+  - *REST/Online Serving*: The model runs as a continuous service. Clients make HTTP/gRPC requests with input data and receive predictions immediately in real-time.
+  - *Batch Inference*: The model runs periodically (e.g., every night) over a large, pre-collected database of inputs, saving all predictions back to storage for fast lookup later.
+- **FastAPI for ML APIs**: An asynchronous, high-performance web framework for building APIs in Python. It relies on standard Python type hints and Pydantic for automated input validation, serialization, and OpenAPI documentation generation, making it the standard choice for lightweight ML REST wrappers.
+
+### Intermediate Concepts
+- **Model Registry**: A centralized repository (e.g., MLflow, Weights & Biases, SageMaker Model Registry) that manages a model's lifecycle. It tracks model binaries, hyperparameters, training metrics, schema definitions, and progression states (e.g., *Staging*, *Production*, *Archived*).
+- **ONNX (Open Neural Network Exchange)**: An open-source, standardized intermediate representation (IR) format for machine learning models. ONNX defines a common graph format and operators, allowing models trained in PyTorch, TensorFlow, or Scikit-Learn to compile down to a single `.onnx` graph and execute on optimized runtimes (like ONNX Runtime) across different hardware backends.
+- **Model Quantization**: A compression technique that converts a model’s parameters (weights and activations) from high-precision floating-point formats (like FP32, 32-bit float) to lower-precision formats (like FP16 or INT8, 8-bit integers). This dramatically reduces memory footprint, increases cache hit rates, and utilizes hardware accelerators (like NVIDIA Tensor Cores) for faster inference, often with negligible loss in accuracy.
+- **Containerization (Docker)**: Wrapping the model file, the inference code, and all system/Python dependencies into a single immutable container image. This guarantees that "it runs on my machine" translates perfectly to production servers.
+
+### Advanced Concepts
+- **NVIDIA Triton Inference Server**: A production-grade model serving software optimized for GPUs and CPUs. Triton supports multi-model concurrency (running PyTorch, ONNX, and TensorRT models on the same GPU simultaneously), dynamic batching (queuing individual real-time requests to execute them as a batch, optimizing GPU utilization), and pipeline ensembles.
+- **vLLM Engine**: A high-throughput, low-latency engine designed specifically for serving Large Language Models. It introduces **PagedAttention**, which dynamically manages Key-Value (KV) cache memory. By treating GPU memory similarly to virtual memory pages in operating systems, vLLM eliminates memory fragmentation and allows LLMs to process significantly larger batches concurrently.
+- **Drift Monitoring**:
+  - *Data Drift (Covariate Shift)*: The distribution of input data changes over time, i.e., $P(X_{serving}) \neq P(X_{training})$, while the relationship between input and output remains stable.
+  - *Concept Drift*: The relationship between input features and target labels changes, i.e., $P(Y|X_{serving}) \neq P(Y|X_{training})$, meaning a model's predictions become inaccurate even if inputs look normal.
+- **CI/CD & GitOps for ML**: Automating the validation and delivery of ML assets. A typical pipeline triggers on a new git commit, pulls data via **DVC (Data Version Control)**, runs unit tests on code, evaluates the newly trained model against validation criteria using **CML (Continuous Machine Learning)**, and automatically updates the model registry.
+
+---
+
+## 3. Internal Working
+
+### Triton Execution Queue & Dynamic Batcher
+When serving deep learning models on GPUs, sending requests one-by-one is highly inefficient because the kernel launch overhead dominates execution time, leaving thousands of CUDA cores idle. 
+
+NVIDIA Triton addresses this using a queue-based dynamic batcher:
+1. **Request Reception**: When individual client requests arrive (via HTTP or gRPC), Triton assigns them to model-specific input queues.
+2. **Dynamic Batching Engine**: A dedicated scheduler monitors these queues. Based on configuration thresholds (`max_queue_delay_microseconds` and `max_batch_size`), the scheduler groups multiple individual requests together into a single tensor batch.
+3. **Execution**: If the queue reaches the maximum batch size, or if the delay timeout expires, the scheduler dispatches the batched tensor to the execution engine.
+4. **Response Splitter**: Once the GPU completes inference, Triton splits the output tensor back into individual client responses and sends them over the network.
+
+```text
+Clients ---> [HTTP/gRPC Router] 
+                    |
+                    v
+          [Model Input Queue] (e.g. Request 1, Request 2, Request 3)
+                    |
+      +-------------+-------------+  <--- Dynamic Batcher Scheduler
+      | Wait for max_batch_size   |
+      | OR max_queue_delay        |
+      +-------------+-------------+
+                    |
+                    v
+          [Batched CUDA Tensor] (Batch Size = 3)
+                    |
+                    v
+             [GPU Execution]
+                    |
+                    v
+        [Response Splitter Engine]
+                    |
+                    +---> Client 1 (Prediction 1)
+                    +---> Client 2 (Prediction 2)
+                    +---> Client 3 (Prediction 3)
+```
+
+### vLLM PagedAttention Mechanism
+In LLM generation, the model must store the Key-Value (KV) tensors of all past tokens in memory (the KV Cache) to calculate attention for the next generated token. In standard frameworks, this memory is allocated contiguously for the maximum possible sequence length (e.g., 2048 or 4096 tokens). Because actual generation lengths vary and attention masks change, this leads to three types of memory waste:
+- **Internal Fragmentation**: Allocating space for 4096 tokens when the conversation only takes 10 tokens.
+- **External Fragmentation**: Memory gaps between sequences that cannot be allocated to new requests.
+- **Reservation Waste**: Pre-allocating maximum block sizes for future tokens that may never be generated.
+
+vLLM resolves this by introducing virtual memory page tables to GPU memory management:
+1. **Logical Blocks**: The KV cache of a request is divided into logical blocks, where each block stores KV tensors for a fixed number of tokens (e.g., 16 tokens).
+2. **Physical Blocks**: The GPU memory is divided into physical block pools.
+3. **Block Table**: A lookup table maps logical blocks to non-contiguous physical blocks. When a new token is generated, if the current physical block is full, the engine dynamically allocates any free physical block from the pool and adds it to the block table.
+4. **Zero Copy Sharing**: For parallel sampling (e.g., generating multiple completions for the same prompt), the physical blocks containing the prompt are shared among requests via reference counting, avoiding any duplicate allocation.
+
+---
+
+## 4. Important Terminology
+
+- **Cold Start**: The latency delay experienced when a model server starts up, loads model weights from disk/registry into memory (RAM or GPU VRAM), compiles graph structures, and warms up runtime libraries before it can process its first inference request.
+- **Throughput**: The volume of predictions a model server can process in a given unit of time (e.g., queries per second, QPS, or tokens per second for LLMs).
+- **Latency**: The time taken to process a single inference request, typically measured in milliseconds. The two key metrics are **Time to First Token (TTFT)** and **Inter-Token Latency** for autoregressive models.
+- **Model Drift**: The degradation of a model's predictive power over time due to shifts in input distributions or underlying environmental rules.
+- **Training-Serving Skew**: Discrepancies between the data processing logic used in the training pipeline and the active serving path, resulting in high validation scores but poor production performance.
+- **Quantization Aware Training (QAT)**: Modeling low-precision quantization errors during the training forward-backward loop, allowing the model to adapt its weights to compensate for precision loss, yielding higher accuracy than Post-Training Quantization (PTQ).
+- **vLLM Continuous Batching**: An optimization where requests are batched at the iteration level rather than the sequence level. Instead of waiting for an entire batch to finish generating, new requests are added to the batch, and completed requests are dropped on a token-by-token basis.
+
+---
+
+## 5. Beginner Examples
+
+### FastAPI + Scikit-Learn Inference API
+Below is a clean, production-ready FastAPI application that loads a pre-trained scikit-learn model, validates inputs using Pydantic, and returns predictions asynchronously.
+
+```python
+# app.py
+import os
+import joblib
+import numpy as np
+from fastapi import FastAPI, HTTPException
+from pydantic import BaseModel, Field
+
+# Initialize FastAPI App
+app = FastAPI(
+    title="ML Model Inference API",
+    description="FastAPI service for hosting a classification model.",
+    version="1.0.0"
+)
+
+# Define request schema with input validation rules
+class InferenceRequest(BaseModel):
+    sepal_length: float = Field(..., gt=0.0, description="Sepal length in cm")
+    sepal_width: float = Field(..., gt=0.0, description="Sepal width in cm")
+    petal_length: float = Field(..., gt=0.0, description="Petal length in cm")
+    petal_width: float = Field(..., gt=0.0, description="Petal width in cm")
+
+    class Config:
+        schema_extra = {
+            "example": {
+                "sepal_length": 5.1,
+                "sepal_width": 3.5,
+                "petal_length": 1.4,
+                "petal_width": 0.2
+            }
+        }
+
+# Define response schema
+class InferenceResponse(BaseModel):
+    class_id: int
+    class_name: str
+    probabilities: list[float]
+
+# Model loading state
+model = None
+classes = ["Iris-setosa", "Iris-versicolor", "Iris-virginica"]
+
+@app.on_event("startup")
+def load_model():
+    """Load model weights into RAM when the application starts up."""
+    global model
+    model_path = os.getenv("MODEL_PATH", "model.joblib")
+    if not os.path.exists(model_path):
+        # Fallback: create and save a dummy model for demonstration
+        from sklearn.datasets import load_iris
+        from sklearn.ensemble import RandomForestClassifier
+        iris = load_iris()
+        clf = RandomForestClassifier(n_estimators=10, random_state=42)
+        clf.fit(iris.data, iris.target)
+        joblib.dump(clf, model_path)
+    
+    model = joblib.load(model_path)
+    print(f"Model loaded successfully from {model_path}")
+
+@app.get("/health", status_code=200)
+def health_check():
+    """Simple health check endpoint for orchestrators (like Kubernetes)."""
+    if model is None:
+        raise HTTPException(status_code=503, detail="Model not initialized")
+    return {"status": "healthy"}
+
+@app.post("/predict", response_model=InferenceResponse)
+async def predict(request: InferenceRequest):
+    """Asynchronously handle client classification requests."""
+    if model is None:
+        raise HTTPException(status_code=503, detail="Model is loading or unavailable")
+
+    try:
+        # Extract features from request model
+        features = np.array([[
+            request.sepal_length,
+            request.sepal_width,
+            request.petal_length,
+            request.petal_width
+        ]])
+
+        # Execute prediction (run on thread pool for large models if needed)
+        prediction = int(model.predict(features)[0])
+        probabilities = model.predict_proba(features)[0].tolist()
+
+        return InferenceResponse(
+            class_id=prediction,
+            class_name=classes[prediction],
+            probabilities=probabilities
+        )
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Inference error: {str(e)}")
+```
+
+To run this application:
+```bash
+# Install dependencies
+pip install fastapi uvicorn scikit-learn joblib pydantic numpy
+
+# Launch server
+uvicorn app:app --host 0.0.0.0 --port 8000
+```
+
+---
+
+## 6. Intermediate Examples
+
+### Example 1: MLflow Experiment Tracking & Model Registry
+This example demonstrates how to train a classification model, track parameters and metrics, and register it to the MLflow Model Registry.
+
+```python
+# train.py
+import mlflow
+import mlflow.sklearn
+from sklearn.datasets import load_breast_cancer
+from sklearn.model_selection import train_test_split
+from sklearn.ensemble import GradientBoostingClassifier
+from sklearn.metrics import accuracy_score, f1_score
+
+def run_training():
+    # Set tracking URI (can be local or remote server)
+    mlflow.set_tracking_uri("sqlite:///mlflow.db")
+    mlflow.set_experiment("Breast_Cancer_Classification")
+
+    # Load and split dataset
+    data = load_breast_cancer()
+    X_train, X_test, y_train, y_test = train_test_split(
+        data.data, data.target, test_size=0.2, random_state=42
+    )
+
+    # Define hyperparameters
+    n_estimators = 100
+    learning_rate = 0.1
+    max_depth = 3
+
+    # Start MLflow run to capture tracking metrics
+    with mlflow.start_run(run_name="gb_classifier_run") as run:
+        # Log hyperparameters
+        mlflow.log_param("n_estimators", n_estimators)
+        mlflow.log_param("learning_rate", learning_rate)
+        mlflow.log_param("max_depth", max_depth)
+
+        # Train model
+        model = GradientBoostingClassifier(
+            n_estimators=n_estimators,
+            learning_rate=learning_rate,
+            max_depth=max_depth,
+            random_state=42
+        )
+        model.fit(X_train, y_train)
+
+        # Predict and evaluate
+        predictions = model.predict(X_test)
+        acc = accuracy_score(y_test, predictions)
+        f1 = f1_score(y_test, predictions)
+
+        # Log metrics
+        mlflow.log_metric("accuracy", acc)
+        mlflow.log_metric("f1_score", f1)
+        print(f"Run completed. Accuracy: {acc:.4f}, F1: {f1:.4f}")
+
+        # Log model to Registry
+        # The registered_model_name parameter automatically registers it
+        mlflow.sklearn.log_model(
+            sk_model=model,
+            artifact_path="model",
+            registered_model_name="BreastCancerClassifier"
+        )
+        print("Model logged and registered successfully.")
+
+if __name__ == "__main__":
+    run_training()
+```
+
+### Example 2: PyTorch Model to ONNX Export and Runtime Execution
+This example demonstrates exporting a PyTorch deep learning model to ONNX format and running inference using ONNX Runtime.
+
+```python
+# pytorch_onnx.py
+import torch
+import torch.nn as nn
+import onnx
+import onnxruntime as ort
+import numpy as np
+
+# 1. Define a simple PyTorch Neural Network
+class ClassifierNet(nn.Module):
+    def __init__(self):
+        super(ClassifierNet, self).__init__()
+        self.fc1 = nn.Linear(10, 32)
+        self.relu = nn.ReLU()
+        self.fc2 = nn.Linear(32, 2)
+        self.softmax = nn.Softmax(dim=1)
+
+    def forward(self, x):
+        x = self.fc1(x)
+        x = self.relu(x)
+        x = self.fc2(x)
+        return self.softmax(x)
+
+# Instantiate PyTorch model and set to evaluation mode
+pytorch_model = ClassifierNet()
+pytorch_model.eval()
+
+# 2. Export Model to ONNX
+# Define a representative dummy input matching input shape (batch_size=1, features=10)
+dummy_input = torch.randn(1, 10)
+onnx_filename = "classifier.onnx"
+
+torch.onnx.export(
+    pytorch_model,               # Model object to be converted
+    dummy_input,                 # Model input blueprint
+    onnx_filename,               # Output file path
+    export_params=True,          # Store trained parameter weights inside file
+    opset_version=15,            # ONNX Operator set version
+    do_constant_folding=True,    # Optimize graph constants
+    input_names=['input'],       # Input layer names
+    output_names=['output'],     # Output layer names
+    dynamic_axes={               # Enable dynamic batch dimension
+        'input': {0: 'batch_size'},
+        'output': {0: 'batch_size'}
+    }
+)
+print(f"Model successfully exported to {onnx_filename}")
+
+# 3. Validate ONNX Graph Structure
+onnx_model = onnx.load(onnx_filename)
+onnx.checker.check_model(onnx_model)
+print("ONNX structure validated successfully.")
+
+# 4. Run Inference using ONNX Runtime
+# Load ONNX model and configure execution providers (CPU in this case)
+ort_session = ort.InferenceSession(onnx_filename, providers=['CPUExecutionProvider'])
+
+# Create raw numpy input array
+raw_input = np.random.randn(2, 10).astype(np.float32)  # Batch size = 2
+
+# Execute inference session
+ort_inputs = {ort_session.get_inputs()[0].name: raw_input}
+ort_outputs = ort_session.run(None, ort_inputs)
+
+print("\nONNX Runtime Inference Result:")
+print("Output Probabilities Shape:", ort_outputs[0].shape)
+print("Output Tensor:\n", ort_outputs[0])
+```
+
+---
+
+## 7. Advanced Examples
+
+### Example 1: Triton Inference Server Configuration (`config.pbtxt`)
+To serve models on Triton, a directory structure is required:
+```text
+model_repository/
+└── image_classifier/
+    ├── config.pbtxt
+    └── 1/
+        └── model.onnx
+```
+
+Below is a configuration file (`config.pbtxt`) that maps inputs and outputs, allocates instance groups, and configures dynamic batching.
+
+```protobuf
+# config.pbtxt
+name: "image_classifier"
+platform: "onnxruntime_onnx"
+max_batch_size: 32
+
+# Input tensor specifications
+input [
+  {
+    name: "input_image"
+    data_type: TYPE_FP32
+    dims: [ 3, 224, 224 ]
+  }
+]
+
+# Output tensor specifications
+output [
+  {
+    name: "probabilities"
+    data_type: TYPE_FP32
+    dims: [ 1000 ]
+  }
+]
+
+# Enable Dynamic Batching
+dynamic_batching {
+  # Wait for up to 5 milliseconds to group incoming requests into a batch
+  max_queue_delay_microseconds: 5000
+  # Prefer dispatching batches of size 4, 8, 16, or 32
+  preferred_batch_size: [ 4, 8, 16, 32 ]
+}
+
+# Model Instance Scoping (Hardware allocation)
+instance_group [
+  {
+    # Run 2 concurrent instances of the model on GPU 0
+    count: 2
+    kind: KIND_GPU
+    gpus: [ 0 ]
+  }
+]
+```
+
+### Example 2: Optimized Multi-Stage Production Dockerfile
+This Dockerfile uses multi-stage builds to compile model dependencies in an builder environment, then copies only runtime files into the final thin container image to minimize security vulnerabilities and runtime footprint.
+
+```dockerfile
+# ==========================================
+# Stage 1: Build & Compile dependencies
+# ==========================================
+FROM python:3.10-slim AS builder
+
+WORKDIR /build
+
+# Install compilation tools
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install packages into a custom directory
+COPY requirements.txt .
+RUN pip install --no-cache-dir --user -r requirements.txt
+
+# ==========================================
+# Stage 2: Clean Production Runtime
+# ==========================================
+FROM python:3.10-slim AS runner
+
+WORKDIR /app
+
+# Install security updates
+RUN apt-get update && apt-get upgrade -y && rm -rf /var/lib/apt/lists/*
+
+# Create a non-root system user for application security
+RUN useradd -u 8888 appuser && mkdir -p /app/models && chown -R appuser:appuser /app
+USER appuser
+
+# Copy installed libraries and executables from builder stage
+COPY --from=builder /root/.local /home/appuser/.local
+COPY --from=builder /build/requirements.txt .
+
+# Copy application source code and pre-downloaded model artifacts
+COPY --chown=appuser:appuser src/ ./src/
+COPY --chown=appuser:appuser models/model.onnx ./models/model.onnx
+
+# Ensure Python looks in the user's local package path
+ENV PATH=/home/appuser/.local/bin:$PATH
+ENV PYTHONUNBUFFERED=1
+ENV MODEL_PATH=/app/models/model.onnx
+
+# Port exposure
+EXPOSE 8000
+
+# Execute server using Gunicorn worker processes wrapping FastAPI (Uvicorn workers)
+CMD ["gunicorn", "-k", "uvicorn.workers.UvicornWorker", "-c", "src/gunicorn_config.py", "src.main:app"]
+```
+
+### Example 3: GitHub Actions Model Validation Pipeline
+This workflow (`.github/workflows/mlops-pipeline.yml`) validates python code quality, installs dependencies, loads test datasets, runs integration tests, and compiles the booklet automatically.
+
+```yaml
+name: MLOps CI/CD Pipeline
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  validate-and-test:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout Code
+      uses: actions/checkout@v3
+
+    - name: Set up Python 3.10
+      uses: actions/setup-python@v4
+      with:
+        python-version: "3.10"
+        cache: 'pip'
+
+    - name: Install System Dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y graphviz
+
+    - name: Install Python Dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install flake8 pytest pytest-cov
+        if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+
+    - name: Lint with Flake8
+      run: |
+        # stop the build if there are Python syntax errors or undefined names
+        flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
+        # exit-zero treats all errors as warnings.
+        flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
+
+    - name: Run Unit & Integration Tests
+      run: |
+        pytest tests/ --cov=src --cov-report=xml
+
+    - name: Compile booklet
+      run: |
+        python3 compile.py
+
+    - name: Verify compiled booklet exists
+      run: |
+        if [ ! -f booklet.md ]; then
+          echo "Compilation Failed: booklet.md not created"
+          exit 1
+        fi
+```
+
+---
+
+## 8. How Interviewers Think
+
+When assessing MLOps and serving capabilities, interviewers focus on trade-offs rather than raw model accuracy:
+- **Optimization Strategy**: Do you blindly suggest GPUs for all deployments, or can you evaluate throughput, batch sizes, and CPU architectures? Expect questions on when to utilize **CPU inference (e.g., OpenVINO, ONNX)** vs. **GPU servers (Triton)**.
+- **Failures and Debugging**: Be prepared to outline scenarios where models failed silently (data drift). The interviewer wants to see if you have concrete monitoring solutions (KS-tests, PSI calculations) rather than hoping nothing goes wrong.
+- **Resource Constraints**: How do you avoid OOM issues? How do you partition GPU resources? (Know about Triton instance groups and vLLM physical block pools).
+- **Security**: Aware of code injection risks via `pickle`? They look for your preference toward static data schemas and containerization bounds.
+
+---
+
+## 9. Frequently Asked Interview Questions
+
+#### 1. What is training-serving skew, and how can it be prevented?
+- **Detailed Answer**: Training-serving skew refers to a gap in model performance between training validation and production deployment. It is caused by:
+  1. *Pipeline Discrepancies*: Using different languages or libraries for feature engineering in training (e.g., Python Pandas) vs. serving (e.g., Java/C++ services).
+  2. *Data Leakage*: Incorporating features during training that are unavailable or calculated differently in real-time inference (e.g., future variables).
+  3. *Distribution Shift*: A mismatch in features caused by input pipeline bugs.
+  
+  To prevent it, package preprocessing transformations inside the serialized model graph itself (e.g., Scikit-Learn pipelines, TensorFlow transform layers, or ONNX subgraphs). Additionally, leverage a centralized **Feature Store** (like Feast) to enforce a single source of truth for features in both training and inference.
+- **Follow-up Questions**: How does a feature store ensure consistency? (Answer: It provides a unified API to query historical logs for training and low-latency cache stores like Redis for serving).
+- **Interviewer's Expectations**: Identify pipeline mismatches, state the solution of serializing preprocessing pipelines together with the model, and explain Feature Store usage.
+
+#### 2. Compare REST APIs (FastAPI) and Dedicated Serving Servers (Triton) for model serving.
+- **Detailed Answer**:
+  - **FastAPI**: A lightweight web framework. It is easy to write, integrates with standard web libraries, and handles customized routing logic well. However, it requires manual scaling logic, has high execution overhead under heavy deep learning workloads because it lacks native queue schedulers, and is bound by Python's Global Interpreter Lock (GIL) if using CPU libraries.
+  - **Triton Inference Server**: A specialized C++ model serving container. It bypasses Python entirely during runtime. Triton handles hardware scheduling, loads multiple framework backend binaries natively (PyTorch, TensorFlow, TensorRT), dynamically batches requests to maximize GPU utilization, and isolates execution runs using concurrent model instances.
+  
+  Use FastAPI for lightweight tabular models, custom microservices, or complex business logic. Use Triton for high-performance deep learning models (CV, NLP, Speech) requiring low latency and high concurrent throughput.
+- **Follow-up Questions**: Can you combine both? (Answer: Yes, by putting FastAPI in front as an API Gateway to handle authentication/logging, which then routes tensor requests to Triton in the backend via gRPC).
+- **Interviewer's Expectations**: Discuss GIL issues in Python servers, highlight Triton's dynamic batching, compare performance, and outline architecture trade-offs.
+
+#### 3. How does vLLM's PagedAttention work, and why does it improve LLM throughput?
+- **Detailed Answer**: In autoregressive LLM generation, the Key-Value (KV) cache grows dynamically with each token. Standard servers pre-allocate contiguous memory pools matching the maximum sequence length (e.g., 4096 tokens) for each request, leading to massive memory fragmentation and underutilization (over 60% of GPU memory is wasted).
+  
+  PagedAttention solves this by:
+  1. *Virtual Block Mapping*: Dividing the KV cache of a request into logical blocks (each storing keys/values for a fixed number of tokens, e.g., 16).
+  2. *Non-Contiguous Storage*: Storing these blocks in non-contiguous physical pages in GPU VRAM.
+  3. *Page Tables*: Managing mapping tables to resolve logical sequence blocks to physical block keys at runtime.
+  
+  This eliminates memory fragmentation, allowing the server to batch more requests concurrently, leading to 2x to 4x increases in serving throughput.
+- **Follow-up Questions**: How does vLLM handle parallel decoding (e.g. temperature sampling)? (Answer: It uses Copy-on-Write block sharing. When branching paths diverge, it copies only the modified physical blocks, leaving prompt blocks shared).
+- **Interviewer's Expectations**: Describe the waste in pre-allocation, explain the analogy of virtual memory pagination applied to GPU VRAM, and show how this enables higher batch sizes.
+
+#### 4. What is Model Quantization (FP16 vs INT8), and how does it affect latency?
+- **Detailed Answer**: Quantization maps floating-point parameters to lower-precision bit-widths:
+  - **FP16 (Half-precision)**: Reduces memory usage by 50% compared to FP32, doubling transfer speeds and utilizing Tensor Cores. It rarely impacts model accuracy.
+  - **INT8 (8-bit Integer)**: Converts 32-bit floating values to 8-bit signed integers. This reduces memory footprint by 75%, speeds up memory transfer, and utilizes integer arithmetic units (vector instructions).
+  
+  Reducing precision lowers the memory bandwidth requirements (the bottleneck for inference) and allows operations to execute faster, reducing latency.
+- **Follow-up Questions**: What is the difference between PTQ and QAT? (Answer: Post-Training Quantization maps weights directly after training, which can cause precision loss. Quantization Aware Training models quantization error during the training loop to maintain accuracy).
+- **Interviewer's Expectations**: Distinguish bit widths, explain memory bandwidth advantages, and outline accuracy impact vs. latency reduction.
+
+#### 5. How do you diagnose and resolve GPU Out-of-Memory (OOM) errors during model serving?
+- **Detailed Answer**: GPU OOM errors occur when the VRAM required to store the model weights, activation maps, execution buffers, and serving queues exceeds the GPU capacity.
+  
+  Diagnostics:
+  1. Analyze model footprint (e.g., a 7B parameter model in FP16 requires $7 \times 2 = 14\text{ GB}$ of VRAM just to load weights).
+  2. Inspect dynamic VRAM allocations using `nvidia-smi` or PyTorch’s memory tracking APIs.
+  
+  Resolutions:
+  - Reduce the maximum serving batch size (`max_batch_size`).
+  - Cap the concurrent instance count in the serving configuration.
+  - Apply quantization (e.g., 4-bit or 8-bit) to reduce weight memory footprint.
+  - Implement KV cache limits or virtual paging adjustments (e.g., adjusting `gpu_memory_utilization` in vLLM).
+- **Follow-up Questions**: How does CUDA memory fragmentation cause OOMs even when free space exists? (Answer: Allocations require contiguous memory block chunks; fragmentation leaves large aggregate free memory split into small non-contiguous blocks).
+- **Interviewer's Expectations**: Discuss base weight size calculations, dynamic runtime buffers, scaling configuration limits, and quantization techniques.
+
+#### 6. Explain the difference between Data Drift and Concept Drift. How do you monitor them?
+- **Detailed Answer**:
+  - **Data Drift (Covariate Shift)**: The statistical properties of the input features change over time, i.e., $P(X)$ changes, but the mapping $P(Y|X)$ remains constant. Example: An app’s user base shifts to a younger demographic, changing feature ranges, but the model's logic for predicting interests based on age is still valid.
+  - **Concept Drift**: The relationship between features and target labels changes, i.e., $P(Y|X)$ changes. Example: A model predicting housing prices based on location and size degrades because inflation or economic shocks shift prices, rendering historical evaluations invalid.
+  
+  Monitoring:
+  - Data Drift: Track statistical distributions of serving inputs against baseline training sets using metrics like the **Kolmogorov-Smirnov (KS) test** (for numerical features), **Population Stability Index (PSI)**, or **Wasserstein Distance**.
+  - Concept Drift: Continuously measure actual performance metrics (accuracy, F1-score, MAE) as target labels arrive, flagging deviations from baseline.
+- **Follow-up Questions**: What do you do once drift is detected? (Answer: Trigger alerts to flag retrain loops, fallback to heuristics, or inspect data pipelines for bugs).
+- **Interviewer's Expectations**: Define mathematical notation of distributions, contrast drift types, and name standard monitoring tests (PSI, KS-test).
+
+#### 7. What are the security risks of using `pickle` for model serialization, and how can they be mitigated?
+- **Detailed Answer**: Python's `pickle` module is a stack-based machine that reconstructs object graphs. The primary security risk is **arbitrary code execution**. During deserialization, `pickle` parses object definitions. If a pickle file contains a malicious class definition that overrides the `__reduce__` method, it can execute arbitrary shell commands (e.g., downloading malware or leaking API keys) the moment `pickle.load()` is invoked.
+  
+  Mitigation:
+  1. Never deserialize untrusted pickle files from external users.
+  2. Enforce cryptographic signatures on model binaries in registry pipelines.
+  3. Transition to safe serialization formats that store only weight matrices and model configuration schemas (such as **Safetensors** for neural networks, or **ONNX** graphs).
+- **Follow-up Questions**: Why is Safetensors safer? (Answer: It stores only raw tensor buffers and metadata in JSON without any code execution capabilities, and it allows zero-copy loading).
+- **Interviewer's Expectations**: Explain the vulnerability mechanism (`__reduce__` exploit), and identify secure alternatives (Safetensors, ONNX).
+
+#### 8. How does NVIDIA Triton's Dynamic Batching work? What are the key configuration trade-offs?
+- **Detailed Answer**: Triton’s dynamic batcher groups individual inference requests arriving sequentially over a short time window into a single batch, allowing the GPU to run parallel vector operations across all elements in the batch.
+  
+  Key Parameters:
+  1. `max_batch_size`: The upper limit of requests Triton will bundle together.
+  2. `max_queue_delay_microseconds`: The duration (in microseconds) the scheduler will wait for additional requests to arrive once the first request is queued.
+  
+  Trade-offs:
+  - Setting a high `max_queue_delay` increases maximum batch sizes (improving total throughput and GPU utilization) but adds artificial latency to the first request in the queue.
+  - Setting a low delay decreases response latency but reduces batch efficiency under light traffic.
+- **Follow-up Questions**: When should you disable dynamic batching? (Answer: For purely latency-sensitive applications with low concurrent traffic where waiting is unacceptable, or when running batch jobs).
+- **Interviewer's Expectations**: Describe queuing mechanisms, define configuration parameters, and explain the latency-throughput trade-off.
+
+#### 9. Design a CI/CD pipeline for updating a production machine learning model when new training data arrives.
+- **Detailed Answer**:
+  1. **Trigger**: An automated scheduler (cron) or Webhook detects new training data in an S3/GCS bucket.
+  2. **Data Validation**: Run data schema validation (Great Expectations) to check for missing values or anomalous distributions.
+  3. **Model Training**: Launch a containerized training run (on Kubeflow or AWS SageMaker). Version data and code using Git commits and DVC tags.
+  4. **Evaluation & Testing**: Compare the newly trained model against the active production model on a holdout test set. Run tests for:
+     - Performance (accuracy, F1-score > production).
+     - Bias and fairness checks.
+     - Bias-variance stability.
+  5. **Model Registry**: If tests pass, save weights and register the model to the Registry (MLflow) with a state tag `Staging`.
+  6. **Deployment**: Trigger CD pipelines. Deploy the staging container to a test cluster. Run load testing.
+  7. **Release**: Transition to production using a Canary deployment (routing 5% of traffic, monitoring error rates, and scaling up to 100%).
+- **Follow-up Questions**: How do you revert if the new model fails? (Answer: Revert the routing rule in the API Gateway back to the stable production model tag in the Registry).
+- **Interviewer's Expectations**: Provide an end-to-end design, outline testing requirements, and mention safe deployment strategies (Canary/Blue-Green).
+
+#### 10. What is a Model Registry (like MLflow), and what metadata does it track?
+- **Detailed Answer**: A Model Registry is a centralized service to store, organize, and manage the lifecycle stages of machine learning models.
+  
+  Metadata tracked:
+  1. *Model Versioning*: Auto-incrementing version numbers for registered models.
+  2. *Artifact Location*: Paths to the actual weights and serialization files (S3, GCS, local).
+  3. *Parameters and Metrics*: Validation accuracy, loss curves, training hyperparameter configurations (e.g. learning rate, epochs).
+  4. *Run Lineage*: Git commit hash of training code, baseline dataset reference (DVC hashes), and training environment dependencies (Docker image tags).
+  5. *Lifecycle States*: Stage flags: `None`, `Staging`, `Production`, or `Archived`.
+- **Follow-up Questions**: Why is versioning in a registry better than git versioning? (Answer: Large model binaries (>1GB) are too heavy for Git, and registries track runtime-specific metadata like output schemas and deployment status).
+- **Interviewer's Expectations**: List key registry components (artifact store, run metadata, transitions) and explain reproducibility benefits.
+
+#### 11. How do you implement A/B testing and Canary deployments for machine learning models?
+- **Detailed Answer**:
+  - **A/B Testing**: Used to evaluate product impact (e.g., conversion rate). Route user traffic between Model A (control) and Model B (treatment) based on user IDs (e.g., hashing user IDs to assign 50% traffic to each). Maintain this routing consistently for each user. Log predictions and outcomes to database tables, then perform statistical tests (e.g., t-test) to measure significance.
+  - **Canary Deployment**: Used to verify technical stability. Route a small fraction of random traffic (e.g., 5%) to the new Model B. Monitor technical metrics (error rates, response latency, memory spikes) for a monitoring window. If stable, incrementally scale traffic to 20%, 50%, and eventually 100%. If anomalies are detected, instantly roll back routing configuration.
+- **Follow-up Questions**: Where is this routing logic implemented? (Answer: In an API Gateway like Kong, Ambassador, or via service meshes like Istio).
+- **Interviewer's Expectations**: Distinguish A/B testing (product impact) from Canary deployments (technical stability) and explain traffic routing mechanics.
+
+#### 12. Contrast batch inference and real-time (online) inference. When should you use each?
+- **Detailed Answer**:
+  - **Batch Inference**:
+    - *Mechanics*: Processes a large block of inputs offline using tools like Spark, PyTorch, or Scikit-Learn pipelines. Results are saved to a key-value store (e.g. Redis, DynamoDB).
+    - *Pros*: High throughput, predictable costs, easy scaling, and low execution risk.
+    - *Cons*: Cannot handle real-time context; predictions can become stale.
+    - *Use Case*: Daily product recommendation emails, default risk scoring.
+  - **Real-Time Inference**:
+    - *Mechanics*: Model runs in an active web container waiting for API requests (REST/gRPC).
+    - *Pros*: Predicts on dynamic user context immediately.
+    - *Cons*: High hosting costs, low latency tolerances (must return under 100ms), and complex scaling requirements.
+    - *Use Case*: Fraud detection, search autocomplete, chatbots.
+- **Follow-up Questions**: What is near-real-time streaming? (Answer: Processing messages from streaming queues like Kafka using Flink, yielding latencies of seconds).
+- **Interviewer's Expectations**: Define latency profiles, cost implications, and matching use cases.
+
+#### 13. How does ONNX Runtime improve CPU/GPU inference performance?
+- **Detailed Answer**: ONNX Runtime optimizes execution of standard ONNX graphs by:
+  1. *Graph Optimization*: Modifying the neural network structure before execution:
+     - **Constant Folding**: Pre-calculating subgraphs composed of constant nodes.
+     - **Node Fusion**: Merging sequential operators (like Conv + Batch Normalization + ReLU) into a single optimized kernel execution block, reducing memory access overhead.
+  2. *Hardware-Specific Backends*: Interfacing with Execution Providers (EPs) like CUDA, TensorRT (for GPUs), or OpenVINO, oneDNN (for Intel CPUs) to run optimized hardware-specific code without rewriting python code.
+- **Follow-up Questions**: Why is Node Fusion highly effective on GPUs? (Answer: It reduces global memory reads/writes by keeping intermediate activation states in fast registers during fused execution).
+- **Interviewer's Expectations**: Discuss graph compilation optimizations (folding, fusion) and explain the role of Execution Providers.
+
+#### 14. What is the role of Data Version Control (DVC) in MLOps, and how does it integrate with Git?
+- **Detailed Answer**: Git is designed to track text files and code. Storing large model binaries (e.g., 500MB) or massive training datasets in Git leads to repository bloating and performance degradation.
+  
+  DVC solves this by:
+  1. *Binary Tracking*: DVC stores model weights and raw datasets in an external object store (e.g., S3, Google Cloud Storage, MinIO).
+  2. *Git Integration*: For every file tracked by DVC, it creates a small `.dvc` text pointer file containing the file's hash, size, and destination path.
+  3. *Version Control*: Git tracks the small `.dvc` files. When switching branches, running `git checkout` followed by `dvc pull` synchronizes the local workspace with the corresponding large assets in remote storage.
+- **Follow-up Questions**: How does DVC ensure pipeline reproducibility? (Answer: It defines DAG pipelines in a `dvc.yaml` file, tracking dependencies, inputs, and outputs to recalculate steps only if inputs change).
+- **Interviewer's Expectations**: Identify Git limitations with large files, explain DVC hashes and pointer files, and detail sync commands (`dvc pull`/`dvc push`).
+
+#### 15. How do you handle cold starts in serverless model deployment (e.g., AWS Lambda)?
+- **Detailed Answer**: Serverless platforms scale down to zero containers when idle. A cold start occurs when a new request arrives, requiring the platform to allocate a VM, pull the container image, boot Python, import packages (like PyTorch or TensorFlow, which can take several seconds), and load model weights from disk to RAM.
+  
+  Mitigation Strategies:
+  1. *Model/Environment Minimization*: Minimize dependencies. Build minimal docker images (using Alpine/distroless bases), and use fast runtimes like ONNX Runtime or TFLite rather than importing entire PyTorch/TensorFlow frameworks.
+  2. *Provisioned Concurrency*: Configure the platform to keep a minimum number of warmed container instances active (incurring baseline costs).
+  3. *Warming Pings*: Schedule periodic cron jobs (e.g., every 5 minutes) to ping the endpoint, keeping instances warm.
+  4. *Weight Caching*: Cache weights in local container layers or write compiled assets directly to persistent storage overlays.
+- **Follow-up Questions**: Why do heavy deep learning models perform poorly on serverless functions? (Answer: They require substantial initialization memory and compute to load weights, and they cannot utilize GPUs in standard serverless configurations).
+- **Interviewer's Expectations**: Detail the boot cycle steps, identify dependency overhead (PyTorch import delays), and list concrete mitigations (lightweight runtimes, warmers, caching).
+
+---
+
+## 10. Common Mistakes
+
+- **Serializing Code with Pickled Weights**: Pickling objects captures implementation dependencies. If a class path or import reference changes in your source code, loading historical pickle files will raise `ModuleNotFoundError` or class instantiation failures. *Always decouple weight storage from network definition schemas (prefer ONNX or config-separated architectures).*
+- **Neglecting Preprocessing Logic Synchronization**: Modifying raw incoming data (e.g., standard scaling, text normalization) in production using standard web code that differs from the training training code. This causes silent accuracy dropouts. *Bundle preprocessing pipelines inside the model binary or use a unified Feature Store.*
+- **Unbounded Serving Queues**: Allowing model requests to queue infinitely under heavy traffic spikes. This leads to memory exhaustion (OOM), server crashes, and timeouts. *Enforce rate limits, specify queue bounds, and set query timeouts on gateways.*
+
+---
+
+## 11. Comparison Section
+
+### FastAPI vs. Triton Inference Server vs. vLLM
+
+| Feature | FastAPI | Triton Inference Server | vLLM Engine |
+| :--- | :--- | :--- | :--- |
+| **Primary Focus** | General web endpoints, business logic | Multi-framework DL inference optimization | Optimized LLM/Transformer text generation |
+| **Supported Frameworks** | Any Python library (manual script) | PyTorch, ONNX, TensorRT, TensorFlow | Transformer models (Hugging Face format) |
+| **Concurrency Support** | Thread pool, async loops | Multi-model concurrent instances | Token-level dynamic execution loops |
+| **Batching Mechanism** | Manual loop grouping | Dynamic Queue-based Batching | Continuous Batching & PagedAttention |
+| **Latency/Throughput Profile** | High overhead; low throughput | Ultra-low latency; high throughput | High throughput; optimized LLM generation |
+| **Best Use Case** | Tabular models, API Gateways, custom business rules | Computer Vision, NLP, multi-model GPU hosting | High-throughput LLM serving (Llama, Qwen, Mistral) |
+
+### Serialization Formats: Pickle vs. ONNX vs. TensorRT
+
+| Feature | Pickle / Joblib | ONNX | TensorRT |
+| :--- | :--- | :--- | :--- |
+| **Format Type** | Python-specific byte stream | Open-standard intermediate representation | NVIDIA-specific compiled GPU engine |
+| **Execution Performance** | Baseline (runs Python interpreter) | Optimized (graph fusions, ONNX Runtime) | Maximum (hardware-tuned kernels for CUDA cores) |
+| **Portability** | Bound to Python and identical source libraries | High (run on C++, C#, Java, Go, JS) | Low (compiled for a specific GPU architecture) |
+| **Compilation Requirement** | None (instant save/load) | Graph export | Compilation/tuning step required |
+| **Security Profile** | Low (arbitrary code execution risk) | High (only data graphs, no execution) | High (compiled binary representation) |
+
+---
+
+## 12. Practical Projects
+
+### Project 1: End-to-End MLOps Model Registry and Deployment System
+Build a complete pipeline that automates training tracking, model registration, and containerized deployment.
+- **Workflow**:
+  1. Trigger training code via a python script.
+  2. Track metrics and parameters in a local MLflow tracking server backed by a SQLite database.
+  3. Register the best-performing model to the MLflow Registry.
+  4. Write a script that checks out the latest model registered in the `Production` stage.
+  5. Build a Docker image containing the model and a FastAPI API wrapper.
+  6. Deploy the container and run validation tests.
+
+### Project 2: High-Throughput LLM Serving System with vLLM and Triton
+Set up an enterprise-grade LLM serving infrastructure to process chat tokens.
+- **Workflow**:
+  1. Spin up a Docker container running the vLLM engine serving an open-source LLM (e.g. `Qwen2.5-7B-Instruct`).
+  2. Set up vLLM to utilize PagedAttention with custom allocation parameters (`gpu_memory_utilization`).
+  3. Write a load-testing Python client that sends 100 concurrent chat prompts to the server.
+  4. Measure latency indicators: Time to First Token (TTFT) and Inter-Token Latency.
+  5. Compare performance results against a standard FastAPI script wrapping a Hugging Face pipeline.
+
+---
+
+## 13. Internship Preparation Notes
+
+- **Resume Bullet Points**:
+  - "Built an automated CI/CD pipeline using GitHub Actions and MLflow to train, evaluate, and register models, reducing production training-serving skew incidents by 40%."
+  - "Deployed deep learning models using Triton Inference Server with dynamic batching, increasing GPU utilization from 15% to 65% and reducing p99 latency by 50ms."
+  - "Implemented model quantization (INT8) and compiled neural networks to ONNX format, reducing model size by 75% and speeding up inference throughput by 3x."
+- **System Design Strategy**: When asked to design an ML system, always ask about SLA constraints (acceptable latency targets) and throughput expectations (QPS). Begin your design with batch vs online design choices, and show how you optimize data pipelines, features caching, model serving architectures, and live monitoring.
+
+---
+
+## 14. Cheat Sheet
+
+### MLflow Commands
+```bash
+# Launch MLflow Tracking UI with a local backend database
+mlflow server \
+    --backend-store-uri sqlite:///mlflow.db \
+    --default-artifact-root ./artifacts \
+    --host 0.0.0.0 \
+    --port 5000
+
+# Set environment variables in code before execution
+export MLFLOW_TRACKING_URI="http://localhost:5000"
+```
+
+### Docker CLI Commands for MLOps
+```bash
+# Build a local model serving image
+docker build -t ml-inference-service:v1 -f Dockerfile .
+
+# Run container with resource constraints (limit to 2 CPUs and 4GB RAM)
+docker run -d \
+  --name ml-api \
+  -p 8000:8000 \
+  --cpus="2.0" \
+  --memory="4g" \
+  -e MODEL_PATH="/app/models/model.onnx" \
+  ml-inference-service:v1
+
+# Run container with GPU support (requires nvidia-container-toolkit)
+docker run --gpus all -d -p 8000:8000 ml-inference-service:v1
+```
+
+---
+
+## 15. One-Day Revision Checklist
+
+- [ ] Explain the difference between **Data Drift** and **Concept Drift** and name monitoring metrics (PSI, KS-test).
+- [ ] Diagram Triton Inference Server's **Dynamic Batching** routing paths from client queues to GPU executors.
+- [ ] Understand why **PagedAttention** in vLLM optimizes memory usage and state how blocks are allocated.
+- [ ] Understand the security risk associated with `pickle` serialization.
+- [ ] Review how **Node Fusion** and **Constant Folding** are applied during ONNX compilation.
+- [ ] Recall the standard HTTP status codes: `201` (Created), `400` (Bad Request), `401` (Unauthorized), `403` (Forbidden), `429` (Rate Limited), and `503` (Service Unavailable).
+- [ ] Write a basic async endpoint using FastAPI.

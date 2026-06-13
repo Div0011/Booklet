@@ -27,7 +27,21 @@ Statistics is like a detective: given incomplete clues (samples), deduce truth (
 
 ---
 
-## 2. Core Concepts
+### 2. Core Concepts
+
+### Sampling & Levels of Measurement
+- **Sampling Methods**:
+  - *Simple Random Sampling*: Every member of the population has an equal chance of selection.
+  - *Stratified Sampling*: Population is split into homogenous groups (strata), and random samples are drawn from each stratum proportionally.
+  - *Cluster Sampling*: Population is split into heterogeneous groups (clusters), and whole clusters are randomly selected.
+- **Levels of Measurement**:
+  - *Nominal*: Categorical data with no order (e.g., city, gender).
+  - *Ordinal*: Ordered categories with unequal intervals (e.g., rating scale 1-5, education level).
+  - *Interval*: Ordered categories with equal intervals, but no true zero (e.g., Temperature in Celsius).
+  - *Ratio*: Ordered categories with equal intervals and a true zero (e.g., height, weight, salary).
+- **Shape of Data**:
+  - *Skewness*: Measures asymmetry. Positive/right skew (tail on right, mean > median). Negative/left skew (tail on left, mean < median).
+  - *Kurtosis*: Measures tailedness. Leptokurtic (fat tails, high peak). Platykurtic (thin tails, flat peak). Mesokurtic (normal distribution).
 
 ### Descriptive Statistics
 ```python
@@ -54,9 +68,26 @@ q3 = np.percentile(data, 75)
 iqr = q3 - q1  # Interquartile range
 ```
 
-### Probability Distributions
+### Probability Distributions: PMF, PDF & CDF
+- **PMF vs. PDF vs. CDF**:
+  - **Probability Mass Function (PMF)**: Probability of a discrete random variable taking a exact value: $P(X = x)$.
+  - **Probability Density Function (PDF)**: Relative likelihood of a continuous random variable taking a value; probability is calculated over an interval (area under the curve): $P(a \le X \le b) = \int_a^b f(x)dx$.
+  - **Cumulative Distribution Function (CDF)**: Probability that the variable takes a value less than or equal to $x$: $F(x) = P(X \le x)$.
+
+- **Discrete Distributions**:
+  - *Bernoulli*: Single trial with success probability $p$ (e.g., coin toss).
+  - *Binomial*: Number of successes in $n$ independent Bernoulli trials.
+  - *Poisson*: Number of events occurring in a fixed interval of time/space given a constant rate $\lambda$.
+  - *Geometric*: Number of Bernoulli trials until the first success.
+
+- **Continuous Distributions**:
+  - *Normal (Gaussian)*: Symmetric, bell-shaped distribution defined by mean $\mu$ and standard deviation $\sigma$.
+  - *Exponential*: Time between events in a Poisson process (memoryless).
+  - *Uniform*: Constant probability over a finite interval.
+  - *Student's t*: Similar to Normal but with heavier tails; used for small sample sizes ($n < 30$).
+
 ```python
-from scipy.stats import norm, binom, poisson
+from scipy.stats import norm, binom, poisson, expon
 
 # Normal distribution N(μ=0, σ=1)
 x = np.linspace(-3, 3, 100)
@@ -69,28 +100,65 @@ p_5heads = binom.pmf(5, n=10, p=0.5)  # P(X=5 | n=10, p=0.5)
 # Poisson: events/time with rate λ
 p_3events = poisson.pmf(3, mu=2)  # P(X=3 | λ=2)
 
-# Sample from distributions
-normal_sample = np.random.normal(0, 1, 1000)
+# Exponential: time between events (lambda=2)
+p_time = expon.cdf(1.5, scale=1/2) # P(T <= 1.5)
 ```
 
-### Hypothesis Testing
+### Central Limit Theorem (CLT) & Hypothesis Testing
+- **Central Limit Theorem**: As sample size $n$ increases ($n \ge 30$), the sampling distribution of the sample mean approaches a normal distribution, regardless of the population distribution shape. The mean of sample means equals the population mean ($\mu$), and the standard deviation of sample means (Standard Error) is $\sigma/\sqrt{n}$.
+- **Z-Test vs. T-Test**:
+  - *Z-Test*: Used when population variance ($\sigma^2$) is known and sample size is large.
+  - *T-Test*: Used when population variance is unknown (estimated from sample standard deviation $s$) and/or sample size is small.
+    - *One-Sample*: Test if sample mean differs from a hypothesized value.
+    - *Two-Sample Independent*: Test if means of two independent groups differ.
+    - *Paired T-Test*: Test if means of two dependent groups (same subjects before/after) differ.
+- **Chi-Square Tests**:
+  - *Goodness-of-Fit*: Tests if sample distribution matches a theoretical distribution.
+  - *Independence*: Tests if two categorical variables are associated.
+- **ANOVA (Analysis of Variance)**:
+  - Tests if means of 3 or more groups differ.
+  - **One-Way ANOVA**: One categorical factor. Partitioning variance:
+    $$SS_{Total} = SS_{Between} + SS_{Within}$$
+    F-Statistic is ratio of Mean Square Between to Mean Square Within.
+  - **Two-Way ANOVA**: Two categorical factors; checks main effects of each factor and their interaction.
+- **Errors & Power**:
+  - **Type I Error ($\alpha$)**: Rejecting the null hypothesis when it is true (False Positive). Significance level $\alpha$ is the probability of Type I error.
+  - **Type II Error ($\beta$)**: Failing to reject the null hypothesis when it is false (False Negative).
+  - **Power ($1 - \beta$)**: Probability of correctly rejecting a false null hypothesis (True Positive).
+
 ```python
 from scipy import stats
 
-# One-sample t-test: Does sample mean = 0?
+# One-sample t-test
 data = np.array([1.2, 0.9, 1.1, 1.0, 0.8])
 t_stat, p_value = stats.ttest_1samp(data, popmean=0)
-# p < 0.05 → reject null hypothesis
 
-# Two-sample t-test: Are two groups different?
+# Two-sample independent t-test
 group1 = [1, 2, 3, 4, 5]
 group2 = [2, 3, 4, 5, 6]
 t_stat, p_value = stats.ttest_ind(group1, group2)
 
-# Chi-square test: Association between categories?
+# Paired t-test
+before = [10, 12, 15, 11]
+after = [12, 14, 15, 13]
+t_stat, p_value = stats.ttest_rel(before, after)
+
+# One-Way ANOVA
+f_stat, p_val = stats.f_oneway([1, 2, 3], [2, 3, 4], [5, 6, 7])
+
+# Chi-square test of independence
 contingency = np.array([[10, 20], [30, 40]])
-chi2, p_value, dof, expected = stats.chi2_contingency(contingency)
+chi2, p_val, dof, expected = stats.chi2_contingency(contingency)
 ```
+
+### Bayesian Statistics
+Bayesian inference treats parameters as random variables with prior probability distributions, updating them as new data is observed.
+- **Bayes' Theorem**:
+  $$P(\theta | \text{Data}) = \frac{P(\text{Data} | \theta) \cdot P(\theta)}{P(\text{Data})}$$
+  - **Prior $P(\theta)$**: Initial belief about parameter $\theta$.
+  - **Likelihood $P(\text{Data} | \theta)$**: Probability of observing data given $\theta$.
+  - **Posterior $P(\theta | \text{Data})$**: Updated belief after seeing the data.
+  - **Evidence $P(\text{Data})$**: Normalizing constant over all possible parameters.
 
 ### Correlation and Covariance
 ```python
@@ -116,6 +184,9 @@ mean = np.mean(data)
 sem = stats.sem(data)  # Standard error of mean
 ci = stats.t.interval(0.95, len(data)-1, loc=mean, scale=sem)
 # 95% confident mean is between ci[0] and ci[1]
+```
+
+---]
 ```
 
 ---
@@ -545,6 +616,42 @@ A: Linear model for binary outcome; outputs probability via logistic function.
 
 **Q60: What is survival analysis?**
 A: Analyze time-to-event data; handles censoring (incomplete observations).
+
+---
+
+#### 61. Explain the Central Limit Theorem and its practical significance in statistics.
+- **Detailed Answer**: The Central Limit Theorem (CLT) states that if you take sufficiently large random samples (usually $n \ge 30$) from any population with mean $\mu$ and finite variance $\sigma^2$, the distribution of the sample means will be approximately normally distributed. This holds true regardless of the underlying population distribution (whether it is uniform, skewed, or bimodal). The mean of this sampling distribution equals the population mean $\mu$, and its standard deviation (known as the Standard Error of the Mean, or SEM) is equal to $\sigma / \sqrt{n}$.
+  - *Practical significance*: The CLT allows us to use parametric statistical tests (like Z-tests and t-tests) and construct confidence intervals for population means even when the raw population data is not normally distributed, which is common in real-world settings.
+- **Follow-up Questions**: How does sample size affect the Standard Error? (Answer: As sample size $n$ increases, the Standard Error decreases proportionally to $\sqrt{n}$, making the sample mean estimate more precise and narrowing the distribution).
+- **Interviewer's Expectations**: State the CLT definition clearly, mention the threshold sample size ($n \ge 30$), define the Standard Error formula, and explain its importance in making parametric assumptions for non-normal populations.
+
+---
+
+#### 62. Contrast One-Way ANOVA and Two-Way ANOVA. How is variance partitioned in a One-Way ANOVA?
+- **Detailed Answer**:
+  - **One-Way ANOVA**: Compares the means of three or more independent groups based on a single categorical independent variable (factor) to see if at least one group mean is significantly different from the others.
+  - **Two-Way ANOVA**: Compares the means across groups classified by two categorical factors. It tests three null hypotheses: the main effect of Factor A, the main effect of Factor B, and the interaction effect between A and B.
+  - **Partitioning of Variance**: In a One-Way ANOVA, the total sum of squares ($SS_{Total}$) represents the total variation in the data and is partitioned into two independent components:
+    $$SS_{Total} = SS_{Between} + SS_{Within}$$
+    - $SS_{Between}$ measures the variation between the group means and the grand mean (due to the treatment factor).
+    - $SS_{Within}$ (or $SS_{Error}$) measures the random variation within each group (residual noise).
+    The F-statistic is calculated as the Ratio of Mean Square Between ($SS_{Between}/df_{Between}$) to Mean Square Within ($SS_{Within}/df_{Within}$). A high F-ratio indicates the group difference is larger than random noise.
+- **Follow-up Questions**: What post-hoc tests do you run if the ANOVA F-test is significant? (Answer: Pairwise comparison tests with correction, such as Tukey's HSD or Bonferroni, to find exactly which groups differ while controlling the family-wise Type I error rate).
+- **Interviewer's Expectations**: Define the difference between one factor and two factors, explain the mathematical partitioning of variance ($SS_{Between}$ vs. $SS_{Within}$), define the F-statistic ratio, and mention the need for post-hoc testing.
+
+---
+
+#### 63. State Bayes' Theorem mathematically. Explain the concept of Prior, Likelihood, and Posterior in Bayesian inference.
+- **Detailed Answer**: Bayes' Theorem is expressed mathematically as:
+  $$P(\theta | \text{Data}) = \frac{P(\text{Data} | \theta) \cdot P(\theta)}{P(\text{Data})}$$
+  Where:
+  - **Prior $P(\theta)$**: The initial probability of the parameter $\theta$ representing our belief before observing the current data.
+  - **Likelihood $P(\text{Data} | \theta)$**: The probability of observing the data given that the parameter $\theta$ takes a specific value.
+  - **Posterior $P(\theta | \text{Data})$**: The updated probability of the parameter $\theta$ after incorporating the evidence from the observed data.
+  - **Evidence $P(\text{Data})$**: The marginal probability of the data, acting as a normalization constant ensuring the posterior distribution integrates to 1.
+  - *Concept*: Bayesian inference updates the prior belief as new data arrives, producing a full probability distribution over the parameters (Posterior), whereas frequentists treat parameters as fixed values and only compute the probability of the data (Likelihood/P-value).
+- **Follow-up Questions**: What is a conjugate prior? (Answer: A prior distribution is conjugate to the likelihood if the resulting posterior distribution belongs to the same probability family as the prior, simplifying analytical calculation—e.g., Beta prior with Binomial likelihood yields a Beta posterior).
+- **Interviewer's Expectations**: Write down the Bayes formula correctly, define prior, likelihood, and posterior clearly, and explain how Bayesian inference differs conceptually from frequentist approaches.
 
 ---
 

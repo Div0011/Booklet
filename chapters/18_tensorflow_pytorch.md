@@ -52,6 +52,32 @@ TensorFlow is a commercial shipyard: massive infrastructure, standardized parts,
 - **Meta-devices and Lazy Execution**: PyTorch 2.0 `torch.compile`, lazy tensors.
 - **Accelerator Orchestration**: TPU pods, GPU clusters, pipeline parallelism.
 
+### Deep-Dive: Framework Syntax Comparison
+- **Tensor Operations**:
+  - *PyTorch*: `x = torch.tensor([1.0, 2.0], dtype=torch.float32, requires_grad=True)`
+  - *TensorFlow*: `x = tf.Variable([1.0, 2.0], dtype=tf.float32)`
+- **Auto-differentiation**:
+  - *PyTorch*: Uses dynamic graph execution under `autograd`. Gradients computed by running `loss.backward()`, populating `tensor.grad`.
+  - *TensorFlow*: Uses `tf.GradientTape()` context manager. Tapes operations on variables, then `tape.gradient(loss, variables)` is called.
+- **Layers & Model Definition**:
+  - *PyTorch*: Class subclasses `nn.Module`. Defines layers in `__init__` and computation in `forward(x)`.
+  - *TensorFlow*: Class subclasses `tf.keras.Model` or uses Keras Sequential API. Defines layers in `__init__` and computation in `call(x)`.
+
+### Deep-Dive: Netron Visualization & Colab Pro Configuration
+- **Netron Model Visualizer**:
+  - Netron is a structural visualization tool for deep learning models. It inputs serialized model binaries (e.g., `.onnx`, `.tflite`, `.pb`, `.h5`, `.pt`) and produces an interactive, graphical representation of the model's computational DAG.
+  - Useful for: validating layer connectivity, checking output shape matching, auditing parameter dimensions, and debugging custom tensor operations.
+- **Google Colab Pro Optimization**:
+  - **GPU Runtimes**: Access to high-performance accelerators: NVIDIA T4 (standard), V100, and A100 Tensor Core GPUs (delivering up to 40GB VRAM, critical for batch sizes of large LLMs/Vision models).
+  - **Memory Management**: High-RAM runtimes allow up to 51GB RAM, avoiding Out-Of-Memory (OOM) crashes during large dataset transformations.
+  - **Drive Mount**:
+    ```python
+    from google.colab import drive
+    drive.mount('/content/drive')
+    ```
+    Allows direct reading and writing of checkpoints to Google Drive, securing parameters against unexpected session timeouts.
+  - **Command Terminal**: Colab Pro features a Linux terminal access, allowing developers to execute git commands, pip installations, and custom training launch scripts directly.
+
 ---
 
 ## 3. Internal Working
@@ -243,6 +269,105 @@ optimizer = optim.Adam(backbone.fc.parameters(), lr=1e-3)
 ```
 Freezing backbone is essential when target dataset is small or fine-tuning budget is limited.
 
+### Example 5: PyTorch vs. TensorFlow Custom Training Loops
+Here we contrast the native API architectures for custom training loops on synthetic regression data.
+
+**PyTorch Implementation:**
+```python
+import torch
+import torch.nn as nn
+import torch.optim as optim
+
+# 1. Setup Model, Optimizer, and Loss
+model = nn.Linear(10, 1)
+optimizer = optim.SGD(model.parameters(), lr=0.01)
+criterion = nn.MSELoss()
+
+# 2. Training Loop
+for epoch in range(100):
+    inputs = torch.randn(32, 10)
+    targets = torch.randn(32, 1)
+    
+    # Forward Pass
+    outputs = model(inputs)
+    loss = criterion(outputs, targets)
+    
+    # Backward Pass & Optimize
+    optimizer.zero_grad()
+    loss.backward()
+    optimizer.step()
+    
+    if epoch % 20 == 0:
+        print(f"PyTorch Epoch {epoch} Loss: {loss.item():.4f}")
+```
+
+**TensorFlow Implementation:**
+```python
+import tensorflow as tf
+
+# 1. Setup Model, Optimizer, and Loss
+model = tf.keras.layers.Dense(1)
+optimizer = tf.keras.optimizers.SGD(learning_rate=0.01)
+loss_fn = tf.keras.losses.MeanSquaredError()
+
+# 2. Training Loop with tf.function (graphs compilation)
+@tf.function
+def train_step(x, y):
+    with tf.GradientTape() as tape:
+        predictions = model(x)
+        loss = loss_fn(y, predictions)
+    gradients = tape.gradient(loss, model.trainable_variables)
+    optimizer.apply_gradients(zip(gradients, model.trainable_variables))
+    return loss
+
+for epoch in range(100):
+    inputs = tf.random.normal((32, 10))
+    targets = tf.random.normal((32, 1))
+    loss = train_step(inputs, targets)
+    
+    if epoch % 20 == 0:
+        print(f"TensorFlow Epoch {epoch} Loss: {loss.numpy():.4f}")
+```
+
+### Example 6: TensorBoard Tracking and Netron Visualization Setup
+Exporting computational logs for profiling and visualizing a model using Netron.
+
+```python
+import torch
+import torch.nn as nn
+from torch.utils.tensorboard import SummaryWriter
+
+# 1. Define Model
+class SimpleMLP(nn.Module):
+    def __init__(self):
+        super().__init__()
+        self.net = nn.Sequential(
+            nn.Linear(28*28, 128),
+            nn.ReLU(),
+            nn.Linear(128, 10)
+        )
+    def forward(self, x):
+        return self.net(x)
+
+model = SimpleMLP()
+
+# 2. Export model graph to TensorBoard
+writer = SummaryWriter("runs/netron_tb_demo")
+dummy_input = torch.randn(1, 28*28)
+writer.add_graph(model, dummy_input)
+writer.close()
+
+# 3. Export model structure to ONNX for Netron visualization
+torch.onnx.export(
+    model, 
+    dummy_input, 
+    "mlp_model.onnx", 
+    input_names=["input_pixels"], 
+    output_names=["class_logits"]
+)
+print("ONNX model saved. You can now open 'mlp_model.onnx' in Netron (https://netron.app) to inspect it.")
+```
+
 ---
 
 ## 7. Advanced Concepts
@@ -426,6 +551,60 @@ They test whether you understand the frameworks as tools, not magic. They want t
 
 33. Design a recommendation model training and serving system.
 - Two-tower model trained with sampled softmax. Embeddings exported to FAISS. Online serving: ANN retrieval + lightweight ranker.
+
+---
+
+#### 61. Contrast PyTorch dynamic graphs with TensorFlow static graphs. Discuss eagerness, trace compiling, and debugging.
+- **Detailed Answer**: The core architectural difference lies in how they construct and execute the computational graph:
+  - **PyTorch (Dynamic / Define-by-Run)**:
+    - *Mechanism*: PyTorch builds the computation graph on-the-fly during the forward pass. Every operation (e.g., adding two tensors) dynamically appends a node to the execution graph.
+    - *Eagerness*: Execution is immediate. Tensors contain concrete values.
+    - *Debugging*: Standard Python debugging tools (e.g., `pdb`, print statements) work seamlessly. Error traces point exactly to the offending line of Python code.
+    - *JIT Compilation*: Can compile graphs using `torch.compile` or TorchScript for production optimization.
+  - **TensorFlow (Static / Define-then-Run)**:
+    - *Mechanism*: Historically (TF 1.x), the graph structure was defined using symbolic placeholders before execution, and run inside a `Session`. Modern TF (2.x) runs in **Eager Execution** mode by default.
+    - *Trace Compiling*: By wrapping a function in `@tf.function`, TF traces the Python operations, constructs a static computation graph (polymorphic tracing), and optimizes it using the XLA (Accelerated Linear Algebra) compiler.
+    - *Debugging*: Harder to debug traced functions since variables contain symbolic nodes rather than concrete values. Error traces map to the compiled C++ runtime, rather than Python lines.
+- **Follow-up Questions**: When should you disable `@tf.function` tracing? (Answer: During debugging, or when your function has dynamic Python control flow that changes execution logic per call, which would trigger constant re-tracing overhead).
+- **Interviewer's Expectations**: Explain the concepts of define-by-run vs. define-then-run, discuss eager execution vs. static graphs, explain how tracing works in `@tf.function`, and compare their debugging profiles.
+
+---
+
+#### 62. What is the API contract for writing custom layers in PyTorch vs. TensorFlow Keras?
+- **Detailed Answer**:
+  - **PyTorch (`nn.Module`)**:
+    - Subclass `nn.Module`.
+    - Instantiate sub-layers or custom parameter tensors in `__init__`. Parameters must be wrapped in `nn.Parameter(tensor)` to register them in the model's parameter list so that optimizers can track them.
+    - Implement `forward(*input)` defining the forward pass logic. Autograd automatically builds the backward pass.
+    - Example:
+      ```python
+      class MyLinear(nn.Module):
+          def __init__(self, in_features, out_features):
+              super().__init__()
+              self.weight = nn.Parameter(torch.randn(out_features, in_features))
+              self.bias = nn.Parameter(torch.zeros(out_features))
+          def forward(self, x):
+              return x @ self.weight.t() + self.bias
+      ```
+  - **TensorFlow Keras (`tf.keras.layers.Layer`)**:
+    - Subclass `tf.keras.layers.Layer`.
+    - Implement `__init__` to handle input-independent configurations.
+    - Implement `build(self, input_shape)`: This is where variables are created once the input shape is known, using `self.add_weight`. This avoids hardcoding input dimensions.
+    - Implement `call(self, inputs)` defining the computation.
+    - Example:
+      ```python
+      class MyLinear(tf.keras.layers.Layer):
+          def __init__(self, units):
+              super().__init__()
+              self.units = units
+          def build(self, input_shape):
+              self.w = self.add_weight(shape=(input_shape[-1], self.units), initializer="random_normal", trainable=True)
+              self.b = self.add_weight(shape=(self.units,), initializer="zeros", trainable=True)
+          def call(self, inputs):
+              return tf.matmul(inputs, self.w) + self.b
+      ```
+- **Follow-up Questions**: Why is the `build` method useful in Keras? (Answer: It enables shape inference. Layers can be declared without specifying input feature dimensions, which are dynamically resolved during the first forward pass).
+- **Interviewer's Expectations**: Compare PyTorch's `nn.Parameter` initialization in `__init__` to Keras's `add_weight` execution in `build`, show basic code snippets for both frameworks, and explain the dynamic shape inference benefits of the Keras `build` stage.
 
 ---
 

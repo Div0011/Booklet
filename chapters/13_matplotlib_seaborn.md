@@ -1,4 +1,4 @@
-# 13. Matplotlib & Seaborn (Data Visualization)
+# 13. Matplotlib, Seaborn, Plotly & Bokeh (Data Visualization)
 
 ## 1. Introduction
 
@@ -93,6 +93,17 @@ ax.annotate('Peak', xy=(x, y), xytext=(x+1, y+1),
 ax.axhline(y=10, color='red')
 ax.axvline(x=5, color='blue')
 ```
+
+### Plotly (Interactive Data Exploration)
+Plotly is a declarative, browser-based data visualization library. Unlike Matplotlib which renders static pixels, Plotly serializes figures into a JSON format that is parsed by **Plotly.js** in the client browser, enabling out-of-the-box zoom, pan, hover tooltips, and interactive filtering.
+- **Plotly Express**: The high-level API for rapid figure creation.
+- **Plotly Graph Objects**: The low-level API offering granular control over figures, traces, and layouts.
+
+### Bokeh (Web-Ready Interactive Graphics)
+Bokeh is a Python interactive visualization library designed to render graphics directly in modern web browsers. It maps Python visualization objects to its JavaScript counterpart, **BokehJS**.
+- **ColumnDataSource**: Bokeh's core data container, enabling direct synchronization between Python data and browser-side JS elements.
+- **Layouts & Dashboards**: Built-in support for rows, columns, and gridplots to create responsive web dashboards.
+- **Bokeh Server**: Enables bidirectional python-to-browser communication, allowing real-time Python code execution in response to browser events (like slider adjustments).
 
 ---
 
@@ -196,6 +207,42 @@ plt.boxplot(data, labels=['A', 'B', 'C', 'D'])
 plt.show()
 ```
 
+### Example 6: Plotly Express Interactive Line Plot
+Creating an interactive line plot with custom tooltips, zoom, and hover-triggered coordinate displays.
+
+```python
+import plotly.express as px
+import pandas as pd
+import numpy as np
+
+# Create sample time series
+df = pd.DataFrame({
+    'Date': pd.date_range(start='2024-01-01', periods=100),
+    'Revenue': np.cumsum(np.random.normal(100, 10, size=100)),
+    'Region': np.random.choice(['North', 'South'], size=100)
+})
+
+# Generate interactive line plot
+fig = px.line(
+    df, 
+    x='Date', 
+    y='Revenue', 
+    color='Region',
+    title='Interactive Daily Revenue Trends',
+    hover_data={'Date': '|%B %d, %Y', 'Revenue': ':.2f'}
+)
+
+# Customize layout
+fig.update_layout(
+    xaxis_title='Timeline',
+    yaxis_title='Cumulative Revenue ($USD)',
+    template='plotly_dark'
+)
+
+# Open in default browser
+fig.show()
+```
+
 ---
 
 ## 6. Intermediate Examples
@@ -256,6 +303,40 @@ ax.plot(dates, values)
 ax.xaxis.set_major_formatter(mdates.DateFormatter('%Y-%m'))
 plt.xticks(rotation=45)
 plt.show()
+```
+
+### Example 6: Interactive Dashboard Layout with Bokeh
+Creating a dual-plot dashboard with linked panning (changing zoom on one plot automatically updates the other) and hover tools.
+
+```python
+from bokeh.io import show
+from bokeh.layouts import column, row
+from bokeh.models import ColumnDataSource, HoverTool
+from bokeh.plotting import figure
+import numpy as np
+import pandas as pd
+
+# Generate sample data
+x = np.linspace(0, 10, 100)
+y1 = np.sin(x)
+y2 = np.cos(x)
+
+# Create ColumnDataSource (shares data between Bokeh and JS)
+source = ColumnDataSource(data=dict(x=x, y1=y1, y2=y2))
+
+# 1. First Plot: Sine Wave
+p1 = figure(title="Linked Sine Wave", height=300, width=450, tools="pan,wheel_zoom,box_zoom,reset")
+p1.line('x', 'y1', source=source, color="navy", alpha=0.8, line_width=2)
+p1.add_tools(HoverTool(tooltips=[("x", "@x{0.00}"), ("y", "@y1{0.00}")]))
+
+# 2. Second Plot: Cosine Wave (linked x_range to p1 for synchronized zooming/panning)
+p2 = figure(title="Linked Cosine Wave", x_range=p1.x_range, height=300, width=450, tools="pan,wheel_zoom,box_zoom,reset")
+p2.line('x', 'y2', source=source, color="firebrick", alpha=0.8, line_width=2)
+p2.add_tools(HoverTool(tooltips=[("x", "@x{0.00}"), ("y", "@y2{0.00}")]))
+
+# Arrange plots in a row layout and open in browser
+dashboard = row(p1, p2)
+# show(dashboard)  # Commented out for non-interactive execution
 ```
 
 ---
@@ -478,6 +559,43 @@ A: Use `mdates.DateFormatter('%Y-%m')`
 A: High dpi (300+), vector format (pdf/svg), good colormap.
 
 **Q51-Q60: [Additional advanced scenarios with visualization best practices]**
+
+---
+
+#### 61. Contrast static plotting (Matplotlib/Seaborn) with interactive plotting (Plotly/Bokeh). What are the tradeoffs?
+- **Detailed Answer**:
+  - **Static Plotting (Matplotlib/Seaborn)**:
+    - *Pros*: Renders directly to pixel arrays or vector paths (PNG, PDF, SVG). High speed, low memory overhead, and absolute pixel-perfect control. Best for academic publications, PDF reports, and large-scale automated batch generation.
+    - *Cons*: Cannot zoom, pan, hover, or filter dynamically without replotting or running a local UI backend like Tkinter.
+  - **Interactive Plotting (Plotly/Bokeh)**:
+    - *Pros*: Renders to HTML/JS canvas in the browser. Allows native panning, zooming, hovering tooltips, and interactive legend toggling. Best for business intelligence dashboards, exploratory web apps, and user-facing presentations.
+    - *Cons*: High memory footprint in the browser (storing data points in JS memory), slower rendering for large arrays, and complex setup for vector-graphic export.
+- **Follow-up Questions**: Which library is best for a web app built with React or Flask? (Answer: Plotly or Bokeh, since they natively output JSON or HTML/JS components that can be embedded directly in web layouts).
+- **Interviewer's Expectations**: Compare rendering outputs (pixels/vectors vs browser DOM/Canvas), discuss user engagement vs. rendering overhead, and identify specific use cases (academic papers vs BI dashboards).
+
+---
+
+#### 62. How does Bokeh's ColumnDataSource work under the hood, and why is it preferred over raw dictionaries or DataFrames?
+- **Detailed Answer**: The `ColumnDataSource` (CDS) is the fundamental data structure in Bokeh. Under the hood, it maps column names (strings) to arrays of data. 
+  - **Synchronization**: CDS acts as the bridge between the Python runtime and the browser's JavaScript engine (BokehJS). When a plot is rendered, Bokeh serializes the CDS into a JSON object and sends it to the browser.
+  - **Shared Data**: Multiple glyphs (e.g. circles, lines, hover labels) can share the same CDS. When you hover over or select a point on one plot, BokehJS uses the shared CDS references to update selection states or values across all linked plots dynamically without roundtrips to Python.
+  - **Efficiency**: Passing data via CDS is highly optimized; updates only transmit modified columns rather than recreating the entire figure structure.
+- **Follow-up Questions**: Can you update a ColumnDataSource in real-time? (Answer: Yes, by using the `.stream()` or `.patch()` methods on the CDS object, which push incremental updates to the browser rather than re-sending the whole dataset).
+- **Interviewer's Expectations**: Explain the Python-to-JS bridge, discuss shared references for linked panning/hovering, and identify optimization advantages (differential updates).
+
+---
+
+#### 63. How do you optimize rendering performance in Matplotlib and Plotly when dealing with large datasets (e.g., 1M+ points)?
+- **Detailed Answer**:
+  - **Matplotlib**:
+    - Use `rasterized=True` inside vector-format plots (like PDF/SVG) so scatter points are rendered as a flat bitmap while keeping text and axes as sharp vectors.
+    - Use low-level artists like `LineCollection` instead of calling `plt.plot()` repeatedly.
+    - Aggdownsample or use `hexbin` / `hist2d` to aggregate points into density bins before plotting, reducing 1M points to a fixed grid.
+  - **Plotly**:
+    - Use **WebGL-backed traces** instead of standard SVG traces (e.g., `go.Scattergl` instead of `go.Scatter`). WebGL delegates point rendering to the system GPU, allowing Plotly to render millions of points smoothly at 60 FPS.
+    - Downsample data using algorithms like LTTB (Largest Triangle Three Buckets) before passing it to Plotly.
+- **Follow-up Questions**: Why does SVG fail for large scatter plots? (Answer: SVG creates a separate DOM element for each scatter point, causing the browser's layout and rendering engines to freeze when handling hundreds of thousands of elements).
+- **Interviewer's Expectations**: Discuss vector vs. raster tradeoffs, introduce GPU-acceleration (WebGL/Scattergl), and suggest pre-aggregation strategies (binning, hexbin, downsampling).
 
 ---
 

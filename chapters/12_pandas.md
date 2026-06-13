@@ -306,6 +306,61 @@ df['phone'].str.replace('-', '')
 df['name'].str.split(' ').str[0]  # First name
 ```
 
+### Example 6: Custom Aggregations & Query Optimization (eval/query)
+Performing complex aggregations using custom functions and optimizing intermediate column math with `pd.eval` or `df.query`.
+
+```python
+# Custom aggregate functions
+def range_range(x):
+    return x.max() - x.min()
+
+agg_df = df.groupby('department').agg(
+    total_salary=('salary', 'sum'),
+    salary_range=('salary', range_range),
+    avg_age=('age', 'mean')
+)
+
+# Optimization using query() and eval()
+# Fast selection and calculations without creating large intermediate DataFrames in memory
+high_sal_eng = df.query("department == 'Engineering' and salary > 100000")
+
+# pd.eval executes string expressions faster on large DataFrames using NumExpr under the hood
+adjusted_salary = pd.eval("df.salary * 1.10 + df.bonus", target=df)
+```
+
+### Example 7: Memory Optimization & Downcasting
+Drastically reducing memory footprint for large datasets by downcasting numeric types and converting string columns to categories.
+
+```python
+import numpy as np
+
+# Mock large dataframe
+np.random.seed(42)
+n_rows = 1_000_000
+large_df = pd.DataFrame({
+    'id': np.arange(n_rows),
+    'age': np.random.randint(18, 90, size=n_rows),
+    'salary': np.random.randint(30000, 200000, size=n_rows).astype(float),
+    'city': np.random.choice(['New York', 'London', 'Paris', 'Tokyo'], size=n_rows)
+})
+
+print("Original Memory Usage:")
+print(large_df.memory_usage(deep=True).sum() / (1024**2), "MB")  # ~56 MB
+
+# 1. Downcast integers (int64 -> int8/int16/int32)
+large_df['id'] = pd.to_numeric(large_df['id'], downcast='integer')      # int32
+large_df['age'] = pd.to_numeric(large_df['age'], downcast='integer')    # int8
+
+# 2. Downcast floats (float64 -> float32)
+large_df['salary'] = pd.to_numeric(large_df['salary'], downcast='float') # float32
+
+# 3. Convert low-cardinality string columns to 'category'
+large_df['city'] = large_df['city'].astype('category')
+
+print("Optimized Memory Usage:")
+print(large_df.memory_usage(deep=True).sum() / (1024**2), "MB")  # ~9.5 MB (83% reduction!)
+```
+
 ---
 
 ## 7. Advanced Examples
@@ -689,6 +744,38 @@ A: Read with specific dtypes; fill missing with appropriate values; validate sch
 
 **Q60: Explain how to optimize groupby for large datasets.**
 A: Ensure groupby key is indexed; consider aggregate over apply; profile with %prun.
+
+---
+
+#### 61. What is the difference between GroupBy.apply() and GroupBy.transform()? When should you use each?
+- **Detailed Answer**:
+  - `GroupBy.apply()` is the most flexible split-apply-combine tool. It passes each sub-DataFrame (group) to the custom function. The function can return a DataFrame, Series, or scalar of any shape. Because it operates on high-level Pandas objects per group, it incurs substantial Python overhead and is relatively slow.
+  - `GroupBy.transform()` applies a function to each column of each group, and must return a Series that is the **same shape** as the input group. Pandas optimizes `transform` internally (especially for built-in strings like `'mean'`, `'std'`, `'sum'`), broadcasting the aggregated values back to the original row indexes.
+  - *When to use*: Use `transform` for broadcasting group statistics back to the original DataFrame (e.g. z-scoring columns within groups). Use `apply` only when the operation cannot be expressed as a standard reduction/transformation (e.g., fitting a regression model per group and returning coefficients).
+- **Follow-up Questions**: What is the difference between `transform` and `agg`? (Answer: `agg` reduces the dimensions by returning one row per group, whereas `transform` retains the original DataFrame's row dimensions).
+- **Interviewer's Expectations**: Contrast the input/output shapes of both methods, explain that `transform` is optimized and vectorized while `apply` has heavy Python loop overhead, and provide a practical use-case (like group-level scaling).
+
+---
+
+#### 62. How does Pandas store data internally? Explain the role of the BlockManager and how heterogeneous dtypes affect performance.
+- **Detailed Answer**: Internally, Pandas DataFrames do not store data as a collection of individual column arrays. Instead, they use a data structure called the **BlockManager**. The BlockManager groups columns of the **same data type** into 2D NumPy arrays (blocks). For example, all float64 columns are stored in one 2D float64 block, and all int64 columns in an int64 block.
+Heterogeneous dtypes affect performance in several ways:
+  - **Memory & Copying**: Operations that force type coercion (e.g., inserting a float into an integer column) require Pandas to split/rebuild blocks, which is slow and memory-intensive.
+  - **Single Dtype Operations**: If a DataFrame consists of a single dtype (e.g., all float64), operations like transposing or `.values` are zero-copy views. If there are mixed dtypes, calling `.values` forces consolidation into a single 2D object array, copying all data and upcasting numeric values.
+- **Follow-up Questions**: How does Pandas 2.0 PyArrow integration change this? (Answer: PyArrow stores data in a column-oriented format (Arrow tables) with contiguous memory chunks per column, avoiding the block-consolidation overhead of BlockManager and improving speed for string and null-value operations).
+- **Interviewer's Expectations**: Define the BlockManager, explain that columns of the same type are grouped into 2D blocks, and identify how mixed-dtype DataFrames cause memory copying and type upcasting during conversions.
+
+---
+
+#### 63. How do df.query() and pd.eval() improve performance and memory efficiency in Pandas?
+- **Detailed Answer**: Standard Pandas expressions like `df[(df['A'] > 5) & (df['B'] < 10)]` evaluate step-by-step, allocating large temporary boolean arrays in memory for each sub-expression. For massive DataFrames, this causes cache misses and high memory overhead.
+  - `df.query()` and `pd.eval()` solve this by taking string expressions and compiling them into optimized bytecode.
+  - Under the hood, they use **NumExpr** (if installed), which evaluates the entire expression in a single pass in C. It splits the array into small chunks that fit into the CPU's L1/L2 cache, executing operations in parallel across multiple CPU cores without allocating intermediate temporary arrays.
+  - *When to use*: Use them when performing mathematical column transformations or complex row filtering on large DataFrames (typically >100,000 rows) to save memory and speed up computation.
+- **Follow-up Questions**: Can you reference local variables inside `df.query()`? (Answer: Yes, by prefixing the variable name with the `@` symbol, e.g., `df.query("salary > @min_sal")`).
+- **Interviewer's Expectations**: Describe how standard Pandas allocations create temporary arrays, explain how NumExpr compiles string expressions to run in C-level loops, and mention CPU cache locality and parallel execution.
+
+---
 
 ## 10. Common Mistakes
 

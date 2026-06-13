@@ -21,6 +21,20 @@ Earlier NLP models (RNNs, LSTMs) processed text sequentially, making parallel tr
 ### Analogy
 An LLM is a highly trained paralegal who has read every document in a massive library. It doesn't "know" facts like databases; it predicts plausible continuations based on statistical patterns in training data.
 
+### Introduction to Generative AI
+Generative AI refers to a class of artificial intelligence systems designed to create new content—such as text, images, music, audio, or code—based on the statistical patterns they learned from training datasets. Unlike traditional discriminative AI (which classifies or predicts labels from inputs, such as identifying spam emails), generative AI constructs entirely new data instances that are structurally similar to its training data.
+
+### History of Generative AI & The GPT Evolution
+1. **Early Probabilistic Models**: Early text generators relied on N-gram models and Markov chains, predicting the next word based purely on the frequency of adjacent word combinations. These models had no semantic understanding and struggled with contexts longer than a few words.
+2. **Deep Representation & NLU (Natural Language Understanding)**: The introduction of Recurrent Neural Networks (RNNs) and Long Short-Term Memory (LSTM) networks enabled models to maintain a hidden state (memory) over sequences, laying the groundwork for NLU (parsing sentence structure, sentiment, and intent).
+3. **Sequence-to-Sequence (Seq2Seq)**: Developed for machine translation, Seq2Seq mapped variable-length input sequences to variable-length outputs using an encoder-decoder architecture. However, sequential processing remained a major performance bottleneck.
+4. **The Transformer Revolution (2017)**: The "Attention is All You Need" paper introduced parallelized self-attention, unlocking the ability to train massive models on web-scale datasets.
+5. **The GPT Family Evolution (OpenAI)**:
+   - **GPT-1 (2018)**: Demonstrated that unsupervised pre-training on a large corpus followed by supervised fine-tuning on specific tasks could achieve strong generalization.
+   - **GPT-2 (2019)**: Expanded parameter size to 1.5 billion. It showed powerful zero-shot learning capabilities—meaning the model could generate highly coherent paragraphs, write poetry, translate languages, and compose stories without task-specific fine-tuning.
+   - **GPT-3 (2020)**: Scaled to 175 billion parameters. It unlocked few-shot prompt learning (in-context learning), enabling users to program the model simply by providing a few input-output examples in the text prompt, bypassing the need for weight-updating fine-tuning.
+   - **GPT-4 & Multimodal Models (2023+)**: Introduced multimodal capabilities, allowing the network to process and reason across text, code, images, and audio simultaneously.
+
 ---
 
 ## 2. Core Concepts
@@ -53,6 +67,13 @@ An LLM is a highly trained paralegal who has read every document in a massive li
 - **Mixture of Experts (MoE)**: Sparse models activate only subset of parameters per token (e.g., Mixtral), increasing capacity without proportional compute.
 - **KV Cache Optimization**: MQA (Multi-Query Attention), GQA (Grouped Query Attention) reduce KV cache memory.
 - **Speculative Decoding**: Small draft model proposes tokens; large model verifies. Faster inference without sampling quality loss.
+- **Autoencoders**: Unsupervised neural networks designed to compress input data into a low-dimensional **latent space** representation (Encoder) and then reconstruct the original input from this latent code (Decoder). They are trained by minimizing reconstruction error (e.g. Mean Squared Error).
+- **Variational Autoencoders (VAEs)**: Probabilistic generative variants of autoencoders. Instead of mapping an input to a fixed point in the latent space, the encoder outputs the parameters of a probability distribution (mean $\mu$ and variance $\sigma^2$). The decoder then samples from this distribution to generate new, unseen data instances. VAEs are optimized using the **ELBO (Evidence Lower Bound)** loss, which balances reconstruction quality and **KL Divergence** (forcing the latent distribution to match a standard normal distribution $\mathcal{N}(0, I)$).
+- **LLM Fine-Tuning Approaches**: Modifying pre-trained LLM weights to specialize them on domain-specific datasets:
+  - **Full Fine-Tuning**: Updates all parameters of the model. Extremely expensive and prone to **catastrophic forgetting**.
+  - **PEFT (Parameter-Efficient Fine-Tuning)**: Keeps the base model weights frozen and trains a small subset of additional weights (e.g., Prefix Tuning, Prompt Tuning).
+  - **LoRA / QLoRA**: Low-Rank Adaptation. Decomposes weight updates into two smaller low-rank matrices, reducing trainable parameters by >99%. QLoRA runs this over a quantized 4-bit base model, allowing fine-tuning on consumer hardware.
+  - **Instruction Tuning**: Fine-tuning pre-trained base models on prompt-response pairs to teach them to follow conversational instructions.
 
 ---
 
@@ -196,6 +217,55 @@ input_text = tokenizer.apply_chat_template(messages, tokenize=False)
 ```
 System prompt sets behavior; chat template formats multi-turn conversations.
 
+### Example 4: VAE Demo 1 - Basic Autoencoder in PyTorch
+This example shows a simple Autoencoder that compresses 28x28 images (like MNIST) into a 2D latent space and reconstructs them, showing the bottleneck effect and MSE loss optimization.
+
+```python
+import torch
+import torch.nn as nn
+import torch.optim as optim
+
+class Autoencoder(nn.Module):
+    def __init__(self, latent_dim=2):
+        super(Autoencoder, self).__init__()
+        # Encoder: 784 -> 128 -> 64 -> latent_dim
+        self.encoder = nn.Sequential(
+            nn.Linear(28 * 28, 128),
+            nn.ReLU(),
+            nn.Linear(128, 64),
+            nn.ReLU(),
+            nn.Linear(64, latent_dim)
+        )
+        # Decoder: latent_dim -> 64 -> 128 -> 784
+        self.decoder = nn.Sequential(
+            nn.Linear(latent_dim, 64),
+            nn.ReLU(),
+            nn.Linear(64, 128),
+            nn.ReLU(),
+            nn.Linear(128, 28 * 28),
+            nn.Sigmoid() # Scale outputs between 0 and 1
+        )
+
+    def forward(self, x):
+        # Flatten input from (batch, 1, 28, 28) to (batch, 784)
+        x_flat = x.view(x.size(0), -1)
+        latent = self.encoder(x_flat)
+        reconstruction = self.decoder(latent)
+        # Reshape back to image dimensions
+        return reconstruction.view(x.size(0), 1, 28, 28)
+
+# Initialize model, loss function, and optimizer
+model = Autoencoder(latent_dim=2)
+criterion = nn.MSELoss() # Reconstruction loss
+optimizer = optim.Adam(model.parameters(), lr=1e-3)
+
+# Mock training step
+dummy_batch = torch.rand(16, 1, 28, 28) # 16 dummy MNIST images
+reconstructed = model(dummy_batch)
+loss = criterion(reconstructed, dummy_batch)
+print(f"Reconstruction Loss: {loss.item():.4f}")
+```
+
 ---
 
 ## 6. Intermediate Examples
@@ -256,6 +326,102 @@ print(f"Perplexity: {perplexity.item():.2f}")
 ```
 Perplexity measures how "surprised" the model is by the text. Lower = more predictable.
 
+### Example 4: VAE Demo 2 - Variational Autoencoder (VAE) Model in PyTorch
+Unlike standard Autoencoders, a VAE encoder outputs mean ($\mu$) and log-variance ($\log(\sigma^2)$). It uses the **reparameterization trick** to sample latent vectors while allowing backpropagation: $z = \mu + \epsilon \odot \sigma$, where $\epsilon \sim \mathcal{N}(0, I)$.
+
+```python
+import torch
+import torch.nn as nn
+
+class VAE(nn.Module):
+    def __init__(self, latent_dim=2):
+        super(VAE, self).__init__()
+        # Shared Encoder backbone
+        self.encoder_backbone = nn.Sequential(
+            nn.Linear(28 * 28, 128),
+            nn.ReLU(),
+            nn.Linear(128, 64),
+            nn.ReLU()
+        )
+        # Latent parameter projections
+        self.fc_mu = nn.Linear(64, latent_dim)
+        self.fc_logvar = nn.Linear(64, latent_dim)
+        
+        # Decoder
+        self.decoder = nn.Sequential(
+            nn.Linear(latent_dim, 64),
+            nn.ReLU(),
+            nn.Linear(64, 128),
+            nn.ReLU(),
+            nn.Linear(128, 28 * 28),
+            nn.Sigmoid()
+        )
+
+    def encode(self, x):
+        h = self.encoder_backbone(x)
+        return self.fc_mu(h), self.fc_logvar(h)
+
+    def reparameterize(self, mu, logvar):
+        # Calculate standard deviation from log variance
+        std = torch.exp(0.5 * logvar)
+        # Sample standard normal noise epsilon
+        eps = torch.randn_like(std)
+        # Return reparameterized latent code z
+        return mu + eps * std
+
+    def decode(self, z):
+        return self.decoder(z)
+
+    def forward(self, x):
+        x_flat = x.view(x.size(0), -1)
+        mu, logvar = self.encode(x_flat)
+        z = self.reparameterize(mu, logvar)
+        reconstruction = self.decode(z)
+        return reconstruction.view(x.size(0), 1, 28, 28), mu, logvar
+
+# VAE Loss Function: Reconstruction (Binary Cross Entropy) + KL Divergence
+def vae_loss_function(recon_x, x, mu, logvar):
+    # Flatten outputs and targets
+    recon_flat = recon_x.view(recon_x.size(0), -1)
+    x_flat = x.view(x.size(0), -1)
+    
+    # 1. Reconstruction Loss (BCE)
+    BCE = nn.functional.binary_cross_entropy(recon_flat, x_flat, reduction='sum')
+    
+    # 2. KL Divergence: -0.5 * sum(1 + log(sigma^2) - mu^2 - sigma^2)
+    KLD = -0.5 * torch.sum(1 + logvar - mu.pow(2) - logvar.exp())
+    
+    return BCE + KLD
+```
+
+### Example 5: VAE Demo 3 - Latent Space Sampling and Image Generation
+This example demonstrates how to generate new synthetic image instances by sampling random coordinate vectors directly from the latent Gaussian space and decoding them:
+
+```python
+import torch
+
+def generate_new_images(vae_model, num_samples=10, latent_dim=2):
+    # Set model to evaluation mode
+    vae_model.eval()
+    
+    with torch.no_grad():
+        # 1. Sample random noise from standard normal distribution
+        random_latent_coords = torch.randn(num_samples, latent_dim)
+        
+        # 2. Pass latent samples through decoder
+        generated_images_flat = vae_model.decode(random_latent_coords)
+        
+        # 3. Reshape flat vectors back to MNIST image dimensions
+        generated_images = generated_images_flat.view(num_samples, 1, 28, 28)
+        
+    print(f"Successfully generated {num_samples} synthetic images from latent space.")
+    return generated_images
+
+# Sample run
+vae_model = VAE(latent_dim=2)
+new_digits = generate_new_images(vae_model, num_samples=5)
+```
+
 ---
 
 ## 7. Advanced Concepts
@@ -305,6 +471,60 @@ LLMs can be structured as autonomous agents that orchestrate multi-step planning
 - **Anthropic Claude's Native Tool Use (Function Calling)**: Instead of arbitrary text, Claude accepts a list of tool definitions (name, description, input schema in JSON). In its forward pass, Claude decides if a tool is needed, pauses generation, and returns a structured `tool_use` JSON response specifying the tool and arguments. The application executes the tool and passes the results back in a `tool_result` block.
 - **Agentic Loops (ReAct)**: The "Reason-Act-Observe" loop patterns. The agent reasons about the current state, acts by using a tool, observes the results, and repeats until the goal is met.
 - **Claude Computer Use API**: Enables Claude to interact directly with standard OS desktop interfaces by simulating mouse clicks, cursor movements, and keyboard inputs on screenshots.
+
+### Project | Code Autocompletion and Bug Detection
+This project demonstrates parameter-efficient fine-tuning (PEFT) of a pre-trained programming model (e.g., CodeLlama-7B) using **QLoRA** (Quantized Low-Rank Adaptation) on custom code bug-fix datasets.
+
+#### Implementation Architecture
+1. **Base Model Quantization**: Load the base model in 4-bit precision using `bitsandbytes` to reduce VRAM requirements:
+   ```python
+   from transformers import AutoModelForCausalLM, BitsAndBytesConfig
+   import torch
+   
+   bnb_config = BitsAndBytesConfig(
+       load_in_4bit=True,
+       bnb_4bit_quant_type="nf4",
+       bnb_4bit_compute_dtype=torch.bfloat16
+   )
+   base_model = AutoModelForCausalLM.from_pretrained(
+       "codellama/CodeLlama-7b-hf",
+       quantization_config=bnb_config,
+       device_map="auto"
+   )
+   ```
+2. **LoRA Adapter Setup**: Wrap the model with a PEFT configuration, targeting target linear projection modules (specifically attention layers):
+   ```python
+   from peft import LoraConfig, get_peft_model
+   
+   peft_config = LoraConfig(
+       r=16, # Rank of decomposed update matrices
+       lora_alpha=32, # Scaling factor
+       target_modules=["q_proj", "k_proj", "v_proj", "o_proj"], # Target attention layers
+       lora_dropout=0.05,
+       bias="none",
+       task_type="CAUSAL_LM"
+   )
+   peft_model = get_peft_model(base_model, peft_config)
+   peft_model.print_trainable_parameters()
+   ```
+3. **Training Configuration**: Set up Hugging Face `SFTTrainer` (Supervised Fine-Tuning) using cosine learning decay, mixed-precision `bf16`, and gradient accumulation to simulate large batch sizes:
+   ```python
+   from trl import SFTTrainer
+   from transformers import TrainingArguments
+   
+   training_args = TrainingArguments(
+       output_dir="./code_qlora_results",
+       learning_rate=2e-4,
+       per_device_train_batch_size=4,
+       gradient_accumulation_steps=4,
+       logging_steps=10,
+       max_steps=100,
+       fp16=False,
+       bf16=True, # Recommended for modern GPUs
+       optim="paged_adamw_32bit"
+   )
+   ```
+4. **Evaluation**: After training, merge weights and test the model on buggy code segments to verify that it generates syntactically correct autocompletions and detects code bugs zero-shot.
 
 ---
 
@@ -399,6 +619,21 @@ They test whether you understand LLMs as statistical sequence models, not magic.
 
 20. What is the difference between open and closed LLM APIs?
 - Open: weights available for self-hosting and modification. Closed: API-only, no weight access.
+
+20a. What is the difference between an Autoencoder and a Variational Autoencoder (VAE)?
+- **Detailed Answer**: An Autoencoder compresses input data into a deterministic bottleneck vector (latent representation) and reconstructs it. A Variational Autoencoder (VAE) maps inputs to a probability distribution (mean and variance) in latent space. This allows VAEs to act as true generative models by sampling new coordinate vectors from the distribution to construct novel data instances.
+- **Follow-up Questions**: What is the loss function of a VAE? (Answer: ELBO loss, combining Reconstruction loss (e.g. MSE/BCE) and KL Divergence).
+- **Interviewer's Expectations**: Distinguish deterministic compression from probabilistic generative mapping.
+
+20b. How does the reparameterization trick work in a VAE and why is it necessary?
+- **Detailed Answer**: In a VAE, the encoder outputs distribution parameters ($\mu$ and $\log(\sigma^2)$) and the latent code is sampled as $z \sim \mathcal{N}(\mu, \sigma^2)$. Sampling is a stochastic process, which has no derivative and blocks backpropagation. The reparameterization trick resolves this by isolating the stochasticity: sampling $\epsilon \sim \mathcal{N}(0, I)$ and computing $z = \mu + \epsilon \odot \sigma$. Now, the model weights can be updated during training because the gradient flows through $\mu$ and $\sigma$ deterministically.
+- **Follow-up Questions**: Can we train a VAE without this trick? (Answer: No, because backpropagation cannot calculate gradients through random sampling).
+- **Interviewer's Expectations**: Explain the gradient bottleneck of stochastic nodes and how the trick isolates random noise.
+
+20c. Explain the difference between full fine-tuning, PEFT, and LoRA/QLoRA.
+- **Detailed Answer**: Full fine-tuning updates all model parameters, which is computationally expensive and requires high VRAM. PEFT (Parameter-Efficient Fine-Tuning) freezes the base model weights and trains only a small set of adapter weights. LoRA (Low-Rank Adaptation) decomposes weight changes by inserting two low-rank matrices ($W_0 + \Delta W$, where $\Delta W = A \times B$) into attention layers. QLoRA (Quantized LoRA) quantizes the base model to 4-bit NormalFloat (NF4) and uses a double quantization technique, drastically reducing memory footprint so a 7B model can be fine-tuned on a single 16GB GPU.
+- **Follow-up Questions**: What are the trade-offs of QLoRA vs. Full Fine-Tuning? (Answer: QLoRA saves >90% VRAM with very minimal loss in model performance).
+- **Interviewer's Expectations**: Detail rank decomposition, parameter savings, and quantization benefits.
 
 ### Scenario-Based Questions
 21. You need to deploy a 70B parameter model on a single A100 80GB GPU.

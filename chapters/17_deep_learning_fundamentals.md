@@ -50,6 +50,46 @@ Traditional ML is like a craftsman with specialized tools for each material. Dee
 - **Architecture Search**: Neural Architecture Search (NAS), AutoML.
 - **Quantization and Pruning**: Model compression for deployment.
 
+### Deep-Dive: Perceptron Mathematics
+A Single Layer Perceptron computes output $y$ from inputs $\mathbf{x} = [x_1, x_2, \dots, x_d]^T$ using:
+$$y = f\left(\sum_{i=1}^d w_i x_i + b\right) = f(\mathbf{w}^T \mathbf{x} + b)$$
+- **Activation Rule**: The transfer function $f(z)$ is a step function:
+  $$f(z) = \begin{cases} 1 & \text{if } z \ge 0 \\ 0 & \text{if } z < 0 \end{cases}$$
+- **Update Rule**: For learning rate $\eta$, target label $y$, and prediction $\hat{y}$, weights and bias are updated iteratively:
+  $$\mathbf{w} \leftarrow \mathbf{w} + \eta (y - \hat{y}) \mathbf{x}$$
+  $$b \leftarrow b + \eta (y - \hat{y})$$
+  The update occurs only on misclassifications. If the dataset is linearly separable, the perceptron learning algorithm is guaranteed to converge in a finite number of steps (Novikoff's convergence theorem).
+
+### Deep-Dive: 10 Core Loss Functions
+1. **Mean Squared Error (MSE)**: $L = \frac{1}{N}\sum (y_i - \hat{y}_i)^2$. Heavily penalizes large errors; sensitive to outliers.
+2. **Mean Absolute Error (MAE)**: $L = \frac{1}{N}\sum |y_i - \hat{y}_i|$. Robust to outliers, but gradient is discontinuous at zero.
+3. **Categorical Cross-Entropy**: $L = -\sum_{c=1}^C y_{i,c} \log(\hat{y}_{i,c})$ for multi-class classification.
+4. **Binary Cross-Entropy**: $L = -\frac{1}{N}\sum [y_i \log(\hat{y}_i) + (1-y_i)\log(1-\hat{y}_i)]$ for binary outcomes.
+5. **Focal Loss**: $L = -\alpha_t (1 - p_t)^\gamma \log(p_t)$. Down-weights easy-to-classify examples, focusing on hard/minority instances.
+6. **Huber Loss**: Smooth combination of MSE and MAE. Quadratic for small errors, linear for large errors:
+   $$L_\delta(a) = \begin{cases} \frac{1}{2} a^2 & \text{if } |a| \le \delta \\ \delta(|a| - \frac{1}{2}\delta) & \text{otherwise} \end{cases}$$
+7. **Hinge Loss**: $L = \max(0, 1 - y\hat{y})$; standard loss for maximum-margin classification (SVMs).
+8. **Kullback-Leibler (KL) Divergence**: $L = \sum P(x) \log\left(\frac{P(x)}{Q(x)}\right)$; measures distribution shift. Used for reconstruction regularization in VAEs.
+9. **Triplet Loss**: $L = \max(0, d(a, p) - d(a, n) + \alpha)$, where $a$ is anchor, $p$ is positive, $n$ is negative, and $\alpha$ is margin. Learns compact embedding representations.
+10. **Cosine Proximity Loss**: $L = 1 - \frac{\mathbf{u} \cdot \mathbf{v}}{\|\mathbf{u}\|_2 \|\mathbf{v}\|_2}$; optimizes alignment direction of embedding vectors.
+
+### Deep-Dive: 10 Optimizers
+1. **SGD**: $W_{t+1} = W_t - \eta g_t$. Can get stuck in local minima or saddle points.
+2. **Momentum**: $v_t = \beta v_{t-1} + \eta g_t$, $W_{t+1} = W_t - v_t$. Dampens oscillations by adding historical velocity.
+3. **Nesterov Accelerated Gradient (NAG)**: $v_t = \beta v_{t-1} + \eta \nabla L(W_t - \beta v_{t-1})$. Computes gradient at look-ahead position.
+4. **AdaGrad**: $W_{t+1} = W_t - \frac{\eta}{\sqrt{G_t} + \epsilon} g_t$, where $G_t = \sum g_\tau^2$. Adapts learning rate per parameter; step size decays over time.
+5. **RMSprop**: $G_t = \beta G_{t-1} + (1-\beta)g_t^2$; resolves AdaGrad's learning rate decay using an exponentially decaying average.
+6. **AdaDelta**: Eliminates explicit learning rate parameter by tracking exponential moving averages of both gradients and weight updates.
+7. **Adam**: $m_t = \beta_1 m_{t-1} + (1-\beta_1)g_t$, $v_t = \beta_2 v_{t-1} + (1-\beta_2)g_t^2$, with bias-corrected terms $\hat{m}_t, \hat{v}_t$. Updates weights as: $W_{t+1} = W_t - \frac{\eta}{\sqrt{\hat{v}_t} + \epsilon} \hat{m}_t$.
+8. **AdaMax**: Variant of Adam replacing the $L_2$-norm scaled running average with $L_\infty$-norm scaling.
+9. **Nadam**: Integrates Nesterov accelerated gradient momentum directly into the Adam update formulation.
+10. **AdamW**: Decouples weight decay ($L_2$ penalty) from the adaptive gradient steps, preventing weight regularization decay distortion.
+
+### Deep-Dive: Weight Initializations
+- **Xavier/Glorot**: Samples weights from $\mathcal{N}\left(0, \sqrt{\frac{2}{d_{in} + d_{out}}}\right)$ or $\mathcal{U}\left(-\sqrt{\frac{6}{d_{in} + d_{out}}}, \sqrt{\frac{6}{d_{in} + d_{out}}}\right)$. Preserves signal variance across layers for tanh/sigmoid activations.
+- **He/Kaiming**: Samples weights from $\mathcal{N}\left(0, \sqrt{\frac{2}{d_{in}}}\right)$ or $\mathcal{U}\left(-\sqrt{\frac{6}{d_{in}}}, \sqrt{\frac{6}{d_{in}}}\right)$. Corrects variance drop due to half-zero outputs of ReLUs.
+- **Orthogonal**: Initializes weight tensors as orthogonal matrices, helping to mitigate gradient scaling explosions or vanishing trends in recurrent configurations.
+
 ---
 
 ## 3. Internal Working
@@ -289,6 +329,64 @@ for batch in loader:
 ```
 Mixed precision reduces memory by ~50% with minimal accuracy impact on modern GPUs.
 
+### Convolutional Neural Network (CNN) Architectures
+- **LeNet-5 (1998)**: 5 layers (2 Conv, 2 Subsampling, 1 FC). Uses average pooling, sigmoid/tanh activations. Engineered for handwritten digit recognition.
+- **AlexNet (2012)**: 8 layers (5 Conv, 3 FC). Key innovations: ReLU activation, Dropout regularization, Overlapping Max Pooling, and dual-GPU parallelization. Won ImageNet 2012.
+- **VGG-16/19 (2014)**: Replaced large filters with stacks of small $3 \times 3$ convolutions. Proved that deep architectures with simple filters yield high representational capacity.
+- **GoogLeNet / Inception (2014)**: Stacks **Inception Modules** performing multi-scale parallel convolutions ($1 \times 1$, $3 \times 3$, $5 \times 5$) and pooling, concatenated along channels. Uses auxiliary classifiers to maintain gradient flow.
+- **ResNet (2015)**: Stacks **Residual Blocks** introducing identity skip-connections: $H(x) = F(x) + x$. Allows training of extremely deep networks (152+ layers) by letting gradients flow directly through skip connections during backpropagation.
+
+### Computer Vision Paradigms
+- **Object Detection (Localization & Classification)**:
+  - **Two-Stage Detectors**:
+    - **R-CNN (2014)**: Extracts 2k region proposals (Selective Search) -> CNN feature extraction -> SVM classifier & bounding box regressor. Computationally expensive ($O(N)$ CNN runs).
+    - **Fast R-CNN (2015)**: Entire image runs once through CNN. RoI Pooling extracts fixed-length vectors from feature maps for classification/regression.
+    - **Faster R-CNN (2015)**: Replaces Selective Search with a **Region Proposal Network (RPN)** sharing convolutional features with the detection head, creating a single unified network.
+  - **One-Stage Detectors**:
+    - **YOLOv9 (2024)**: Directly predicts classes and bounding boxes in a single pass. Integrates **Programmable Gradient Information (PGI)** to solve the information bottleneck in deep networks, and **Generalized Efficient Layer Aggregation Network (GELAN)** to optimize parameters and speed.
+- **Image Segmentation**:
+  - **Mask R-CNN (2017)**: Extends Faster R-CNN by adding a third parallel branch predicting pixel-level segmentation masks. Replaces RoIPool with **RoIAlign** (using bilinear interpolation) to preserve exact spatial locations.
+- **Multi-Object Tracking (MOT)**:
+  - **DeepSORT**: Tracks objects across video frames. Uses a **Kalman Filter** to predict state coordinates, the **Hungarian Algorithm** to match tracks to new detections, and a deep CNN appearance descriptor to associate IDs based on visual similarity (handling occlusions).
+- **Generative Adversarial Networks (GANs)**:
+  - **DCGAN (Deep Convolutional GAN)**: Standardizes spatial CNNs for stable generation, removing pooling (using strided/fractionally-strided convs) and using Batch Normalization.
+  - **WGAN (Wasserstein GAN)**: Optimizes Earth Mover's Distance. Uses weight clipping or Gradient Penalty (WGAN-GP) to satisfy Lipschitz constraints, eliminating mode collapse.
+  - **StyleGAN**: Separates latent code mapping into a style generator. Controls synthesis scale using Adaptive Instance Normalization (AdaIN) at each layer.
+
+### Practical Computer Vision Project Blueprints
+
+#### Blueprint 1: Custom PyTorch CNN for Image Classification
+- **Stack**: PyTorch, Torchvision.
+- **Design**:
+  - Stacks `Conv2d` -> `BatchNorm2d` -> `ReLU` -> `MaxPool2d` blocks.
+  - Flatten layer followed by fully connected `Linear` layers and Dropout.
+  - Trained using Cross-Entropy loss and AdamW optimizer.
+  - Employs data augmentation (random horizontal flips, rotations, normalization).
+
+#### Blueprint 2: YOLOv9 Object Detection Pipeline
+- **Stack**: Ultralytics / YOLOv9 PyTorch repo.
+- **Design**:
+  - Format dataset into YOLO TXT format: `<class_id> <x_center> <y_center> <width> <height>` (normalized).
+  - Configure `data.yaml` defining train, val, and class counts.
+  - Initialize YOLOv9 model with pre-trained weights and fine-tune.
+  - Run inference script saving bounding box overlays.
+
+#### Blueprint 3: Detectron2 Mask R-CNN Instance Segmentation
+- **Stack**: Detectron2, PyTorch.
+- **Design**:
+  - Register custom dataset in COCO JSON format.
+  - Instantiate a pre-trained Mask R-CNN config (`COCO-InstanceSegmentation/mask_rcnn_R_50_FPN_3x`).
+  - Train model on custom dataset; adjust learning rate and iterations.
+  - Use `DefaultPredictor` and `Visualizer` to draw segmentation boundaries.
+
+#### Blueprint 4: YOLOv9 + DeepSORT Object Tracking System
+- **Stack**: OpenCV, PyTorch, YOLOv9, DeepSORT.
+- **Design**:
+  - Run YOLOv9 object detector on each video frame to extract bounding boxes.
+  - Extract appearance feature vectors from bounding box crops using a pre-trained Re-ID network.
+  - Pass bounding box coordinates, confidence scores, and feature vectors to the DeepSORT tracker.
+  - Retrieve matched track IDs and draw bounding boxes with persistent labels across frames.
+
 ---
 
 ## 8. How Interviewers Think
@@ -438,6 +536,55 @@ They test whether you understand neural network fundamentals: forward/backward p
 
 38. Design an image search system.
 - CNN encoder -> embedding vector -> ANN index (FAISS/HNSW). Online: encode query -> ANN search -> return top-k.
+
+---
+
+#### 61. Write down the step-by-step mathematical proof of backpropagation for a single neuron using the chain rule.
+- **Detailed Answer**: Consider a single neuron with input $x$, weight $w$, bias $b$, and output $a = \sigma(z)$ where $z = wx + b$. Let the loss be $L = \frac{1}{2}(y - a)^2$. We seek the gradients $\frac{\partial L}{\partial w}$ and $\frac{\partial L}{\partial b}$ to perform weight updates.
+  Using the **Chain Rule**, we decompose the derivative of the loss with respect to the weight $w$:
+  $$\frac{\partial L}{\partial w} = \frac{\partial L}{\partial a} \cdot \frac{\partial a}{\partial z} \cdot \frac{\partial z}{\partial w}$$
+  1. Compute the derivative of the loss with respect to the activation $a$:
+     $$\frac{\partial L}{\partial a} = -(y - a)$$
+  2. Compute the derivative of the activation $a$ with respect to the pre-activation $z$:
+     $$\frac{\partial a}{\partial z} = \sigma'(z) = \sigma(z)(1 - \sigma(z)) = a(1 - a)$$
+  3. Compute the derivative of the pre-activation $z$ with respect to the weight $w$:
+     $$\frac{\partial z}{\partial w} = x$$
+  4. Multiply the terms together:
+     $$\frac{\partial L}{\partial w} = -(y - a) \cdot a(1 - a) \cdot x$$
+     Defining the error term $\delta = \frac{\partial L}{\partial z} = \frac{\partial L}{\partial a} \cdot \frac{\partial a}{\partial z} = -(y - a)a(1-a)$, we get:
+     $$\frac{\partial L}{\partial w} = \delta x$$
+  5. Similarly, for the bias $b$, since $\frac{\partial z}{\partial b} = 1$:
+     $$\frac{\partial L}{\partial b} = \frac{\partial L}{\partial a} \cdot \frac{\partial a}{\partial z} \cdot \frac{\partial z}{\partial b} = \delta \cdot 1 = \delta$$
+- **Follow-up Questions**: How does this scale to a multi-layer network? (Answer: The error term $\delta_j^l$ at node $j$ in layer $l$ is computed recursively from the error terms in the subsequent layer: $\delta_j^l = \left(\sum_k \delta_k^{l+1} w_{kj}^{l+1}\right) \sigma'(z_j^l)$, which is propagated backward through the network).
+- **Interviewer's Expectations**: Correctly break down the chain rule steps, write the derivatives of the squared loss and sigmoid function, define the error term ($\delta$), and show the final gradient products for both weight and bias.
+
+---
+
+#### 62. Discuss the mathematical diagnostics of vanishing vs. exploding gradients. How do you resolve them in deep models?
+- **Detailed Answer**: During backpropagation in an $L$-layer network, the gradient of the loss with respect to the first layer's weights $W_1$ involves product terms of Jacobian matrices:
+  $$\frac{\partial L}{\partial W_1} \propto \prod_{l=2}^L \left( W_l^T \operatorname{diag}(\sigma'(z_l)) \right)$$
+  - **Vanishing Gradients**:
+    - *Diagnostic*: If the weights $W_l$ are initialized small (eigenvalues $< 1$) and/or we use saturating activations like sigmoid/tanh whose derivatives $\sigma'(z) \le 0.25$, the product $\prod_{l=2}^L W_l^T \operatorname{diag}(\sigma'(z_l))$ approaches zero exponentially as $L$ increases. As a result, early layers learn extremely slowly or stop training entirely.
+    - *Remedies*: Use non-saturating activations (ReLU, LeakyReLU, GELU), implement residual skip-connections (which add $1$ to the Jacobian, preserving gradient flow), apply Batch/Layer Normalization, and initialize weights using He/Xavier protocols.
+  - **Exploding Gradients**:
+    - *Diagnostic*: If the weights $W_l$ are initialized large (eigenvalues $> 1$), the matrix product grows exponentially with the network depth, causing the gradients to become extremely large, leading to numerical overflow (NaN losses) and unstable oscillations.
+    - *Remedies*: Implement **Gradient Clipping** (capping the norm of the gradient vector: $g \leftarrow g \cdot \frac{\tau}{\max(\tau, \|g\|)}$), use weight regularization (weight decay), and employ proper initialization (He/Kaiming).
+- **Follow-up Questions**: Why does Batch Normalization prevent vanishing/exploding gradients? (Answer: It normalizes the inputs to each activation function, preventing activations from sliding into saturating regimes where derivatives are close to zero, and bounds the scale of outputs).
+- **Interviewer's Expectations**: Write or explain the product-of-Jacobians backprop formulation, describe how sigmoid/tanh derivatives cause vanishing gradients, explain how weight scale causes exploding gradients, and outline multiple concrete engineering resolutions.
+
+---
+
+#### 63. Explain the architecture of YOLOv9. What are the key innovations compared to previous YOLO versions?
+- **Detailed Answer**: YOLOv9 (2024) is a state-of-the-art single-stage object detector. It addresses the **information bottleneck** problem in deep feedforward neural networks, where input data details are gradually lost as features pass through successive convolutional layers.
+  Key Innovations:
+  1. **Programmable Gradient Information (PGI)**:
+     - Deep networks suffer from lost input signal pathways. PGI generates gradients for the main branch through a auxiliary reversible network.
+     - An **Auxiliary Reversible Branch** is trained alongside the main branch, ensuring that the backpropagated error signals retain complete semantic data from the inputs.
+     - Crucially, this auxiliary branch is completely **discarded during inference**, resulting in zero additional computational overhead at runtime.
+  2. **Generalized Efficient Layer Aggregation Network (GELAN)**:
+     - Optimizes the network's backbone. GELAN combines features of ELAN (Efficient Layer Aggregation Network) and CSPNet, allowing developers to choose arbitrary computational blocks (e.g., standard convolutions, ResNet blocks) while maintaining high inference speed and low parameter counts.
+- **Follow-up Questions**: Why is YOLOv9 faster than two-stage detectors like Mask R-CNN? (Answer: It processes the entire image and directly regresses class probabilities and bounding box coordinates in a single forward pass, bypassing the region proposal and crop alignment steps).
+- **Interviewer's Expectations**: Describe the information bottleneck problem in deep vision backbones, explain the PGI concept (auxiliary reversible branch training, zero-cost inference discarding), and detail the composition of GELAN.
 
 ---
 

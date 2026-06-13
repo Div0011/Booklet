@@ -71,6 +71,21 @@ $$\text{RRF Score}(d) = \sum_{m \in M} \frac{1}{k + r_m(d)}$$
 #### Reranking
 A two-stage retrieval pipeline. First, a fast Bi-Encoder retrieves the top 100 candidate chunks. Second, a heavy **Cross-Encoder reranking model** evaluates the query and candidate chunks together, scoring their relevance. This keeps search latency low while maintaining high accuracy.
 
+#### Navigating the Hugging Face Hub
+The Hugging Face Hub serves as the central repository for open-source AI models, hosting datasets, embeddings, rerankers, and large language models (LLMs). When building RAG pipelines:
+- **Model Formats**: Models are stored in formats like `safetensors` (for standard PyTorch/TensorFlow execution) or `GGUF` (quantized format optimized for CPU and local running).
+- **Hugging Face Hub Library (`huggingface_hub`)**: Programmatic API to search, download, and cache weights locally, facilitating offline inferences.
+- **Pipelines**: The `transformers` library abstracts model loading, tokenization, and generation into simple API calls (e.g., `pipeline("text-generation", model="...")`).
+
+#### Ollama for Local Model Execution
+Ollama is a lightweight framework that packages open-source LLMs (like Llama 3, Mistral, and Gemma) and embeddings into self-contained local services.
+- **Local API Endpoint**: Runs a background daemon exposing a standard REST API (usually at `http://localhost:11434/api/generate`) compatible with OpenAI SDKs and orchestration engines like LangChain.
+- **Benefits for RAG**:
+  - **Zero Data Leakage**: Sensitive enterprise or user data never leaves the local machine.
+  - **Zero Cost**: Eliminates token fees associated with commercial APIs.
+  - **Offline Functionality**: RAG pipelines can run completely offline.
+- **Modelfile**: A configuration file used to define system prompts, temperature settings, and base model parameters for custom local models.
+
 ### Advanced Concepts
 
 #### Query Expansion & HyDE
@@ -267,6 +282,10 @@ expanded_queries = generate_query_variations(query)
 print("Generated Query Variations:")
 for q in expanded_queries:
     print("-", q)
+```
+
+---
+
 ### Example 3: Gemini RAG with Firestore Vector Search & Vertex AI
 This example demonstrates generating dense vectors with Vertex AI, executing a vector query on Firestore Vector Search, and feeding the context to Gemini using System Instructions and Structured Output (Pydantic schema).
 
@@ -353,6 +372,103 @@ def gemini_rag_query(query: str) -> RAGResponse:
 # result = gemini_rag_query("What is the refund policy for active members?")
 # print(f"Answer: {result.answer}")
 # print(f"Citations: {result.citations}")
+```
+
+---
+
+### Example 4: Local RAG with Ollama, Chroma DB, and Hugging Face Embeddings
+
+This example shows how to configure a local RAG pipeline using only open-source libraries and a local model. 
+
+#### Part A: Creating a Custom Model via Ollama Modelfile
+To build a custom model with system instructions, we create a file named `Modelfile`:
+```dockerfile
+# 1. Specify the base model (pulled from Hugging Face / Ollama registry)
+FROM llama3
+
+# 2. Set the temperature (lower values are better for factual RAG)
+PARAMETER temperature 0.0
+
+# 3. Set the system prompt to enforce context constraints
+SYSTEM """
+You are a local RAG assistant. Answer user questions using only the provided context.
+If the answer is not present in the context, respond with 'Answer not found in context'.
+Do not use pre-trained external knowledge.
+"""
+```
+To build this custom model, run:
+```bash
+ollama create local-rag-assistant -f ./Modelfile
+```
+
+#### Part B: Running the Python local RAG Pipeline
+This script runs the query using Chroma DB for local vector search, Hugging Face's `all-MiniLM-L6-v2` for embeddings, and queries our custom local Ollama model.
+
+```python
+import os
+import requests
+import chromadb
+from chromadb.utils import embedding_functions
+
+# 1. Setup local Chroma DB and load embedding function from Hugging Face Hub
+# Requires: pip install chromadb sentence-transformers requests
+chroma_client = chromadb.PersistentClient(path="./local_chroma")
+
+# Use a local Sentence Transformer model from Hugging Face
+hf_embedding_func = embedding_functions.SentenceTransformerEmbeddingFunction(
+    model_name="all-MiniLM-L6-v2"
+)
+
+# 2. Get or create collection
+collection = chroma_client.get_or_create_collection(
+    name="local_knowledge_base",
+    embedding_function=hf_embedding_func
+)
+
+# 3. Ingest documents
+documents = [
+    "Project Orion is scheduled for launch in Q4 2026 under lead developer Sarah Jenkins.",
+    "The codebase coding standard mandates using explicit type hints for all public APIs.",
+    "We use pre-receive git hooks to prevent committing secret keys to the repo."
+]
+collection.upsert(
+    ids=["doc1", "doc2", "doc3"],
+    documents=documents,
+    metadatas=[{"source": "management"}, {"source": "guidelines"}, {"source": "security"}]
+)
+
+# 4. Search local collection
+query = "When is Project Orion launching?"
+results = collection.query(
+    query_texts=[query],
+    n_results=1
+)
+
+retrieved_doc = results["documents"][0][0]
+retrieved_meta = results["metadatas"][0][0]
+print(f"Retrieved Document: {retrieved_doc} (Source: {retrieved_meta['source']})")
+
+# 5. Format prompt and query local Ollama API
+ollama_url = "http://localhost:11434/api/generate"
+prompt = f"""Context: {retrieved_doc}
+
+Question: {query}
+Answer:"""
+
+payload = {
+    "model": "local-rag-assistant",
+    "prompt": prompt,
+    "stream": False
+}
+
+try:
+    response = requests.post(ollama_url, json=payload)
+    response_data = response.json()
+    print("\nOllama Local Answer:")
+    print(response_data.get("response"))
+except Exception as e:
+    print(f"\nFailed to connect to local Ollama API: {e}")
+    print("Ensure Ollama is running (`ollama serve`) and the custom model is created.")
 ```
 
 ---
@@ -661,6 +777,20 @@ Interviewers want to see if you can evaluate system trade-offs. They will check 
 
 ---
 
+#### 24. How do you build a completely offline RAG system using Hugging Face and Ollama? What are the limitations?
+- **Detailed Answer**: To build a completely offline RAG system, you load local Hugging Face embeddings (e.g. `all-MiniLM-L6-v2`) via libraries like `sentence-transformers`, index the vectors in a local database like Chroma DB or FAISS, and query a local model hosted on Ollama (e.g. Llama 3) via REST requests. Limitations include performance bottlenecks on local hardware (CPUs vs GPUs), high memory footprints, and potential quality drops compared to massive cloud models.
+- **Follow-up Questions**: How can you run a local model on CPU with acceptable latency? (Answer: Use quantized GGUF models via llama.cpp or Ollama which compress model weights and run fast on CPU).
+- **Interviewer's Expectations**: Describe the offline pipeline steps (local embeddings, local DB, local model) and identify key resource constraints (CPU/GPU, quantization, memory limits).
+
+---
+
+#### 25. What is a Modelfile in Ollama and how do you use it to configure a local RAG assistant's behavior?
+- **Detailed Answer**: A Modelfile is a configuration script for creating and sharing models with Ollama. It defines the base model (using `FROM`), system instructions (using `SYSTEM`), runtime parameters like temperature and context size (using `PARAMETER`), and template formatting (using `TEMPLATE`). In a local RAG setup, you use the Modelfile to lock down the temperature to `0.0` and set system prompts that enforce the model to only answer using retrieved context.
+- **Follow-up Questions**: What parameters are crucial in a RAG Modelfile? (Answer: `PARAMETER temperature 0.0` to minimize randomness, and `PARAMETER num_ctx 4096` to ensure the model has enough context window size for the retrieved documents).
+- **Interviewer's Expectations**: Explain the purpose of a Modelfile, its main commands (FROM, SYSTEM, PARAMETER), and how custom prompt restrictions ground local generation.
+
+---
+
 ## 10. Common Mistakes
 
 - **Splitting chunks without overlap**: Cuts sentences in half, causing the model to lose context at boundaries.
@@ -690,6 +820,7 @@ Interviewers want to see if you can evaluate system trade-offs. They will check 
 - **Hybrid Search RAG with Reranking**: Build an API server that implements hybrid search:
   - Connect a search database (Elasticsearch/BM25) with a vector database (Qdrant).
   - Search both databases using a query, merge the results using RRF, rerank the top candidates using a Cross-Encoder, and generate the final answer using an LLM.
+- **Historical Figure Chatbot**: Implement a conversational interface where the user chats with a simulated historical figure (e.g., Abraham Lincoln). Ingest public historical letters/speeches of the figure, store conversation history in memory, and feed both history and retrieved context to the LLM.
 
 ### Advanced/Resume-worthy
 - **Agentic RAG with Iterative Retrieval**: Develop a production-ready conversational agent:
@@ -697,6 +828,7 @@ Interviewers want to see if you can evaluate system trade-offs. They will check 
   - If the retrieved context is incomplete, the agent dynamically generates follow-up queries.
   - Integrate a reflection loop to validate citations and check for hallucinations before returning responses.
   - Wrap the system in Docker containers and expose REST API endpoints.
+- **Legal Document Assistant with Chat History**: Build a tool to parse multi-page legal contracts. Set up parent-child retrieval so details are retrieved but whole clauses are returned. Implement a conversational buffer memory window to maintain context over a multi-turn dialogue, and add citation validation to ensure all claims references exist in the source document.
 
 ---
 

@@ -71,6 +71,14 @@ A restaurant menu: The menu is the REST API (standardized interface). The items 
 - **Idempotency Keys**: Generates a unique token for transactional operations. The server stores the initial response in a database/cache associated with the key. If a duplicate request arrives, the server returns the cached response instead of re-processing.
 - **Webhooks**: An event-driven architecture where a server notifies external clients of state changes via HTTP POST callbacks. Requires signature verification (e.g., using HMAC-SHA256) to ensure the webhook payload was not tampered with.
 
+### Deep-Dive: Flask Core Web Framework
+- **Routing & Variable Rules**: Flask uses Werkzeug's routing system to map URLs to view functions. Dynamic variables can be embedded in paths using `<converter:name>`, where converters include `string`, `int`, `float`, `path`, and `uuid` (e.g., `/users/<int:user_id>`).
+- **Context Locals**: Flask manages concurrency using local proxy contexts bound to the current thread or greenlet.
+  - **Application Context**: Exposes application-level variables like `current_app` (the active application instance) and `g` (a temporary global namespace for a single request).
+  - **Request Context**: Exposes request-specific data like `request` (headers, args, form data) and `session` (signed cookie-based user session).
+- **Database Session Management**: Flask-SQLAlchemy integrates SQLAlchemy. It binds a scoped session to Flask's request lifecycle. A transaction starts when database actions are called and automatically rolls back if an uncaught exception is raised, with the session closing (`session.remove()`) at request teardown.
+- **Modular Blueprints**: Blueprints allow dividing a large Flask application into independent modules. Each blueprint can define its own routing rules, template folders, static paths, and error handlers, registered to the central application object using a common prefix.
+
 ---
 
 ## 3. Internal Working
@@ -221,6 +229,44 @@ def get_active_users(api_url: str, token: str) -> list:
     except requests.exceptions.Timeout:
         print("The request timed out.")
     return []
+
+### Example 4: Basic Flask Application with Custom Routing
+Setting up a minimal Flask application with dynamic URL route converters and JSON responses.
+
+```python
+from flask import Flask, jsonify, request
+
+app = Flask(__name__)
+
+# Mock database
+USERS = {
+    1: {"name": "Alice", "role": "Developer"},
+    2: {"name": "Bob", "role": "Designer"}
+}
+
+# Dynamic route parameters using type converters
+@app.route("/users/<int:user_id>", methods=["GET"])
+def get_user(user_id):
+    user = USERS.get(user_id)
+    if not user:
+        # Return JSON error and matching 404 client error code
+        return jsonify({"error": "User not found"}), 404
+    
+    # Return user details with standard 200 OK status
+    return jsonify(user), 200
+
+# Route handling request arguments (query parameters)
+@app.route("/users", methods=["GET"])
+def list_users():
+    role_filter = request.args.get("role")
+    results = USERS
+    if role_filter:
+        results = {k: v for k, v in USERS.items() if v["role"].lower() == role_filter.lower()}
+    
+    return jsonify(list(results.values())), 200
+
+if __name__ == "__main__":
+    app.run(debug=True)
 ```
 
 ---
@@ -429,6 +475,75 @@ async def create_employee(
 #     uvicorn.run("main:app", host="127.0.0.1", port=8000, reload=True)
 ```
 
+### Example 5: Flask CRUD API with Flask-SQLAlchemy
+A Flask REST API integrated with SQLAlchemy database schemas to perform CRUD operations.
+
+```python
+from flask import Flask, jsonify, request
+from flask_sqlalchemy import SQLAlchemy
+
+app = Flask(__name__)
+# Configure SQLite memory database for testing
+app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///:memory:"
+app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
+db = SQLAlchemy(app)
+
+# 1. Model Definition
+class Book(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    title = db.Column(db.String(100), nullable=False)
+    author = db.Column(db.String(100), nullable=False)
+
+    def to_dict(self):
+        return {"id": self.id, "title": self.title, "author": self.author}
+
+# Initialize database tables
+with app.app_context():
+    db.create_all()
+
+# 2. CRUD Route Handlers
+@app.route("/books", methods=["POST"])
+def create_book():
+    data = request.get_json()
+    if not data or "title" not in data or "author" not in data:
+        return jsonify({"error": "Missing title or author"}), 400
+    
+    new_book = Book(title=data["title"], author=data["author"])
+    db.session.add(new_book)
+    db.session.commit()  # Save changes to database
+    return jsonify(new_book.to_dict()), 201
+
+@app.route("/books", methods=["GET"])
+def get_books():
+    books = Book.query.all()
+    return jsonify([b.to_dict() for b in books]), 200
+
+@app.route("/books/<int:book_id>", methods=["PUT"])
+def update_book(book_id):
+    book = Book.query.get(book_id)
+    if not book:
+        return jsonify({"error": "Book not found"}), 404
+    
+    data = request.get_json()
+    book.title = data.get("title", book.title)
+    book.author = data.get("author", book.author)
+    db.session.commit()
+    return jsonify(book.to_dict()), 200
+
+@app.route("/books/<int:book_id>", methods=["DELETE"])
+def delete_book(book_id):
+    book = Book.query.get(book_id)
+    if not book:
+        return jsonify({"error": "Book not found"}), 404
+    
+    db.session.delete(book)
+    db.session.commit()
+    return jsonify({"message": "Book deleted"}), 200
+
+if __name__ == "__main__":
+    app.run(debug=True)
+```
+
 ---
 
 ## 7. Advanced Concepts & Examples
@@ -571,7 +686,54 @@ def verify_webhook_signature(
     ).hexdigest()
     
     # 5. Use constant-time comparison to prevent timing attacks
+    # 5. Use constant-time comparison to prevent timing attacks
     return hmac.compare_digest(expected_signature, received_signature)
+```
+
+### Example 4: Modular Flask Microservice with Blueprints
+Structuring a scalable Flask application using blueprints, middleware pre-request actions, and application configurations.
+
+`project/auth.py`:
+```python
+from flask import Blueprint, jsonify
+
+auth_bp = Blueprint("auth", __name__)
+
+@auth_bp.route("/login", methods=["POST"])
+def login():
+    return jsonify({"token": "jwt_token_secret_123"}), 200
+```
+
+`project/main.py`:
+```python
+from flask import Flask, jsonify, g, request
+import time
+from auth import auth_bp
+
+app = Flask(__name__)
+
+# Register Blueprint module under route prefix
+app.register_blueprint(auth_bp, url_prefix="/api/v1/auth")
+
+# Application middleware: hook executed before every request
+@app.before_request
+def start_timer():
+    g.start_time = time.time()  # Store timestamp in request context 'g'
+
+# Application middleware: hook executed after every request
+@app.after_request
+def log_request_performance(response):
+    duration = time.time() - g.start_time
+    # Inject profiling metadata into response headers
+    response.headers["X-Response-Time-Ms"] = str(int(duration * 1000))
+    return response
+
+@app.route("/api/v1/health", methods=["GET"])
+def health_check():
+    return jsonify({"status": "healthy"}), 200
+
+if __name__ == "__main__":
+    app.run(port=8000)
 ```
 
 ---
@@ -857,6 +1019,39 @@ Security measures:
 - **SSL Termination**: The gateway decrypts SSL/TLS traffic, allowing internal service-to-service communication to run on HTTP to reduce CPU overhead.
 - **Follow-up Questions**: How does SSL termination improve backend service performance? (Answer: It offloads SSL handshake calculations from individual microservice containers to the gateway hardware).
 - **Interviewer's Expectations**: Propose reverse proxying, token authorization delegation, centralized rate-limiting, and SSL termination.
+
+---
+
+#### 61. Explain Flask's application and request contexts. How do they work under the hood, and how are they managed in multi-threaded environments?
+- **Detailed Answer**: Flask uses a context-based design to make variables like `request` or `current_app` globally accessible inside view functions without explicitly passing them as arguments.
+  - **The Two Contexts**:
+    1. **Application Context**: Bound to the lifespan of the Flask application object. It manages variables like `current_app` (the active application instance) and `g` (a temporary global namespace for a single request, often used for database connections or timers).
+    2. **Request Context**: Bound to the lifespan of a single HTTP request. It manages variables like `request` (incoming request payload/headers) and `session` (signed cookie data).
+  - **Under the Hood (Werkzeug Local Proxies)**:
+    - Flask uses **Thread-Local Storage** (specifically Werkzeug's `LocalStack` and `LocalProxy`). 
+    - When an HTTP request arrives, Flask identifies the thread handling the request and pushes the corresponding application and request context objects onto their respective thread-local stacks.
+    - Global variables like `request` are actually `LocalProxy` objects. When accessed (e.g. `request.args`), the proxy dynamically forwards the attribute lookup to the top item on the active thread's local stack.
+    - In multi-threaded or asynchronous environments (like greenlets or asyncio), Werkzeug uses greenlet/task identifiers instead of OS thread IDs to isolate stacks, ensuring that parallel requests do not leak data or access other clients' payloads.
+    - At the end of the request-response lifecycle, Flask pops both contexts from the stack, clearing the thread-local storage to prevent memory leaks.
+- **Follow-up Questions**: Why do you get a `RuntimeError: Working outside of application context` when running background tasks or scripts? (Answer: Outside of an active HTTP request, the local stacks are empty. You must manually push an application context using the `with app.app_context():` context manager to access variables like `current_app` or database models).
+- **Interviewer's Expectations**: Define the two context types (application vs. request), explain thread-local storage stacks, describe how `LocalProxy` resolves variables dynamically, and detail context creation/cleanup on request lifecycle.
+
+---
+
+#### 62. Describe the database session lifecycle in Flask-SQLAlchemy. How does it handle connection pools, transaction boundaries, and request teardown?
+- **Detailed Answer**: Flask-SQLAlchemy manages database connections and ORM transactions by linking the SQLAlchemy `Session` to Flask's request lifecycle:
+  - **Initialization & Scoped Session**:
+    - Flask-SQLAlchemy creates a `scoped_session`, which acts as a thread-safe registry of database sessions. When `db.session` is called, it returns a session unique to the active request context/thread.
+  - **Connection Pool**:
+    - Under the hood, SQLAlchemy maintains a connection pool (e.g., `QueuePool`). When the session needs to query the database, it checks out a physical TCP connection from the pool.
+  - **Transaction Boundaries**:
+    - A transaction begins automatically (lazy initialization) when the first SQL statement is executed.
+    - The developer staging changes using `db.session.add(item)` or `db.session.delete(item)` updates the session's internal state. Calling `db.session.commit()` commits the active database transaction and returns the connection to the pool.
+  - **Request Teardown & Cleanup**:
+    - Flask registers a teardown handler (`@app.teardown_request` or `@app.teardown_appcontext`).
+    - At the end of every request (after the response is sent), Flask invokes `db.session.remove()`. This method calls `session.close()`, which rolls back any uncommitted transactions (preventing dangling locks), clears all cached objects in the session identity map, and returns the physical database connection to the pool.
+- **Follow-up Questions**: What is the danger of not closing or removing a session in a web application? (Answer: Unclosed sessions keep database connections checked out, eventually exhausting the database server's connection limits and causing subsequent requests to time out or crash).
+- **Interviewer's Expectations**: Define scoped sessions, explain connection pooling, detail automatic transaction rollback/closure during request teardown, and identify resource exhaustion risks of unmanaged sessions.
 
 ---
 

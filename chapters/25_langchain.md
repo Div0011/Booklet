@@ -114,6 +114,34 @@ chain = prompt | model | parser
 # print(result)
 ```
 
+### Example 2: Gemini Text Generation with Structured Output
+This example demonstrates configuring a Google Gemini chat model to return a strictly formatted JSON output using Pydantic.
+
+```python
+# To run this, install: pip install langchain-google-genai pydantic
+from langchain_google_genai import ChatGoogleGenerativeAI
+from pydantic import BaseModel, Field
+
+# 1. Initialize Gemini Model (requires GEMINI_API_KEY environment variable)
+# Using gemini-2.5-flash for fast and structured reasoning
+model = ChatGoogleGenerativeAI(model="gemini-2.5-flash", temperature=0.1)
+
+# 2. Define Pydantic Schema for structured outputs
+class BookAnalysis(BaseModel):
+    title: str = Field(description="The title of the book")
+    author: str = Field(description="The author of the book")
+    genres: list[str] = Field(description="List of genres")
+    main_summary: str = Field(description="A concise 3-sentence summary of the main plot")
+
+# 3. Bind the model to enforce structured output
+structured_model = model.with_structured_output(BookAnalysis)
+
+# 4. Execute the call directly
+# response = structured_model.invoke("Analyze the book 'The Hobbit' by J.R.R. Tolkien")
+# print(response.title, response.author)
+# print(response.main_summary)
+```
+
 ---
 
 ## 6. Intermediate Examples
@@ -166,6 +194,98 @@ agent_executor = AgentExecutor(
 #     "chat_history": history
 # })
 # print(response["output"])
+```
+
+### Example 2: Local Agent CLI Project with Custom Tools
+This example demonstrates a command-line interface agent that can run local calculations, check file sizes in the workspace, and answer general user queries using local tools.
+
+```python
+import os
+import sys
+from langchain.agents import AgentExecutor, create_openai_tools_agent
+from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
+from langchain_core.tools import tool
+from langchain_openai import ChatOpenAI
+
+# 1. Define local CLI utility tools
+@tool
+def calculate_expression(expression: str) -> str:
+    """Evaluates simple mathematical calculations. Inputs must be standard Python math expressions (e.g. '15 * 100 / 4')."""
+    try:
+        # Safe eval-like behavior for basic arithmetic
+        allowed_chars = "0123456789+-*/(). "
+        if not all(c in allowed_chars for c in expression):
+            return "Error: Invalid characters in math expression."
+        return str(eval(expression, {"__builtins__": None}))
+    except Exception as e:
+        return f"Error evaluating expression: {e}"
+
+@tool
+def list_workspace_files(directory_path: str = ".") -> str:
+    """Lists files in the current workspace directory to help the user navigate."""
+    try:
+        files = os.listdir(directory_path)
+        file_list = [f for f in files if os.path.isfile(os.path.join(directory_path, f))]
+        if not file_list:
+            return "No files found in directory."
+        return "\n".join(file_list[:10])  # limit to top 10
+    except Exception as e:
+        return f"Error reading workspace directory: {e}"
+
+tools = [calculate_expression, list_workspace_files]
+
+# 2. Build agent prompt template
+prompt = ChatPromptTemplate.from_messages([
+    ("system", "You are a terminal CLI assistant helper. Help the user perform tasks and calculations using tools."),
+    MessagesPlaceholder(variable_name="chat_history"),
+    ("human", "{input}"),
+    MessagesPlaceholder(variable_name="agent_scratchpad"),
+])
+
+# 3. Setup LLM and construct Agent Executor
+llm = ChatOpenAI(model="gpt-4o-mini", temperature=0)
+agent = create_openai_tools_agent(llm, tools, prompt)
+agent_executor = AgentExecutor(agent=agent, tools=tools, verbose=False)
+
+# 4. Interactive CLI execution loop
+def run_cli_agent():
+    print("=== LangChain CLI Assistant Initialized ===")
+    print("Type 'exit' or 'quit' to terminate.")
+    chat_history = []
+    
+    while True:
+        try:
+            user_input = input("\nYou > ")
+            if user_input.lower() in ["exit", "quit"]:
+                print("Goodbye!")
+                break
+            
+            if not user_input.strip():
+                continue
+                
+            response = agent_executor.invoke({
+                "input": user_input,
+                "chat_history": chat_history
+            })
+            
+            output = response["output"]
+            print(f"\nAssistant:\n{output}")
+            
+            # Update history window (keep last 5 turns)
+            chat_history.append(("human", user_input))
+            chat_history.append(("assistant", output))
+            chat_history = chat_history[-10:]
+            
+        except KeyboardInterrupt:
+            print("\nExiting CLI...")
+            break
+        except Exception as e:
+            print(f"Error executing agent loop: {e}")
+
+if __name__ == "__main__":
+    # To run: python cli_agent.py
+    # run_cli_agent()
+    pass
 ```
 
 ---
@@ -351,7 +471,19 @@ def get_user_balance(user_id):
 - **Follow-up Questions**: Can you use LlamaIndex retrievers inside a LangChain pipeline? (Answer: Yes).
 - **Interviewer's Expectations**: Compare the strengths and primary focus areas of both frameworks.
 
-*(Remaining questions available in the interactive reader...)*
+---
+
+#### 8. How do you implement structured data generation in LangChain using Google Gemini?
+- **Detailed Answer**: In LangChain, structured data generation with Gemini is implemented using the `with_structured_output` method on the `ChatGoogleGenerativeAI` class. First, define a Pydantic schema class specifying the fields, data types, and descriptions. Next, instantiate the Gemini model and call `model.with_structured_output(YourSchemaClass)`. Under the hood, LangChain formats the schema as a JSON schema and passes it to the Gemini API parameters. The API forces the model output logits to strictly match the requested JSON format, ensuring a 100% parseable structured response.
+- **Follow-up Questions**: What is the difference between passing a Pydantic class vs a raw dict schema? (Answer: Pydantic validates input types automatically and returns a Python object instance, whereas a raw dict schema returns a raw JSON/dictionary structure without type validation).
+- **Interviewer's Expectations**: Explain `with_structured_output`, Pydantic models, JSON schema injection, and native model-level output parsing.
+
+---
+
+#### 9. Why are custom tools registered with Pydantic schemas in LangChain, and how does the model access them?
+- **Detailed Answer**: LangChain tools are registered with schemas (typically generated automatically from Pydantic or function type-hints and docstrings) to define the tool's interface. When the model runs, LangChain serializes this metadata into a tool descriptor JSON object (containing tool name, description, and parameter types) and injects it into the LLM context or functions parameter list. The model uses this description to decide if a tool should be called and how to format the arguments.
+- **Follow-up Questions**: What is the purpose of the `@tool` decorator? (Answer: The `@tool` decorator simplifies tool registration by automatically parsing the function's name, docstring, and argument type annotations to build the underlying `BaseTool` object).
+- **Interviewer's Expectations**: Describe schema serialization, function descriptions, API injection, and the LLM tool-selection process.
 
 ---
 

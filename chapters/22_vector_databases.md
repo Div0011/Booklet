@@ -82,6 +82,15 @@ In production systems, the database must accept inserts and updates while proces
 #### Streaming Ingestion and Write Amplification
 When a vector is inserted, the database writes it to a Write-Ahead Log (WAL) and stores it in an in-memory buffer index. In the background, worker processes merge buffer segments into the main HNSW index and recalculate graph links. This background merging process can cause high disk write amplification and temporary CPU spikes.
 
+#### Chroma DB Architecture
+Chroma DB is an open-source, AI-native vector database designed to be embedded directly into Python applications or run as a standalone client-server setup. It defaults to using an in-memory database or storing data locally on disk via SQLite for metadata storage and hnswlib for vector index serialization. It is popular for rapid prototyping, local development, and lightweight desktop search engines because of its minimal setup overhead and simple API.
+
+#### Pinecone DB Architecture
+Pinecone DB is a proprietary, fully managed, cloud-native vector database service. Unlike embedded databases, Pinecone abstracts away all infrastructure, indexing algorithms, and scaling concerns. It offers two main hosting paradigms:
+- **Pod-based Indexing**: Uses dedicated cloud resources (pods) optimized for either storage capacity (s1/p2 pods) or performance/low-latency (p1 pods).
+- **Serverless Indexing**: Dynamically provisions compute and storage resources, charging only for read, write, and storage footprints.
+Pinecone partitions indices using **Namespaces**, allowing multiple isolated datasets to coexist in a single index, and supports dynamic metadata filtering to prune the search space during the query phase.
+
 ---
 
 ## 3. Internal Working
@@ -223,6 +232,51 @@ distances, indices = index.search(xq, k)
 print("\nIVF-PQ Match indices:", indices)
 ```
 
+### Example 3: Local Collection Setup, Ingestion, and Querying in Chroma DB
+Chroma DB is ideal for local embedding storage. This example demonstrates how to initialize an in-memory Chroma client, create a collection, ingest document texts (with auto-generated embeddings via Chroma's default sentence-transformers model), and run a semantic query.
+
+```python
+import chromadb
+
+# 1. Initialize ephemeral (in-memory) Chroma client
+# For disk persistence, use chromadb.PersistentClient(path="./chroma_db")
+client = chromadb.EphemeralClient()
+
+# 2. Create or retrieve a collection
+# Chroma will use its default sentence-transformers model (all-MiniLM-L6-v2) for auto-embedding
+collection = client.create_collection(name="legal_documents")
+
+# 3. Add documents, metadata, and unique IDs
+# The client will automatically generate 384-dimensional embeddings for the documents
+collection.add(
+    documents=[
+        "Section 402 of the Clean Water Act prohibits the discharge of pollutants without a permit.",
+        "Under Section 101 of the Patent Act, anyone who invents a new process or machine may obtain a patent.",
+        "The Equal Protection Clause of the 14th Amendment prohibits states from denying equal protection under the law."
+    ],
+    metadatas=[
+        {"source": "environmental_law", "clause": "402"},
+        {"source": "patent_law", "clause": "101"},
+        {"source": "constitutional_law", "clause": "14"}
+    ],
+    ids=["doc1", "doc2", "doc3"]
+)
+
+# 4. Query the collection using natural language
+query_results = collection.query(
+    query_texts=["water pollution discharge permit"],
+    n_results=1,
+    include=["documents", "metadatas", "distances"]
+)
+
+# 5. Output search results
+print("Chroma DB Query Results:")
+for doc, meta, dist in zip(query_results["documents"][0], query_results["metadatas"][0], query_results["distances"][0]):
+    print(f"Document: {doc}")
+    print(f"Metadata: {meta}")
+    print(f"L2 Distance Score: {dist:.4f}")
+```
+
 ---
 
 ## 6. Intermediate Examples
@@ -270,6 +324,82 @@ results = store.query([0.1, 0.9, 0.0], category_filter="shoes", k=2)
 print("Search results:")
 for rank, (idx, score, meta) in enumerate(results):
     print(f"Rank {rank+1}: ID={meta['id']}, Score={score:.4f}")
+```
+
+### Example 2: Remote Index Setup, Namespace Querying, and Metadata Filtering in Pinecone DB
+Pinecone DB operates as a remote cloud vector database. This example demonstrates using the official Python client (`pinecone-client`) to set up a serverless index, upsert high-dimensional vectors with metadata, and perform similarity queries restricted to specific namespaces and metadata filters.
+
+```python
+from pinecone import Pinecone, ServerlessSpec
+import numpy as np
+
+# 1. Initialize Pinecone client with an API key
+# Make sure PINECONE_API_KEY is configured in your environment variables
+pc = Pinecone(api_key="your-api-key-here")
+
+index_name = "retail-catalog"
+dimension = 1536  # Standard embedding dimension (e.g. OpenAI text-embedding-3)
+
+# 2. Create a serverless index if it doesn't already exist
+if index_name not in pc.list_indexes().names():
+    pc.create_index(
+        name=index_name,
+        dimension=dimension,
+        metric="cosine",
+        spec=ServerlessSpec(
+            cloud="aws",
+            region="us-east-1"
+        )
+    )
+
+# 3. Connect to the remote index
+index = pc.Index(index_name)
+
+# 4. Generate dummy vectors representing retail products
+# Each item has an ID, a vector, and a metadata dictionary
+items = [
+    {
+        "id": "prod_1",
+        "values": np.random.uniform(-1, 1, dimension).tolist(),
+        "metadata": {"category": "shoes", "price": 89.99}
+    },
+    {
+        "id": "prod_2",
+        "values": np.random.uniform(-1, 1, dimension).tolist(),
+        "metadata": {"category": "clothing", "price": 45.00}
+    },
+    {
+        "id": "prod_3",
+        "values": np.random.uniform(-1, 1, dimension).tolist(),
+        "metadata": {"category": "shoes", "price": 120.00}
+    }
+]
+
+# 5. Upsert vectors into a specific namespace to isolate datasets
+namespace_name = "us-catalog"
+index.upsert(vectors=items, namespace=namespace_name)
+
+# 6. Perform a similarity query with metadata filtering within the namespace
+query_vector = np.random.uniform(-1, 1, dimension).tolist()
+
+query_response = index.query(
+    namespace=namespace_name,
+    vector=query_vector,
+    top_k=2,
+    include_values=False,
+    include_metadata=True,
+    filter={
+        "category": {"$eq": "shoes"},
+        "price": {"$lt": 100.00}
+    }
+)
+
+# 7. Print results
+print("Pinecone Query Results:")
+for match in query_response["matches"]:
+    print(f"Product ID: {match['id']}")
+    print(f"Similarity Score: {match['score']:.4f}")
+    print(f"Metadata: {match['metadata']}")
 ```
 
 ---

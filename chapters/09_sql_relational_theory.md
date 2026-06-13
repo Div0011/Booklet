@@ -32,130 +32,138 @@ Think of a relational database as a **filing cabinet with superpowers**. Each ta
 
 ### Beginner Concepts
 
-#### Tables and Rows
-A table is a two-dimensional grid. Rows are records; columns are attributes.
+#### SQL Command Categorization
+SQL statements are grouped into functional categories:
+- **DDL (Data Definition Language)**: Defines the schema database structure.
+  - Commands: `CREATE`, `ALTER`, `DROP`, `TRUNCATE`.
+- **DML (Data Manipulation Language)**: Modifies and queries data.
+  - Commands: `SELECT`, `INSERT`, `UPDATE`, `DELETE`, `MERGE`.
+- **DCL (Data Control Language)**: Controls permissions and access.
+  - Commands: `GRANT`, `REVOKE`.
+- **TCL (Transaction Control Language)**: Manages transactions.
+  - Commands: `COMMIT`, `ROLLBACK`, `SAVEPOINT`.
 
-```sql
--- users table
-id | name    | email            | age
-1  | Alice   | alice@test.com   | 30
-2  | Bob     | bob@test.com     | 25
-3  | Charlie | charlie@test.com | 35
-```
+#### Data Constraints
+Constraints enforce data integrity rules at the schema level:
+- `PRIMARY KEY`: Uniquely identifies each record. Cannot contain NULLs.
+- `FOREIGN KEY`: Establishes referential integrity between tables, ensuring values in a column match values in the primary key of another table.
+- `NOT NULL`: Prevents NULL values from being stored in a column.
+- `UNIQUE`: Guarantees that all values in a column are distinct.
+- `CHECK`: Evaluates logical expressions to restrict allowed values (e.g. `CHECK (age >= 18)`).
+- `DEFAULT`: Automatically assigns a value if none is provided.
 
-#### Primary Keys
-Unique identifier for each row. Enforces uniqueness; used for indexing and relationships.
+#### Basic DML Operations
+- **INSERT**: Adds new records to a table:
+  ```sql
+  INSERT INTO users (id, name, age) VALUES (1, 'Alice', 30);
+  ```
+- **UPDATE**: Modifies existing data:
+  ```sql
+  UPDATE users SET age = 31 WHERE id = 1;
+  ```
+- **DELETE**: Removes records based on a filter condition:
+  ```sql
+  DELETE FROM users WHERE id = 1;
+  ```
+- **MERGE (Upsert)**: Conditionally inserts or updates a record depending on whether it matches an existing condition.
 
-```sql
-CREATE TABLE users (
-    id INT PRIMARY KEY,
-    name VARCHAR(100)
-);
-```
+#### Basic Query Clauses & Logical Operators
+- **WHERE**: Filters rows based on conditional logic.
+- **Logical Operators**: Combines conditions using `AND`, `OR`, and `NOT`.
+- **ORDER BY**: Sorts the result set. Defaults to `ASC` (ascending); use `DESC` for descending.
+- **LIMIT & OFFSET**:
+  - `LIMIT N`: Restricts the output to the first $N$ records.
+  - `OFFSET M`: Skips the first $M$ records (crucial for page-based querying).
 
-#### Foreign Keys
-Link rows in one table to rows in another. Prevents orphaned records.
+#### SQL Comparison Operators
+- **IN**: Checks if a value is within a list:
+  ```sql
+  SELECT * FROM users WHERE age IN (18, 21, 30);
+  ```
+- **BETWEEN**: Filters values within an inclusive range:
+  ```sql
+  SELECT * FROM users WHERE age BETWEEN 18 AND 30;
+  ```
+- **LIKE**: Matches patterns using wildcards:
+  - `%`: Represents zero or more characters (e.g., `'A%'` matches 'Alice', 'Arthur').
+  - `_`: Represents exactly one character (e.g., `'h_t'` matches 'hat', 'hot').
 
-```sql
-CREATE TABLE orders (
-    id INT PRIMARY KEY,
-    user_id INT REFERENCES users(id),
-    amount DECIMAL(10, 2)
-);
-```
-
-#### SELECT, WHERE, ORDER BY
-Fundamental query operations.
-
-```sql
-SELECT name, email FROM users WHERE age > 25 ORDER BY age DESC;
-```
-
-#### JOIN
-Combine rows from multiple tables.
-
-```sql
-SELECT users.name, orders.amount
-FROM users INNER JOIN orders ON users.id = orders.user_id;
-```
+#### Built-in Scalar Functions
+- **Numeric Functions**: `ABS(x)` (absolute value), `ROUND(x, d)` (round to $d$ decimals), `CEIL(x)` (ceiling), `FLOOR(x)` (floor).
+- **String Functions**:
+  - `CONCAT(a, b)`: Joins strings.
+  - `SUBSTRING(str, pos, len)`: Extracts substrings.
+  - `LENGTH(str)`: Returns character count.
+  - `REPLACE(str, from, to)`: Substitutes text.
+  - `UPPER(str)` / `LOWER(str)`: Capitalizes/lowercases strings.
+- **Date & Time Functions**:
+  - `NOW()` / `CURRENT_TIMESTAMP`: Current date and time.
+  - `DATE_ADD(date, interval)` / `DATE_SUB()`: Adds/subtracts days, hours, etc.
+  - `DATEDIFF(date1, date2)`: Returns difference in days.
+  - `DATE_FORMAT(date, format)`: Converts date to string format.
 
 ### Intermediate Concepts
 
-#### Normalization (1NF, 2NF, 3NF)
-Decomposing tables to eliminate redundancy.
+#### SQL Joins
+Joins combine records from two or more tables based on a matching column:
+- **INNER JOIN**: Returns rows only when there is a match in both tables.
+- **LEFT JOIN (LEFT OUTER JOIN)**: Returns all rows from the left table, and matched rows from the right (returns NULLs if no match).
+- **RIGHT JOIN (RIGHT OUTER JOIN)**: Returns all rows from the right table, and matched rows from the left.
+- **FULL JOIN (FULL OUTER JOIN)**: Returns all rows when there is a match in either table.
+- **CROSS JOIN**: Produces the Cartesian product of both tables (every row of table A paired with every row of table B).
+- **SELF JOIN**: A regular join in which a table is joined with itself (requires table aliases).
 
-- **1NF**: Atomic values (no lists in columns).
-- **2NF**: No partial dependencies (non-key columns depend on entire primary key).
-- **3NF**: No transitive dependencies (non-key columns depend only on primary key).
+#### Aggregation and HAVING
+- **Aggregation Functions**: Calculate summary values: `COUNT()`, `SUM()`, `AVG()`, `MIN()`, `MAX()`.
+- **GROUP BY**: Groups rows sharing a common value into summary rows.
+- **HAVING**: Filters grouped rows *after* the `GROUP BY` execution. Unlike `WHERE`, `HAVING` can evaluate aggregate functions.
 
-#### ACID Transactions
-- **Atomicity**: All-or-nothing; partial updates never happen.
-- **Consistency**: Data satisfies all constraints before and after transaction.
-- **Isolation**: Concurrent transactions don't interfere.
-- **Durability**: Committed data persists even if system crashes.
+#### Subqueries
+A subquery is a query nested inside another statement:
+- **Scalar Subquery**: Returns a single value (one row, one column). Used in SELECT or WHERE.
+- **Column Subquery**: Returns a single column containing multiple rows. Evaluated using `IN` or `NOT IN`.
+- **Correlated Subquery**: A subquery that references columns of the outer query. It is executed once for each row processed by the outer query:
+  ```sql
+  SELECT name, salary, department_id
+  FROM employees e1
+  WHERE salary > (
+      SELECT AVG(salary) 
+      FROM employees e2 
+      WHERE e2.department_id = e1.department_id
+  );
+  ```
+- **EXISTS**: Checks if the subquery returns any rows (stops processing as soon as a single match is found, improving performance).
 
-#### Indexes
-Speed up lookups by organizing data into B-Trees or Hash tables.
-
-```
-Without index: O(n) scan
-With index: O(log n) lookup
-```
-
-#### Aggregation Functions
-GROUP BY, COUNT, SUM, AVG, MAX, MIN.
-
-```sql
-SELECT department, COUNT(*) as employees, AVG(salary)
-FROM employees
-GROUP BY department;
-```
+#### Database Design, Normalization, & ER Diagrams
+- **Entity-Relationship (ER) Diagrams**: Conceptual drawings depicting tables (entities), columns (attributes), and lines showing relationships (one-to-one, one-to-many, many-to-many).
+- **Normalization**: Splitting tables to eliminate redundancy and prevent anomalies (insert/update/delete anomalies):
+  - **1NF**: Atomic values (no nested tables or multi-valued attributes).
+  - **2NF**: In 1NF and all non-key columns depend on the *entire* primary key (no partial dependencies on composite keys).
+  - **3NF**: In 2NF and non-key columns depend *only* on the primary key (no transitive dependencies).
 
 ### Advanced Concepts
 
 #### Window Functions
-Apply functions over a sliding "window" of rows without collapsing groups.
+Window functions perform calculations across a set of table rows related to the current row without collapsing the group:
+- Syntax: `FUNCTION() OVER (PARTITION BY col ORDER BY col)`
+- **ROW_NUMBER()**: Assigns a unique, sequential integer to each row.
+- **RANK()**: Assigns ranks, skipping numbers if there are ties (e.g. 1, 2, 2, 4).
+- **DENSE_RANK()**: Assigns ranks without skipping numbers for ties (e.g. 1, 2, 2, 3).
+- **LEAD(col, offset)**: Fetches values from subsequent rows in the window.
+- **LAG(col, offset)**: Fetches values from preceding rows in the window.
+- **Running Totals**: `SUM(amount) OVER (PARTITION BY user_id ORDER BY order_date ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW)`.
 
-```sql
-SELECT name, salary,
-       RANK() OVER (ORDER BY salary DESC) as rank,
-       LAG(salary) OVER (ORDER BY salary DESC) as prev_salary
-FROM employees;
-```
+#### ACID Transactions & Isolation
+- **Atomicity**: All-or-nothing execution.
+- **Consistency**: Transition from one valid state to another.
+- **Isolation**: Prevents concurrent execution interference.
+- **Durability**: Committed data survives crashes.
 
-#### Common Table Expressions (CTEs)
-Named temporary result sets for complex queries.
-
-```sql
-WITH manager_avg AS (
-    SELECT manager_id, AVG(salary) as avg_sal
-    FROM employees
-    GROUP BY manager_id
-)
-SELECT e.name, m.avg_sal
-FROM employees e
-JOIN manager_avg m ON e.manager_id = m.manager_id;
-```
-
-#### Query Optimization
-Query planner analyzes different execution paths and chooses the fastest.
-
-```
-SELECT * FROM orders WHERE user_id = 5 AND status = 'shipped'
-→ Index on (user_id, status)
-→ Cost: 0.32 (fast)
-```
-
-#### Constraints
-CHECK, UNIQUE, NOT NULL, FOREIGN KEY.
-
-```sql
-CREATE TABLE users (
-    id INT PRIMARY KEY,
-    email VARCHAR(100) UNIQUE NOT NULL,
-    age INT CHECK (age >= 18)
-);
-```
+#### Modern SQL: Generative AI & GPT with SQL
+- **Query Generation**: Using LLMs to compile natural language requests ("Show me our top 5 customers in 2026") into optimized SQL queries.
+- **Query Explanation**: Passing complex legacy SQL queries containing nested joins and subqueries to an LLM to generate plain English explanations.
+- **SQL Dialect Translation**: Translating SQL queries between dialects (e.g., converting Oracle PL/SQL syntax to PostgreSQL PG/SQL).
+- *Best Practices*: Enforce LLM outputs to utilize read-only credentials, run syntax parsers before execution, and use parameterized queries to prevent SQL injection.
 
 ---
 
@@ -942,6 +950,27 @@ CREATE INDEX idx_user_created ON notifications(user_id, created_at DESC);
 
 **Q60: How do you measure and optimize database query cost?**
 A: Use EXPLAIN ANALYZE; measure I/O (seeks, scans), CPU, memory; profile hot queries; optimize with indexes, partitioning, materialization; monitor production metrics (latency, throughput).
+
+---
+
+#### 61. Contrast ROW_NUMBER(), RANK(), and DENSE_RANK() window functions in SQL.
+- **Detailed Answer**:
+  All three window functions assign sequential integers to rows in a partition based on an ordering column. The key difference is how they handle ties (rows with identical values in the ordering column):
+  - `ROW_NUMBER()`: Always assigns a unique, sequential number to each row, regardless of ties. If there is a tie, the ordering among tie rows is arbitrary (unless a secondary order column is specified).
+  - `RANK()`: Assigns the same rank to tied rows, but skips subsequent rank numbers. For example, if three rows tie for rank 1, they all get rank 1, and the next row is assigned rank 4.
+  - `DENSE_RANK()`: Assigns the same rank to tied rows, but does not skip any numbers. If three rows tie for rank 1, they all get rank 1, and the next row is assigned rank 2.
+- **Follow-up Questions**: When would you use DENSE_RANK() over RANK()? (Answer: Use `DENSE_RANK()` when you want a continuous list of ranks, such as finding the top 3 highest salaries in a company, where a tie in salaries shouldn't skip rankings).
+- **Interviewer's Expectations**: Define each function, explain how ties are handled, and describe rank-skipping behavior.
+
+---
+
+#### 62. What is a correlated subquery in SQL, how does it differ from a non-correlated subquery, and what is its performance impact?
+- **Detailed Answer**:
+  - **Non-correlated Subquery**: A subquery that is independent of the outer query. It runs exactly once, evaluates to a set of values or a single value, and feeds that static result to the outer query.
+  - **Correlated Subquery**: A subquery that references one or more columns from the outer query. It cannot run independently because its execution depends on the values of the outer row.
+  - **Performance Impact**: A correlated subquery runs conceptually once for *every single row* processed by the outer query. In large datasets, this can lead to an $O(N \times M)$ runtime (nested loop behavior). To optimize, correlated subqueries should often be rewritten as `JOIN`s or `WITH` Common Table Expressions (CTEs) to allow the query planner to optimize execution.
+- **Follow-up Questions**: How does `EXISTS` utilize correlated subqueries efficiently? (Answer: `EXISTS` is evaluated as a semi-join; the database engine halts the subquery execution for a row the moment it finds the first matching record, saving I/O).
+- **Interviewer's Expectations**: Define correlated vs non-correlated, explain the per-row execution loop, discuss performance implications (nested loop cost), and propose alternative optimization strategies like `JOIN`s or CTEs.
 
 ---
 

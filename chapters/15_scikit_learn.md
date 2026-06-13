@@ -197,6 +197,120 @@ probs = model.predict_proba(X_test)
 ```
 Use calibrated probabilities for threshold-based decisions or cost-sensitive applications.
 
+### Example 5: Unsupervised Learning Pipeline (PCA + KMeans & DBSCAN Clustering)
+```python
+from sklearn.datasets import make_blobs
+from sklearn.preprocessing import StandardScaler
+from sklearn.decomposition import PCA
+from sklearn.cluster import KMeans, DBSCAN
+from sklearn.pipeline import Pipeline
+
+# Generate synthetic high-dimensional cluster data
+X_raw, _ = make_blobs(n_samples=500, n_features=10, centers=4, random_state=42)
+
+# Preprocessing and Dimensionality Reduction Pipeline
+preprocessor = Pipeline([
+    ("scaler", StandardScaler()),
+    ("pca", PCA(n_components=2, random_state=42))
+])
+
+# Fit and transform
+X_proj = preprocessor.fit_transform(X_raw)
+
+# 1. KMeans Clustering (parametric, expects spherical clusters)
+kmeans = KMeans(n_clusters=4, random_state=42, n_init="auto")
+kmeans_labels = kmeans.fit_predict(X_proj)
+
+# 2. DBSCAN Clustering (non-parametric density-based, handles arbitrary shapes & noise)
+dbscan = DBSCAN(eps=0.3, min_samples=5)
+dbscan_labels = dbscan.fit_predict(X_proj)
+
+print("KMeans cluster centers:\n", kmeans.cluster_centers_)
+print("DBSCAN noise points detected:", sum(dbscan_labels == -1))
+```
+
+### Example 6: Ensemble Models (AdaBoost & XGBoost Integration)
+```python
+from sklearn.datasets import make_classification
+from sklearn.model_selection import train_test_split
+from sklearn.ensemble import AdaBoostClassifier
+from sklearn.tree import DecisionTreeClassifier
+from xgboost import XGBClassifier
+
+X, y = make_classification(n_samples=1000, n_features=20, random_state=42)
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+# 1. AdaBoost with Decision Tree stump base estimator
+ada = AdaBoostClassifier(
+    estimator=DecisionTreeClassifier(max_depth=1),
+    n_estimators=100,
+    learning_rate=0.1,
+    random_state=42
+)
+ada.fit(X_train, y_train)
+print("AdaBoost Test Accuracy:", ada.score(X_test, y_test))
+
+# 2. XGBoost Classifier using scikit-learn API wrapper
+xgb = XGBClassifier(
+    n_estimators=100,
+    max_depth=3,
+    learning_rate=0.1,
+    random_state=42,
+    eval_metric="logloss"
+)
+xgb.fit(X_train, y_train)
+print("XGBoost Test Accuracy:", xgb.score(X_test, y_test))
+```
+
+### Example 7: Anomaly Detection with Isolation Forest
+```python
+from sklearn.ensemble import IsolationForest
+import numpy as np
+
+# Generate clean training data and some anomalous test data
+rng = np.random.default_rng(42)
+X_train = rng.normal(loc=0.0, scale=1.0, size=(200, 2))
+X_test = np.vstack([
+    rng.normal(loc=0.0, scale=1.0, size=(20, 2)),      # Normal points
+    rng.uniform(low=-4.0, high=4.0, size=(10, 2))      # Potential outliers
+])
+
+# Fit Isolation Forest (contamination is the expected ratio of outliers)
+iso_forest = IsolationForest(contamination=0.1, random_state=42)
+iso_forest.fit(X_train)
+
+# Predict anomaly labels (-1: anomaly, 1: normal)
+predictions = iso_forest.predict(X_test)
+anomaly_scores = iso_forest.decision_function(X_test)  # Lower values indicate anomaly
+
+print("Outliers predicted in test set:", sum(predictions == -1))
+```
+
+### Example 8: Time-Series Split and Modeling
+```python
+from sklearn.model_selection import TimeSeriesSplit
+from sklearn.linear_model import Ridge
+import numpy as np
+
+# Generate mock daily time-series target and features
+timesteps = 100
+X_ts = np.random.randn(timesteps, 5)
+y_ts = np.arange(timesteps) * 0.5 + np.random.randn(timesteps)
+
+# TimeSeriesSplit prevents lookahead bias (future leakage into past)
+tscv = TimeSeriesSplit(n_splits=5)
+
+for fold, (train_index, test_index) in enumerate(tscv.split(X_ts)):
+    X_train, X_test = X_ts[train_index], X_ts[test_index]
+    y_train, y_test = y_ts[train_index], y_ts[test_index]
+    
+    model = Ridge(alpha=1.0)
+    model.fit(X_train, y_train)
+    score = model.score(X_test, y_test)
+    print(f"Fold {fold} - Train Range: [{train_index[0]}-{train_index[-1]}], "
+          f"Test Range: [{test_index[0]}-{test_index[-1]}], R^2 Score: {score:.3f}")
+```
+
 ---
 
 ## 7. Advanced Concepts
@@ -395,6 +509,37 @@ Interviewers test whether you can build end-to-end ML workflows with scikit-lear
 
 38. Design a model evaluation dashboard.
 - Metrics table with CIs, confusion matrix, calibration curve, per-segment performance, fairness slices, and champion/challenger comparison.
+
+---
+
+#### 61. Explain how ColumnTransformer prevents data leakage. How does it handle heterogeneous datasets?
+- **Detailed Answer**: `ColumnTransformer` allows you to apply different preprocessing pipelines to specific subsets of columns (numeric, categorical, text) in a heterogeneous dataset, and concatenate the output features into a single matrix.
+  It prevents **data leakage** because:
+  1. It respects the standard estimator contract: fitting statistics (e.g., mean/standard deviation for `StandardScaler`, category mapping for `OneHotEncoder`) occurs strictly on the training folds/sets when calling `ColumnTransformer.fit()`.
+  2. These parameters are then statically applied during `ColumnTransformer.transform()` on validation or test folds.
+  3. When combined within an overall `Pipeline`, the entire preprocessing graph is executed within cross-validation folds, guaranteeing that no test/validation data statistics leak into the training transformations.
+- **Follow-up Questions**: How do you pass through specific columns unmodified or drop columns inside a ColumnTransformer? (Answer: Use the `"passthrough"` or `"drop"` string literals as the transformer parameter in the tuple specification).
+- **Interviewer's Expectations**: Define `ColumnTransformer`'s column-specific mapping capability, explain why fit-on-train and transform-on-test prevents leakages of means/categories, and describe integrating it inside a scikit-learn `Pipeline`.
+
+---
+
+#### 62. What is the contract for custom estimators and transformers in scikit-learn? How do you implement a custom transformer?
+- **Detailed Answer**: To create custom, pipeline-compatible components in scikit-learn, you must adhere to the estimator/transformer contract:
+  1. Subclass `BaseEstimator` to automatically inherit parameter inspection helpers, get/set parameter mechanisms for hyperparameter tuning (`get_params`, `set_params`), and avoid using `*args` or `**kwargs` in your `__init__`.
+  2. Subclass `TransformerMixin` to automatically get the `fit_transform()` implementation from your `fit` and `transform` methods.
+  3. Implement `fit(self, X, y=None)`: Learn data-driven parameters from `X` and store them as public attributes ending with a trailing underscore (e.g., `self.mean_`). It must return `self`.
+  4. Implement `transform(self, X)`: Apply the learned parameters to `X` and return a new array or DataFrame without modifying the original input.
+- **Follow-up Questions**: Why should learned attributes in a custom transformer end with a trailing underscore? (Answer: It is a scikit-learn convention that separates hyperparameters set in `__init__` from parameters computed during the `fit` phase).
+- **Interviewer's Expectations**: Describe the inheritance of `BaseEstimator` and `TransformerMixin`, explain the signature contracts of `fit` and `transform`, and identify the trailing underscore convention for learned parameters.
+
+---
+
+#### 63. What is target leakage/pipeline leakage? How do you detect and fix it in scikit-learn pipelines?
+- **Detailed Answer**: **Target leakage** occurs when features used to train a model contain information about the target variable that would not be available at inference time (e.g., customer transaction IDs representing fraud outcomes, or raw target values incorporated in calculation steps). **Pipeline leakage** occurs when preprocessing calculations (like scaling, mean imputation, or target encoding) are fit on the entire dataset *before* splitting into train/test or cross-validation folds, leaking test distribution data into the training process.
+  - **Detection**: Check if cross-validation scores are unrealistically high compared to out-of-sample/production test scores. Inspect feature importances to see if a feature explains nearly 100% of target variance.
+  - **Fix**: Package all preprocessing transformers and final estimators in a scikit-learn `Pipeline` object. Enforce validation splits *before* calling `.fit()`. Never compute global statistics on the entire dataset.
+- **Follow-up Questions**: What is the difference between target encoding leakage and data leakage? (Answer: Data leakage is a general term for test data informing training, whereas target encoding leakage specifically refers to a feature calculation using target labels of the same row or fold, causing overfitting).
+- **Interviewer's Expectations**: Define target leakage and pipeline leakage, identify symptoms (e.g., optimistic CV scores, dominant features), and detail how wrapping steps in a `Pipeline` resolves preprocessing leakage.
 
 ---
 

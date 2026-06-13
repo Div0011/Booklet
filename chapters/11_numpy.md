@@ -159,9 +159,37 @@ np.argmax(a)  # Index of max element
 
 ### Advanced Concepts
 
+#### Memory Strides & Memory Layouts (C-Contiguous vs. Fortran-Contiguous)
+An array's elements are stored in a flat, one-dimensional block of physical memory. The translation from multi-dimensional index to a specific memory offset uses **strides**: the number of bytes to skip in memory to move to the next element along each axis.
+- **C-Contiguous (Row-Major)**: Row elements are contiguous in memory. Strides for shape `(M, N)` of float64 (8 bytes) are `(N * 8, 8)`. The last axis varies fastest. This is the default in NumPy.
+- **Fortran-Contiguous (Column-Major)**: Column elements are contiguous in memory. Strides for shape `(M, N)` of float64 are `(8, M * 8)`. The first axis varies fastest.
+
+```python
+import numpy as np
+
+# C-contiguous (default)
+arr_c = np.array([[1.0, 2.0], [3.0, 4.0]])
+print(arr_c.strides)  # (16, 8) -> 16 bytes (2 float64s) to jump rows, 8 bytes to jump columns
+
+# Fortran-contiguous
+arr_f = np.array([[1.0, 2.0], [3.0, 4.0]], order='F')
+print(arr_f.strides)  # (8, 16) -> 8 bytes to jump rows, 16 bytes to jump columns
+```
+
+#### Zero-Copy Strided Views
+Because strides map indices to memory offsets, operations like transposition, reshaping, or slicing do not need to copy data. They simply return a new view with modified `shape` and `strides`.
+```python
+# Transpose changes strides without copying
+arr_t = arr_c.T
+print(arr_t.strides)  # (8, 16)
+print(arr_t.base is arr_c)  # True (it's a view!)
+```
+
+#### Advanced Vectorization & SIMD
+NumPy ufuncs execute loops in precompiled C code. If the array is contiguous, compilers optimize these loops using **SIMD (Single Instruction Multiple Data)** instructions, applying operations to multiple numbers simultaneously in processor vector registers. Custom Python functions can be vectorized via `np.vectorize` or `np.frompyfunc` (which avoids loop overhead in Python but is still slower than native C ufuncs since it calls a Python function per element).
+
 #### Structured Arrays
 Compound dtypes with named fields for record-oriented storage.
-
 ```python
 # Define dtype with named fields
 dt = np.dtype([('name', 'U10'), ('age', 'i4'), ('salary', 'f8')])
@@ -177,8 +205,14 @@ print(employees['name'])  # ['Alice' 'Bob']
 print(employees[0]['age'])  # 30
 ```
 
-#### Memory Mapping
-Map files directly into memory for arrays larger than RAM.
+#### Memory Mapping (np.memmap)
+Map files directly into memory for arrays larger than RAM. Under the hood, this uses virtual memory mapping (`mmap` on POSIX systems) to load and flush data from disk on-demand, skipping standard file I/O streams.
+```python
+# Create memory-mapped file
+arr = np.memmap('large_file.dat', dtype='float32', mode='w+', shape=(1000000, 1000))
+arr[0, 0] = 3.14  # Write to disk seamlessly
+del arr  # Flush automatically on delete
+```
 
 ```python
 # Create memory-mapped file
@@ -472,6 +506,72 @@ B = np.ones((5, 4, 2))  # 5 matrices of 4x2
 result = np.einsum('bij,bjk->bik', A, B)  # (5, 3, 2)
 ```
 
+### Example 6: Zero-Copy Sliding Window using Stride Tricks
+By directly manipulating shape and strides, we can create overlapping windows over an array without allocating new memory for the segments.
+
+```python
+from numpy.lib.stride_tricks import as_strided
+
+data = np.array([10, 20, 30, 40, 50, 60], dtype=np.int32)  # 4 bytes per element
+print(data.strides)  # (4,)
+
+# We want 3-element rolling windows: [10,20,30], [20,30,40], [30,40,50], [40,50,60]
+# Output shape: (4 windows, 3 elements per window)
+# Output strides:
+#   To move to the next window, jump 1 element forward (4 bytes)
+#   To move to the next element within a window, jump 1 element forward (4 bytes)
+window_size = 3
+num_windows = len(data) - window_size + 1
+
+windows = as_strided(
+    data,
+    shape=(num_windows, window_size),
+    strides=(data.strides[0], data.strides[0])
+)
+
+print(windows)
+# [[10 20 30]
+#  [20 30 40]
+#  [30 40 50]
+#  [40 50 60]]
+
+print(windows.base is data)  # True (completely zero-copy!)
+```
+
+### Example 7: Cache Locality and Strides Performance Impact
+Demonstrating why iteration along contiguous dimensions is faster due to CPU cache-line prefetching.
+
+```python
+import time
+
+# Create a large 2D C-contiguous array (10000 x 10000)
+size = 10000
+arr_c = np.ones((size, size), dtype=np.float64)
+arr_f = np.ones((size, size), dtype=np.float64, order='F')
+
+# Sum along rows in C-contiguous array (Fast: sequential access hits CPU cache)
+t0 = time.perf_counter()
+sum_rows_c = np.sum(arr_c, axis=1)
+t1 = time.perf_counter()
+c_row_time = t1 - t0
+
+# Sum along columns in C-contiguous array (Slow: jumping strides hits memory)
+t0 = time.perf_counter()
+sum_cols_c = np.sum(arr_c, axis=0)
+t1 = time.perf_counter()
+c_col_time = t1 - t0
+
+# Sum along columns in F-contiguous array (Fast: sequential access column-wise)
+t0 = time.perf_counter()
+sum_cols_f = np.sum(arr_f, axis=0)
+t1 = time.perf_counter()
+f_col_time = t1 - t0
+
+print(f"C-Order row-sum (contiguous): {c_row_time:.4f}s")
+print(f"C-Order col-sum (non-contiguous): {c_col_time:.4f}s")  # Typically 2-5x slower
+print(f"F-Order col-sum (contiguous): {f_col_time:.4f}s")
+```
+
 ---
 
 ## 7. Advanced Examples
@@ -709,6 +809,37 @@ A: Operations that respect memory layout are faster. Transposing column-major ma
 A: Use stride tricks or np.convolve(data, np.ones(window)/window, mode='valid').
 
 **Q41-Q60: [Advanced scenarios covering sparse arrays, GPU acceleration with CuPy, integration with pandas/scipy, performance profiling, parallel operations, and real-world machine learning data pipelines with detailed examples and optimizations]**
+
+---
+
+#### 61. Explain how memory strides work in NumPy. How do they enable zero-copy operations?
+- **Detailed Answer**: Memory strides are a tuple representing the number of bytes that must be skipped in the 1D flat memory block to step to the next element along each dimension. For example, a 2D float64 array of shape `(3, 4)` in row-major (C-contiguous) format has strides `(32, 8)`—meaning it takes 32 bytes (4 elements * 8 bytes) to jump to the next row, and 8 bytes to jump to the next column. 
+Because multi-dimensional array access is calculated mathematically as `offset = sum(index[d] * strides[d])`, NumPy can perform operations like transposing, reshaping, slicing, or flipping by simply modifying the metadata (shape and strides) instead of copying the underlying memory buffer. For instance, transposing a row-major array of shape `(M, N)` and strides `(A, B)` returns a view of shape `(N, M)` and strides `(B, A)` pointing to the exact same memory buffer.
+- **Follow-up Questions**: When does reshape fail to return a view and instead perform a copy? (Answer: Reshaping requires a copy if the new shape cannot be represented with a single set of regular strides over the existing data buffer—typically when reshaping a non-contiguous slice of an array).
+- **Interviewer's Expectations**: Describe strides as byte steps per axis, show how index mapping is computed mathematically, and explain that transposes and slices are O(1) metadata changes returning a view.
+
+---
+
+#### 62. What is the difference between C-contiguous and Fortran-contiguous arrays, and how does this affect performance?
+- **Detailed Answer**: C-contiguous arrays store elements row-by-row (row-major order), meaning adjacent columns in the same row are adjacent in memory. Fortran-contiguous arrays store elements column-by-column (column-major order), meaning adjacent rows in the same column are adjacent in memory.
+This affects performance due to **CPU cache locality**:
+  - CPUs load data into cache lines (typically 64 bytes). When you access `arr[i, j]`, the CPU pre-fetches adjacent memory.
+  - In a C-contiguous array, summing along axis 1 (row-wise sum) reads elements sequentially in memory, yielding high cache hit rates and enabling SIMD auto-vectorization. Summing along axis 0 (column-wise sum) jumps strides, causing cache misses.
+  - The opposite is true for Fortran-contiguous arrays: axis 0 operations are fast; axis 1 operations are slow.
+- **Follow-up Questions**: How can you check if an array is contiguous in Python? (Answer: Check `arr.flags['C_CONTIGUOUS']` or `arr.flags['F_CONTIGUOUS']`).
+- **Interviewer's Expectations**: Detail row-major vs. column-major memory ordering, explain cache lines/locality and cache misses, and discuss how choosing the wrong reduction axis can severely bottleneck performance.
+
+---
+
+#### 63. How does np.memmap work under the hood? When would you use it, and what are its limitations?
+- **Detailed Answer**: `np.memmap` creates a memory-mapped file interface. Under the hood, it uses the OS kernel's virtual memory subsystem (via the `mmap` system call). The file on disk is mapped directly into the process's virtual address space without loading it fully into RAM. When a slice of the array is accessed, the OS triggers page faults to load only the required pages from disk into the page cache. When edits are made and `flush()` is called (or the object is garbage collected), the dirty pages are written back to disk.
+  - **When to use**: When processing datasets larger than system RAM, or when you need quick, random read/write access to sub-regions of a large binary array without the memory overhead of reading the entire file.
+  - **Limitations**:
+    1. Performance is heavily dependent on disk I/O speed. Random access can cause thrashing.
+    2. File format must be raw binary data (no headers, unless offset is carefully configured).
+    3. Python's GIL can still limit parallel CPU processing, even though I/O is handled by the OS.
+- **Follow-up Questions**: How does memmap differ from regular file streaming? (Answer: Memmap lets you use standard NumPy indexing and mathematical operations directly on the mapped array as if it were in RAM, letting the OS handle page paging, whereas streaming requires manual chunking and buffer loading).
+- **Interviewer's Expectations**: Explain virtual memory mapping, page faults, demand paging, and identify limitations (disk I/O bottlenecks, RAM page thrashing, and raw binary format requirements).
 
 ---
 

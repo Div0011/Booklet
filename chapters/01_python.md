@@ -32,6 +32,35 @@ Think of Python as a **project manager** translating high-level business require
 
 ### Beginner Concepts
 
+#### Predefined Keywords
+Python has a set of predefined keywords (such as `def`, `class`, `yield`, `await`, `async`, `global`, `nonlocal`, `lambda`, `pass`, etc.) that hold special meanings and cannot be used as identifiers (variable or function names).
+- `global`: Declares that a variable inside a function is at the module level.
+- `nonlocal`: Used inside nested functions to rebind a variable in the nearest outer enclosing scope (excluding global scope).
+- `pass`: A null statement used as a placeholder where syntactically a statement is required but no action is needed.
+
+#### Operators & Type Casting
+- **Operators**: Python supports:
+  - *Arithmetic*: `+`, `-`, `*`, `/`, `%`, `**` (exponentiation), `//` (floor division).
+  - *Comparison*: `==`, `!=`, `>`, `<`, `>=`, `<=`.
+  - *Logical*: `and`, `or`, `not`.
+  - *Bitwise*: `&` (AND), `|` (OR), `^` (XOR), `~` (NOT), `<<` (left shift), `>>` (right shift).
+- **Type Casting**:
+  - *Implicit*: Python automatically coerces types when safe (e.g., `3 + 4.5` results in a float `7.5`).
+  - *Explicit*: Manual conversion using constructors like `int()`, `float()`, `str()`, `list()`, `set()`, `dict()`.
+
+#### Conditionals & Loops
+- **Conditionals**: `if`, `elif`, and `else` blocks handle branching logic based on boolean evaluations.
+- **Loops**:
+  - `for`: Iterates over a sequence. Supports an optional `else` block which runs if the loop completes without hitting a `break`.
+  - `while`: Repeatedly executes as long as a condition is true. Also supports `else`.
+  - **Loop Control**: `break` exits the loop immediately; `continue` skips the rest of the current iteration and goes to the next.
+
+#### Data Structures & Core Types
+- **Strings**: Immutable sequences of Unicode characters. Supports format engines (`f-strings`, `.format()`, `%`), slicing (`[start:stop:step]`), and operations like `.split()`, `.join()`.
+- **Lists**: Mutable dynamic arrays with amortized $O(1)$ insertions.
+- **Tuples & Sets**: Tuples are immutable arrays (hashable if their elements are hashable). Sets are mutable, unordered collections of unique elements backed by a hash table.
+- **Dictionaries**: Store key-value pairs. Dictionaries resolve hash collisions using **open addressing** (specifically, pseudo-random probing) rather than chaining.
+
 #### Dynamic Typing
 Variables bind to values at runtime, not declaration. Contrast with Java's `int x = 5`:
 ```python
@@ -48,6 +77,7 @@ lst = [1, 2]; lst.append(3)  # Same id()
 s = "hello"; s = s + " world"  # New string created
 ```
 **Why it matters**: Immutable objects hashable (safe dict keys). Mutable can't be hashed. Immutable avoids synchronization in multithreading.
+- *Mutable Defaults Trap*: Defining a function with a mutable default argument like `def foo(val=[])` binds `val` to a single list object created at definition time. Subsequent calls append to this same shared list instance. Fix this by using `def foo(val=None): if val is None: val = []`.
 
 #### LEGB Rule
 Variable lookup: **Local → Enclosing → Global → Builtin**
@@ -124,6 +154,35 @@ class Circle:
         if value <= 0: raise ValueError("Positive only")
         self._r = value
 ```
+
+#### Parameter Passing in Functions
+Python parameters are passed using **call-by-sharing** (pass-by-object-reference). When you call a function, the arguments are bound to the parameter names in the local scope:
+- If you pass an immutable object (e.g. integer or string), rebinding it inside the function does not affect the caller.
+- If you pass a mutable object (e.g. a list or dictionary), modifying it in-place affects the caller, but rebinding the variable to a new object does not.
+
+#### Functional Programming Utilities
+- **Lambdas**: Anonymous one-line functions: `lambda x, y: x + y`.
+- **Map, Filter, & Reduce**:
+  - `map(func, iterable)`: Applies a function to all items in an input list.
+  - `filter(func, iterable)`: Filters items based on a boolean-returning function.
+  - `reduce(func, iterable)`: Applies a rolling computation to sequential pairs of values (imported from `functools`).
+
+#### OOP Mechanics: Inheritance & Methods
+- **Inheritance Types**: Supports multiple and multilevel inheritance. Multiple inheritance is resolved via the MRO algorithm.
+- **Class Methods vs. Static Methods**:
+  - `@classmethod`: Accepts the class `cls` as the first argument. Can access/modify class state. Used for alternative constructor factory functions.
+  - `@staticmethod`: Receives no class or instance argument. Behaves like a regular function placed inside the class namespace.
+- **Abstract Classes**: Enforces child class implementations using the `abc` module:
+  ```python
+  from abc import ABC, abstractmethod
+  class Worker(ABC):
+      @abstractmethod
+      def do_work(self): pass
+  ```
+- **Dunder Methods**: Double underscore methods customize built-in operator behaviors:
+  - `__new__` vs `__init__`: `__new__` is the constructor (allocates memory and returns a new instance), while `__init__` is the initializer (populates attributes on the returned instance).
+  - `__str__` vs `__repr__`: `__str__` defines user-friendly string representations; `__repr__` defines unambiguous representations for developers (eval-able where possible).
+  - `__call__`: Allows instances to be invoked like regular functions.
 
 ### Advanced Concepts
 
@@ -239,6 +298,15 @@ def constant_folding():
 dis.dis(constant_folding)
 # Output: LOAD_CONST(5); RETURN_VALUE
 ```
+
+#### File Handling, Exceptions, & Logging
+- **File Handling**: Opening files using the `with` context manager guarantees file closure, preventing file descriptor leaks. Supports reading (`r`), writing (`w`), appending (`a`), and binary modes (`b`).
+- **Exceptions**: Exception hierarchy runs inside `try-except-else-finally` blocks. `else` executes only if no exception occurred; `finally` runs unconditionally, executing cleanup operations. Custom exceptions inherit from `Exception` (or `BaseException` for system-level overrides).
+- **Logging**: Configured via the `logging` module to track application events. Supports log levels: `DEBUG` $\to$ `INFO` $\to$ `WARNING` $\to$ `ERROR` $\to$ `CRITICAL`. Loggers can direct output to handlers (StreamHandler, FileHandler) and format messages structurally.
+
+#### Concurrency: Multithreading vs. Multiprocessing
+- **Multithreading**: Lightweight, shared memory execution. Because of CPython's **Global Interpreter Lock (GIL)**, multiple threads cannot execute bytecode in parallel on multiple cores. Multithreading is highly effective for I/O-bound tasks (network calls, database operations, file reads), as the GIL is released during blocking system calls. Threads can use locks (`threading.Lock`) to prevent race conditions.
+- **Multiprocessing**: Spawns multiple independent OS processes, each with its own memory space and Python interpreter instance. This bypasses the GIL entirely, enabling true parallel execution on multi-core systems. Spawning processes is computationally heavier and requires Inter-Process Communication (IPC) objects like `multiprocessing.Queue`, `Pipe`, or `SharedMemory` to exchange data.
 
 ---
 
@@ -935,6 +1003,30 @@ PEP 8: indentation groups statements into suites. Cleaner than braces.
 
 **60. Unpacking assignment.**
 `a, b = [1, 2]`. Extended: `a, *rest, z = [1, 2, 3, 4, 5]` → `a=1, rest=[2,3,4], z=5`.
+
+---
+
+#### 61. Explain how mutable default arguments behave in Python and how to avoid side effects.
+- **Detailed Answer**: In Python, default parameter values are evaluated exactly once when the function is defined, not when it is called. If a mutable object (like a list or dictionary) is used as a default, that single object is instantiated at compile-time and shared across all subsequent invocations. Any in-place updates to that argument will persist across calls, causing unintended side effects.
+  To avoid this, use a `None` sentinel as the default value and instantiate a new mutable object inside the function body if the argument is `None`:
+  ```python
+  def append_to(element, target=None):
+      if target is None:
+          target = []
+      target.append(element)
+      return target
+  ```
+- **Follow-up Questions**: Why does Python evaluate defaults at definition time? (Answer: To optimize performance by avoiding repetitive evaluations, and because default values themselves are attributes of the function object stored in `__defaults__`).
+- **Interviewer's Expectations**: Point out that defaults are evaluated once at definition time, describe the persistent shared object, and demonstrate the `None` sentinel fix.
+
+---
+
+#### 62. Contrast Python's multithreading and multiprocessing in terms of GIL, memory sharing, and suitability.
+- **Detailed Answer**:
+  - **Multithreading**: Uses lightweight threads within a single process. Since CPython's Global Interpreter Lock (GIL) restricts execution to one thread at a time, threads cannot run CPU-bound bytecode in parallel. However, threads share the same memory space, making communication simple, and they release the GIL during blocking I/O calls, making multithreading ideal for network/database tasks.
+  - **Multiprocessing**: Spawns independent OS processes, each with its own memory space and Python interpreter instance. This bypasses the GIL entirely, enabling true parallel execution on multi-core systems, making it ideal for CPU-bound tasks. The drawback is that processes do not share memory; exchanging data requires serialization (pickling) and IPC mechanisms (queues, pipes, or managers).
+- **Follow-up Questions**: How does memory overhead compare? (Answer: Multiprocessing has a much higher memory overhead since each process has to load the entire Python runtime and its own heap, whereas multithreading shares a single process heap).
+- **Interviewer's Expectations**: Contrast GIL impact, compare memory spaces (shared vs isolated), identify suitability (I/O-bound vs CPU-bound), and mention serialization overhead.
 
 ---
 

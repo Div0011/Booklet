@@ -22,6 +22,24 @@ Modern corporate data is fragmented across various repositories: SQL databases, 
 ### Analogy
 If Microsoft Excel is like a single workbench where you manually copy, paste, and format data tables, Power BI is an automated assembly line: raw materials (data sources) are ingested, cleaned and stamped by machines (Power Query), stored in standardized bins (VertiPaq), and assembled into final products (visual dashboards) that are delivered automatically to clients.
 
+### Power BI Desktop Installation & Setup
+To begin developing Power BI reports, download and install **Power BI Desktop**, which is a free application running on Windows OS.
+1. **System Requirements**: 64-bit Windows operating system (Windows 10/11 or Windows Server), at least 4 GB RAM (8 GB or more recommended), and .NET Framework 4.8 or later.
+2. **Download Methods**:
+   - **Microsoft Store (Recommended)**: Automates updates and ensures you always have the latest monthly release without admin privileges.
+   - **Direct MSI Download**: Downloaded from the official Microsoft download page. Useful for offline installs or managed corporate deployment.
+
+### User Interface Elements
+The Power BI Desktop interface is structured into three primary workspace views accessible from the left-hand navigation pane, along with helper configuration panels:
+1. **Report View**: The primary canvas layout where you design and construct interactive visualizations (charts, tables, slicers).
+2. **Table/Data View**: Allows you to inspect, filter, and format the data loaded in the tables after Power Query transformations.
+3. **Model View**: Shows the relationship diagram of all loaded tables, where you configure cardinalities, cross-filtering directions, and database schemas (like Star Schemas).
+4. **Power Query Editor**: A separate window triggered by clicking "Transform Data", used to perform ETL operations (cleaning, merging, transforming data) using the functional **M Language**.
+5. **Configuration Panes (Right Side)**:
+   - **Fields/Data Pane**: Lists all columns and measures across loaded tables.
+   - **Visualizations Pane**: Provides the chart template selection library and data field mappings (X-axis, Y-axis, tooltips).
+   - **Format Pane**: Allows detailed visual styling configurations (colors, titles, borders, page sizes).
+
 ---
 
 ## 2. Core Concepts
@@ -48,6 +66,51 @@ If Microsoft Excel is like a single workbench where you manually copy, paste, an
   - **Import Mode**: Loads a copy of the data into the in-memory VertiPaq engine (fastest query speeds).
   - **DirectQuery**: Queries the target database directly at runtime (slower, but supports real-time data and large volumes).
 
+### Visualizations Deep-Dive
+Visual elements convert calculated metrics into interactive insights. Selecting the appropriate visual type is essential for optimal user experience:
+1. **Bar & Column Charts**: 
+   - **Clustered Bar/Column**: Displays categories side-by-side. Best for comparing independent categories.
+   - **Stacked Bar/Column**: Stacks categories on top of each other. Best for comparing part-to-whole relationships across categories.
+   - **100% Stacked Bar/Column**: Standardizes the total height to 100%, showing relative percentage weights.
+2. **Pie & Donut Charts**: Used to show part-to-whole compositions. Limit categories to 3-4; high cardinality makes these charts unreadable.
+3. **Waterfall Charts**: Shows the cumulative effect of sequentially introduced positive or negative values (e.g. tracking revenue from Gross Sales to Net Profit).
+4. **Treemap Charts**: Displays nested colored rectangles representing category values by size. Best for high-cardinality hierarchical structures (e.g., product subcategories).
+5. **Table & Matrix Visuals**:
+   - **Table**: A flat, row-by-row representation of data.
+   - **Matrix**: A pivot-table style structure supporting multi-dimensional groupings (rows and columns) with collapsible hierarchies and dynamic totals.
+6. **Line & Area Charts**: 
+   - **Line Chart**: Best for displaying continuous trends over time.
+   - **Area Chart**: Shades the region under the line; best for showing the magnitude of volume changes over time.
+7. **KPI & Slicers**:
+   - **KPI Visual**: Shows a current value (e.g. sales this month), its target goal, and a colored status indicator (red/green) based on threshold differences.
+   - **Slicers**: Interactive visual filters placed on the canvas, allowing users to dynamically filter report visuals (supports single-select, multi-select, dropdowns, and search).
+8. **Funnel Charts**: Shows stages in a linear process (e.g. recruitment pipelines or sales pipelines) to identify conversion bottlenecks.
+9. **Scatter Plot**: Displays relationships between two numeric values using X and Y coordinates. Useful for spotting correlations, clusters, and outliers.
+10. **Maps**:
+    - **Bubble Map**: Places dots on geographical coordinates, using dot size to represent value.
+    - **Filled Map**: Colors administrative boundaries (countries/states) based on value intensity.
+11. **Gauge & Card Visuals**:
+    - **Card**: Displays a single, highlighted numeric metric (e.g., Total Profit).
+    - **Gauge**: A circular arc visual showing progress toward a defined target.
+12. **Custom Visuals**: Visual layouts not available in the default panel. Developers can import them from **Microsoft AppSource** (e.g., Sankey diagrams, Gantt charts) or write custom code using TypeScript.
+
+### Data Modeling & Relationships
+A robust data model is the foundation of high-performance calculations and clean dashboards:
+1. **Fact vs. Dimension Tables**:
+   - **Fact Table**: Stores quantitative transactions, values, or metrics (e.g., `SalesAmount`, `Quantity`, `DateKey`, `ProductKey`). It is tall, narrow, and grows continuously.
+   - **Dimension Table**: Stores descriptive attributes or lookup context (e.g., `ProductName`, `CustomerEmail`, `RegionCode`). It is wide, relatively short, and has unique primary keys.
+2. **Star Schema vs. Snowflake Schema**:
+   - **Star Schema**: Direct one-to-many relationships pointing from descriptive dimension tables to a central fact table. Highly recommended because the VertiPaq engine optimizes dictionary joins in this shape, leading to faster queries and simplified DAX.
+   - **Snowflake Schema**: Normalized dimension tables containing sub-dimensions (e.g. `Product` links to `Subcategory` which links to `Category`). This normalizes schemas but degrades query performance by forcing VertiPaq to traverse multiple relationship steps to propagate filters.
+3. **Relationship Cardialities**:
+   - **One-to-Many (1:M)**: The standard relationship type. One row in the dimension table filters multiple rows in the fact table.
+   - **One-to-One (1:1)**: Links two tables sharing a unique key. Use sparingly; consider merging tables instead.
+   - **Many-to-Many (M:N)**: Both tables share non-unique keys. Can cause ambiguity and performance lag. Best resolved using a **Bridge Table** with unique key lists.
+4. **Filter Propagation & Direction**:
+   - **Single Direction**: Filters flow only from the "one" side of the relationship to the "many" side. 
+   - **Both (Bidirectional)**: Filters flow in both directions. Avoid setting this globally, as it creates performance overhead, double-counting bugs, and ambiguous circular paths.
+   - **Active vs. Inactive**: Only one active relationship path can exist between two tables. If you link a Sales table to a Date table on both `OrderDate` and `ShipDate`, one is active (solid line) and the other is inactive (dotted line). Inactive relationships are dormant by default but can be activated in specific DAX queries using `USERELATIONSHIP`.
+
 ---
 
 ## 3. Internal Working
@@ -71,6 +134,32 @@ Analytical queries typically aggregate single columns (e.g., summing total sales
 1. **Value Encoding**: Converts integers into smaller mathematical representation spaces.
 2. **Dictionary Encoding**: Replaces text strings with integer index keys, storing the actual strings once in a lookup dictionary.
 3. **Run-Length Encoding (RLE)**: Compresses repeating consecutive values in a column by storing the value and its count (e.g., storing `(10, 5x)` instead of `10, 10, 10, 10, 10`).
+
+### Connectivity Modes in Power BI
+Power BI Desktop connects to data sources using four distinct data connectivity models:
+1. **Import Mode**: 
+   - **How it works**: VertiPaq takes a full copy of the data from the source, compresses it, and loads it into the host machine's RAM. 
+   - **Pros/Cons**: Extremely fast queries because operations happen in memory. However, dataset size is limited by RAM capacity (1 GB limit for shared capacity, up to 10-100 GB in Premium capacity), and the data remains static until a scheduled refresh runs.
+2. **DirectQuery Mode**: 
+   - **How it works**: No data is copied or stored in Power BI. When a user interacts with a visual, Power BI dynamically translates the visual's request into a native SQL query and executes it directly against the source database.
+   - **Pros/Cons**: Supports massive databases (multi-terabyte scale) and real-time updates. However, report performance is limited by the source database's speed and network latency, and DAX calculations are restricted to functions that can translate directly to SQL.
+3. **Live Connection Mode**:
+   - **How it works**: Connects directly to pre-built analysis models (e.g. Azure Analysis Services, SQL Server Analysis Services (SSAS), or published Power BI datasets).
+   - **Pros/Cons**: The data modeling and calculations are managed centrally on the remote server; the local desktop report acts strictly as a visualization layer. No data modeling or custom tables can be created locally in this mode.
+4. **Dual (Composite) Mode**:
+   - **How it works**: Individual tables are set to either "Import" or "DirectQuery", and some dimension tables can be set to "Dual".
+   - **Pros/Cons**: Tables in Dual mode can behave as Import (for fast local joins with imported facts) or DirectQuery (for joining with DirectQuery facts), maximizing performance while supporting real-time detail views.
+
+### Power BI Service & Publishing Architecture
+Once a report is created in Power BI Desktop, it is published to the cloud-based **Power BI Service** (app.powerbi.com) for distribution and sharing:
+1. **Workspaces**: Collaborative shared spaces where developers publish reports, dashboards, and datasets. Access is managed through roles: Admin, Member, Contributor, and Viewer.
+2. **Reports vs. Dashboards**:
+   - **Report**: Multi-page interactive canvases showing multiple visuals built from a single dataset.
+   - **Dashboard**: A single-page canvas showing pinned tiles from *multiple* different reports. They are static, intended for high-level monitoring, and do not support slicing or drill downs.
+3. **Scheduled Refresh**: Automated data re-imports configured in the Service. Import models on Shared capacity support up to 8 refreshes per day, while Premium capacity supports up to 48 refreshes per day.
+4. **Power BI Gateways**: Secure link proxies installed on on-premises networks to allow the cloud-based Power BI Service to query local databases.
+   - **On-premises Data Gateway (Personal Mode)**: Runs as an application under a single user's Windows account. Cannot be shared; useful for individual reporting.
+   - **On-premises Data Gateway (Standard/Enterprise Mode)**: Runs as a Windows background service. Can be shared by multiple users, supports central administration, direct DirectQuery tunnels, and scheduled refreshes across multiple databases.
 
 ---
 
@@ -111,6 +200,25 @@ ProfitColumn = Sales[Revenue] - Sales[Cost]
 TotalSalesMeasure = SUM(Sales[Revenue])
 ```
 
+### Example 3: Basic DAX Aggregators
+These measures calculate basic column summaries over the active filter context:
+```dax
+-- MIN: Find the lowest unit price sold
+LowestPrice = MIN(Sales[UnitPrice])
+
+-- MAX: Find the highest quantity in a single transaction
+MaxQuantity = MAX(Sales[Quantity])
+
+-- AVERAGE: Calculate the average sales transaction amount
+AverageSales = AVERAGE(Sales[Amount])
+
+-- COUNT: Count all transaction rows (includes duplicates/non-blanks)
+TransactionCount = COUNT(Sales[TransactionID])
+
+-- DISTINCTCOUNT: Count unique customers who made a purchase
+UniqueCustomers = DISTINCTCOUNT(Sales[CustomerID])
+```
+
 ---
 
 ## 6. Intermediate Examples
@@ -140,6 +248,88 @@ RETURN
 TotalWeightedProfit = SUMX(
     Sales,
     (Sales[Quantity] * Sales[UnitPrice]) - Sales[CostAmount]
+)
+```
+
+### Example 3: Dynamic Context Modifiers (ALL, ALLEXCEPT, ALLSELECTED)
+These examples show how to manipulate filter context for percentages and running totals:
+```dax
+-- 1. ALL: Calculates total sales across all products, ignoring visual product filters
+AllProductSales = CALCULATE(
+    [TotalSales],
+    ALL(Products)
+)
+
+-- Percentage of Total Product Sales
+PctOfTotalSales = DIVIDE([TotalSales], [AllProductSales], 0)
+
+-- 2. ALLEXCEPT: Clears all filters on the Customers table EXCEPT for the CustomerRegion
+RegionTotalSales = CALCULATE(
+    [TotalSales],
+    ALLEXCEPT(Customers, Customers[CustomerRegion])
+)
+
+-- 3. ALLSELECTED: Clears filters from grouping columns in the visual, but keeps external slicers
+VisualTotalSales = CALCULATE(
+    [TotalSales],
+    ALLSELECTED(Products)
+)
+```
+
+### Example 4: Advanced Iterators (MINX, MAXX, AVERAGEX)
+```dax
+-- MAXX: Finds the maximum daily sales amount by iterating over a list of dates
+MaxDailySales = MAXX(
+    VALUES('Calendar'[Date]),
+    [TotalSales]
+)
+
+-- AVERAGEX: Calculates the average monthly sales across months
+AverageMonthlySales = AVERAGEX(
+    VALUES('Calendar'[MonthYear]),
+    [TotalSales]
+)
+```
+
+### Example 5: Date-Time, String, and Logical Functions
+```dax
+-- 1. Date-Time: Year-to-Date (YTD) Sales
+SalesYTD = TOTALYTD(
+    [TotalSales],
+    'Calendar'[Date]
+)
+
+-- 2. String: Create a customer display label
+CustomerLabel = CONCATENATE(
+    UPPER(Customers[LastName]),
+    CONCATENATE(", ", Customers[FirstName])
+)
+
+-- 3. Logical: Categorize sales size using SWITCH
+SalesCategory = SWITCH(
+    TRUE(),
+    Sales[Amount] > 10000, "High Value",
+    Sales[Amount] > 1000, "Medium Value",
+    "Low Value"
+)
+
+-- 4. Logical: Handle blanks with COALESCE
+CleanedDescription = COALESCE(Products[Description], "No Description Provided")
+```
+
+### Example 6: Dynamic Relationship Modifiers (USERELATIONSHIP, CROSSFILTER)
+```dax
+-- USERELATIONSHIP: Force query to use the inactive relationship on Shipping Date
+ShippedSales = CALCULATE(
+    [TotalSales],
+    USERELATIONSHIP(Sales[ShipDateKey], 'Calendar'[DateKey])
+)
+
+-- CROSSFILTER: Force the relationship between Sales and Products to be bidirectional
+-- for this calculation only, allowing product properties to filter bridging tables
+SalesWithBidirectional = CALCULATE(
+    [TotalSales],
+    CROSSFILTER(Sales[ProductKey], Products[ProductKey], Both)
 )
 ```
 
