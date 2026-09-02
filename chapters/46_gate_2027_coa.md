@@ -1,4 +1,4 @@
-# GATE 2027 — Computer Organization and Architecture (COA)
+# 46. GATE 2027 — Computer Organization and Architecture (COA)
 
 > CS Syllabus Section 3: Instruction set and addressing modes. Design of ALU. Design of control unit. Memory interfacing and hierarchy. I/O interface. Instruction pipelining.
 

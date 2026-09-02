@@ -1,4 +1,4 @@
-# GATE 2027: Programming, Data Structures and Algorithms
+# 47. GATE 2027: Programming, Data Structures and Algorithms
 
 > **CS Syllabus:** Programming in C. Recursion. Arrays, stacks, queues, linked lists, trees, binary search trees, binary heaps, graphs. Searching, sorting, hashing. Asymptotic worst case time and space complexity. Algorithm design techniques: greedy, dynamic programming and divide‐and‐conquer. Graph traversals, minimum spanning trees, shortest paths.
 >

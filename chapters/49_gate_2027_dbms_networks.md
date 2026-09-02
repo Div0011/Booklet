@@ -1,4 +1,4 @@
-# GATE 2027 Study Chapter: Database Management Systems & Computer Networks
+# 49. GATE 2027 Study Chapter: Database Management Systems & Computer Networks
 
 > **Coverage:** CS Sections 9 & 10 + DA Section 5 (Data Warehousing)
 > **Weightage (GATE CS):** DBMS ~10-12 marks, Networks ~10-12 marks | **DA:** Data Warehousing ~4-6 marks

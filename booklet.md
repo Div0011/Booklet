@@ -55,10 +55,10 @@
 - 43. [43. MLOps, Model Serving & Pipelines (FastAPI, Triton, ONNX, MLflow, CI/CD)](#43-mlops,-model-serving-&-pipelines-fastapi,-triton,-onnx,-mlflow,-ci/cd)
 - 44. [44. GATE 2027 Engineering Mathematics (CS & DA Syllabi)](#44-gate-2027-engineering-mathematics-cs-&-da-syllabi)
 - 45. [45. GATE 2027 Digital Logic (CS Syllabus Section 2)](#45-gate-2027-digital-logic-cs-syllabus-section-2)
-- 46. [GATE 2027 — Computer Organization and Architecture (COA)](#gate-2027-—-computer-organization-and-architecture-coa)
-- 47. [GATE 2027: Programming, Data Structures and Algorithms](#gate-2027:-programming,-data-structures-and-algorithms)
+- 46. [46. GATE 2027 — Computer Organization and Architecture (COA)](#46-gate-2027-—-computer-organization-and-architecture-coa)
+- 47. [47. GATE 2027: Programming, Data Structures and Algorithms](#47-gate-2027:-programming,-data-structures-and-algorithms)
 - 48. [48. GATE 2027: Theory of Computation & Compiler Design](#48-gate-2027:-theory-of-computation-&-compiler-design)
-- 49. [GATE 2027 Study Chapter: Database Management Systems & Computer Networks](#gate-2027-study-chapter:-database-management-systems-&-computer-networks)
+- 49. [49. GATE 2027 Study Chapter: Database Management Systems & Computer Networks](#49-gate-2027-study-chapter:-database-management-systems-&-computer-networks)
 - 50. [50. GATE 2027: Operating Systems & System Architecture](#50-gate-2027:-operating-systems-&-system-architecture)
 - 51. [51. GATE 2027: Machine Learning & Artificial Intelligence for Data Science (DA)](#51-gate-2027:-machine-learning-&-artificial-intelligence-for-data-science-da)
 - 52. [52. GATE 2027: High-Yield Formula Sheet & Master Reference (CS & DA)](#52-gate-2027:-high-yield-formula-sheet-&-master-reference-cs-&-da)
@@ -38998,7 +38998,7 @@ $J_0 = K_0 = 1$; $J_1 = K_1 = \bar{Q_2} Q_0$; $J_2 = K_2 = Q_0$ with sync reset 
 
 <div style='page-break-before: always;'></div>
 
-# GATE 2027 — Computer Organization and Architecture (COA)
+# 46. GATE 2027 — Computer Organization and Architecture (COA)
 
 > CS Syllabus Section 3: Instruction set and addressing modes. Design of ALU. Design of control unit. Memory interfacing and hierarchy. I/O interface. Instruction pipelining.
 
@@ -40316,7 +40316,7 @@ If you can answer all 8 self-test questions correctly in under 4 minutes total, 
 
 <div style='page-break-before: always;'></div>
 
-# GATE 2027: Programming, Data Structures and Algorithms
+# 47. GATE 2027: Programming, Data Structures and Algorithms
 
 > **CS Syllabus:** Programming in C. Recursion. Arrays, stacks, queues, linked lists, trees, binary search trees, binary heaps, graphs. Searching, sorting, hashing. Asymptotic worst case time and space complexity. Algorithm design techniques: greedy, dynamic programming and divide‐and‐conquer. Graph traversals, minimum spanning trees, shortest paths.
 >
@@ -42911,7 +42911,7 @@ print("Evaluated Expression Result:", calc.expr())  # Output: 43.0
 
 <div style='page-break-before: always;'></div>
 
-# GATE 2027 Study Chapter: Database Management Systems & Computer Networks
+# 49. GATE 2027 Study Chapter: Database Management Systems & Computer Networks
 
 > **Coverage:** CS Sections 9 & 10 + DA Section 5 (Data Warehousing)
 > **Weightage (GATE CS):** DBMS ~10-12 marks, Networks ~10-12 marks | **DA:** Data Warehousing ~4-6 marks

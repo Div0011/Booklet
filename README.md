@@ -93,4 +93,4 @@ For the best reading and study experience, open `reader.html` or `index.html` in
 
 ### 2. Compiled Master Documents (`booklet.md` & `Complete_Interview_Handbook_2025.docx`)
 - **`booklet.md`:** 2.4 MB complete consolidated markdown document containing all 52 chapters with a hyperlinked Table of Contents.
-- **`Complete_Interview_Handbook_2025.docx`:** Professional Microsoft Word handbook containing all 10 Parts and 48 Chapters with rich typography, code styling, and formatted formulas.
+- **`Complete_Interview_Handbook_2025.docx`:** Professional Microsoft Word handbook. This is a separately compiled artifact containing 48 chapters across 10 Parts. Its chapter numbering and topic boundaries differ from the live `booklet.md` source (52 chapters, chapters 44–52 for GATE 2027). For the most up-to-date GATE 2027 content, use `booklet.md` or the HTML readers.
