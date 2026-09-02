@@ -40455,7 +40455,7 @@ void swap(int *a, int *b) {         // Call by reference
 ```c
 // 1D and 2D arrays
 int arr[5] = {1, 2, 3, 4, 5};
-int matrix[3][3] = {{1,2,3}, {4,5,6}, {7,8,9}};
+int matrix[3][3] = { {1, 2, 3}, {4, 5, 6}, {7, 8, 9} };
 
 // Array traversal
 for (int i = 0; i < 5; i++) {
